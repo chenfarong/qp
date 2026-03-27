@@ -84,6 +84,26 @@ func (h *AuthHandler) Validate(c *gin.Context) {
 	})
 }
 
+// Refresh 刷新令牌
+func (h *AuthHandler) Refresh(c *gin.Context) {
+	var req struct {
+		RefreshToken string `json:"refresh_token" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	resp, err := h.authService.RefreshToken(req.RefreshToken)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
 // RegisterRoutes 注册路由
 func (h *AuthHandler) RegisterRoutes(router *gin.Engine) {
 	authGroup := router.Group("/api/auth")
@@ -91,5 +111,6 @@ func (h *AuthHandler) RegisterRoutes(router *gin.Engine) {
 		authGroup.POST("/register", h.Register)
 		authGroup.POST("/login", h.Login)
 		authGroup.GET("/validate", h.Validate)
+		authGroup.POST("/refresh", h.Refresh)
 	}
 }

@@ -47,9 +47,11 @@ type LoginRequest struct {
 
 // TokenResponse 令牌响应
 type TokenResponse struct {
-	Token    string     `json:"token"`
-	ExpireAt int64      `json:"expire_at"`
-	UserInfo model.User `json:"user_info"`
+	Token           string     `json:"token"`
+	RefreshToken    string     `json:"refresh_token"`
+	ExpireAt        int64      `json:"expire_at"`
+	RefreshExpireAt int64      `json:"refresh_expire_at"`
+	UserInfo        model.User `json:"user_info"`
 }
 
 // Register 用户注册
@@ -100,10 +102,18 @@ func (s *AuthService) Register(req RegisterRequest) (*TokenResponse, error) {
 		return nil, err
 	}
 
+	// 生成刷新令牌
+	refreshToken, refreshExpireAt, err := s.generateRefreshToken(user.ID.Hex())
+	if err != nil {
+		return nil, err
+	}
+
 	return &TokenResponse{
-		Token:    token,
-		ExpireAt: expireAt,
-		UserInfo: user,
+		Token:           token,
+		RefreshToken:    refreshToken,
+		ExpireAt:        expireAt,
+		RefreshExpireAt: refreshExpireAt,
+		UserInfo:        user,
 	}, nil
 }
 
@@ -136,15 +146,29 @@ func (s *AuthService) Login(req LoginRequest) (*TokenResponse, error) {
 		return nil, err
 	}
 
+	// 生成刷新令牌
+	refreshToken, refreshExpireAt, err := s.generateRefreshToken(user.ID.Hex())
+	if err != nil {
+		return nil, err
+	}
+
 	return &TokenResponse{
-		Token:    token,
-		ExpireAt: expireAt,
-		UserInfo: user,
+		Token:           token,
+		RefreshToken:    refreshToken,
+		ExpireAt:        expireAt,
+		RefreshExpireAt: refreshExpireAt,
+		UserInfo:        user,
 	}, nil
 }
 
 // Claims JWT声明
 type Claims struct {
+	UserID string `json:"user_id"`
+	jwt.RegisteredClaims
+}
+
+// RefreshClaims 刷新令牌声明
+type RefreshClaims struct {
 	UserID string `json:"user_id"`
 	jwt.RegisteredClaims
 }
@@ -158,6 +182,35 @@ func (s *AuthService) generateToken(userID string) (string, int64, error) {
 			ExpiresAt: jwt.NewNumericDate(time.Unix(expireAt, 0)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
+			Issuer:    "qp-game-server",
+			Subject:   userID,
+			Audience:  []string{"qp-game-client"},
+		},
+	}
+
+	// 使用HS256算法签名
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(s.jwtSecret))
+	if err != nil {
+		return "", 0, err
+	}
+
+	return tokenString, expireAt, nil
+}
+
+// generateRefreshToken 生成刷新令牌
+func (s *AuthService) generateRefreshToken(userID string) (string, int64, error) {
+	// 刷新令牌有效期为7天
+	expireAt := time.Now().Add(7 * 24 * time.Hour).Unix()
+	claims := RefreshClaims{
+		UserID: userID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Unix(expireAt, 0)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			Issuer:    "qp-game-server",
+			Subject:   userID,
+			Audience:  []string{"qp-game-client"},
 		},
 	}
 
@@ -173,6 +226,10 @@ func (s *AuthService) generateToken(userID string) (string, int64, error) {
 // ValidateToken 验证JWT令牌
 func (s *AuthService) ValidateToken(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		// 验证签名算法
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
 		return []byte(s.jwtSecret), nil
 	})
 
@@ -185,6 +242,67 @@ func (s *AuthService) ValidateToken(tokenString string) (*Claims, error) {
 	}
 
 	return nil, errors.New("invalid token")
+}
+
+// ValidateRefreshToken 验证刷新令牌
+func (s *AuthService) ValidateRefreshToken(tokenString string) (*RefreshClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &RefreshClaims{}, func(token *jwt.Token) (interface{}, error) {
+		// 验证签名算法
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
+		return []byte(s.jwtSecret), nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(*RefreshClaims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, errors.New("invalid refresh token")
+}
+
+// RefreshToken 刷新令牌
+func (s *AuthService) RefreshToken(refreshToken string) (*TokenResponse, error) {
+	// 验证刷新令牌
+	claims, err := s.ValidateRefreshToken(refreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	// 获取用户信息
+	user, err := s.GetUserByID(claims.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 检查用户状态
+	if user.Status != 1 {
+		return nil, errors.New("user account is disabled")
+	}
+
+	// 生成新的访问令牌
+	token, expireAt, err := s.generateToken(user.ID.Hex())
+	if err != nil {
+		return nil, err
+	}
+
+	// 生成新的刷新令牌
+	newRefreshToken, refreshExpireAt, err := s.generateRefreshToken(user.ID.Hex())
+	if err != nil {
+		return nil, err
+	}
+
+	return &TokenResponse{
+		Token:           token,
+		RefreshToken:    newRefreshToken,
+		ExpireAt:        expireAt,
+		RefreshExpireAt: refreshExpireAt,
+		UserInfo:        *user,
+	}, nil
 }
 
 // GetUserByID 根据ID获取用户信息
