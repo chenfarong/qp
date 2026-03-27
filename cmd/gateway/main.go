@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,6 +11,8 @@ import (
 
 	"os"
 
+	protoutil "github.com/aoyo/qp/pkg/proto"
+	proto "github.com/aoyo/qp/proto"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"gopkg.in/yaml.v3"
@@ -163,9 +167,30 @@ func registerRoutes(router *gin.Engine, config *Config, wsManager *WebSocketMana
 				}
 
 				// 处理接收到的消息
-				if messageType == websocket.TextMessage {
-					// 广播消息给所有客户端
-					wsManager.broadcast <- message
+				if messageType == websocket.BinaryMessage {
+					// 反序列化protobuf消息
+					msg, err := protoutil.Deserialize(message)
+					if err != nil {
+						log.Printf("Failed to deserialize message: %v", err)
+						continue
+					}
+
+					// 处理消息
+					response := handleMessage(msg, config)
+
+					// 序列化响应消息
+					responseData, err := protoutil.Serialize(response)
+					if err != nil {
+						log.Printf("Failed to serialize response: %v", err)
+						continue
+					}
+
+					// 发送响应消息
+					err = conn.WriteMessage(websocket.BinaryMessage, responseData)
+					if err != nil {
+						log.Printf("Failed to write message: %v", err)
+						break
+					}
 				}
 			}
 		}()
@@ -190,6 +215,124 @@ func registerRoutes(router *gin.Engine, config *Config, wsManager *WebSocketMana
 		gameGroup.GET("/characters/:id", proxyToService(fmt.Sprintf("http://localhost:%d", config.Server.Gamelogic.Port)))
 		gameGroup.PUT("/characters/:id/status", proxyToService(fmt.Sprintf("http://localhost:%d", config.Server.Gamelogic.Port)))
 		gameGroup.POST("/battle", proxyToService(fmt.Sprintf("http://localhost:%d", config.Server.Gamelogic.Port)))
+	}
+}
+
+// handleMessage 处理接收到的protobuf消息
+func handleMessage(msg *proto.Message, config *Config) *proto.Message {
+	// 根据消息类型处理
+	switch msg.Type {
+	case proto.MessageType_MSG_TYPE_AUTH_REGISTER:
+		// 处理注册请求
+		if req := msg.GetAuthRegister(); req != nil {
+			// 构建请求数据
+			data, err := json.Marshal(req)
+			if err != nil {
+				return createErrorResponse(500, "Failed to marshal request")
+			}
+
+			// 发送请求到SsoAuth服务
+			resp, err := http.Post(fmt.Sprintf("http://localhost:%d/api/auth/register", config.Server.Ssoauth.Port), "application/json", bytes.NewBuffer(data))
+			if err != nil {
+				return createErrorResponse(500, "Failed to send request")
+			}
+			defer resp.Body.Close()
+
+			// 解析响应
+			var authResp struct {
+				Token    string `json:"token"`
+				UserID   string `json:"user_id"`
+				Username string `json:"username"`
+				Nickname string `json:"nickname"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&authResp); err != nil {
+				return createErrorResponse(500, "Failed to decode response")
+			}
+
+			// 构建响应消息
+			return &proto.Message{
+				Type: proto.MessageType_MSG_TYPE_RESPONSE,
+				Data: &proto.Message_Response{
+					Response: &proto.Response{
+						Code:    200,
+						Message: "success",
+						Data: &proto.Response_AuthResponse{
+							AuthResponse: &proto.AuthResponse{
+								Token:    authResp.Token,
+								UserID:   authResp.UserID,
+								Username: authResp.Username,
+								Nickname: authResp.Nickname,
+							},
+						},
+					},
+				},
+			}
+		}
+	case proto.MessageType_MSG_TYPE_AUTH_LOGIN:
+		// 处理登录请求
+		if req := msg.GetAuthLogin(); req != nil {
+			// 构建请求数据
+			data, err := json.Marshal(req)
+			if err != nil {
+				return createErrorResponse(500, "Failed to marshal request")
+			}
+
+			// 发送请求到SsoAuth服务
+			resp, err := http.Post(fmt.Sprintf("http://localhost:%d/api/auth/login", config.Server.Ssoauth.Port), "application/json", bytes.NewBuffer(data))
+			if err != nil {
+				return createErrorResponse(500, "Failed to send request")
+			}
+			defer resp.Body.Close()
+
+			// 解析响应
+			var authResp struct {
+				Token    string `json:"token"`
+				UserID   string `json:"user_id"`
+				Username string `json:"username"`
+				Nickname string `json:"nickname"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&authResp); err != nil {
+				return createErrorResponse(500, "Failed to decode response")
+			}
+
+			// 构建响应消息
+			return &proto.Message{
+				Type: proto.MessageType_MSG_TYPE_RESPONSE,
+				Data: &proto.Message_Response{
+					Response: &proto.Response{
+						Code:    200,
+						Message: "success",
+						Data: &proto.Response_AuthResponse{
+							AuthResponse: &proto.AuthResponse{
+								Token:    authResp.Token,
+								UserID:   authResp.UserID,
+								Username: authResp.Username,
+								Nickname: authResp.Nickname,
+							},
+						},
+					},
+				},
+			}
+		}
+	// 其他消息类型的处理...
+	default:
+		return createErrorResponse(400, "Unknown message type")
+	}
+
+	// 默认返回错误响应
+	return createErrorResponse(400, "Invalid message")
+}
+
+// createErrorResponse 创建错误响应
+func createErrorResponse(code int32, message string) *proto.Message {
+	return &proto.Message{
+		Type: proto.MessageType_MSG_TYPE_RESPONSE,
+		Data: &proto.Message_Response{
+			Response: &proto.Response{
+				Code:    code,
+				Message: message,
+			},
+		},
 	}
 }
 

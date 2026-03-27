@@ -6,6 +6,8 @@ server:
     port: 9000
   ssoauth:
     port: 9090
+  bill:
+    port: 9100
 
 # MongoDB Configuration
 database:

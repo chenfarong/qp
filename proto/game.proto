@@ -1,0 +1,195 @@
+syntax = "proto3";
+
+package game;
+
+option go_package = "github.com/aoyo/qp/proto";
+
+// 消息类型枚举
+enum MessageType {
+  MSG_TYPE_UNKNOWN = 0;
+  // 认证相关
+  MSG_TYPE_AUTH_REGISTER = 1;
+  MSG_TYPE_AUTH_LOGIN = 2;
+  MSG_TYPE_AUTH_VALIDATE = 3;
+  // 游戏相关
+  MSG_TYPE_GAME_CREATE_CHARACTER = 4;
+  MSG_TYPE_GAME_GET_CHARACTERS = 5;
+  MSG_TYPE_GAME_GET_CHARACTER = 6;
+  MSG_TYPE_GAME_UPDATE_CHARACTER_STATUS = 7;
+  MSG_TYPE_GAME_BATTLE = 8;
+  // 代币相关
+  MSG_TYPE_BILL_GET_TOKEN_BALANCE = 9;
+  MSG_TYPE_BILL_ADD_TOKEN = 10;
+  MSG_TYPE_BILL_REMOVE_TOKEN = 11;
+  // 支付相关
+  MSG_TYPE_BILL_CREATE_PAYMENT = 12;
+  MSG_TYPE_BILL_GET_PAYMENT = 13;
+  // 通用响应
+  MSG_TYPE_RESPONSE = 100;
+}
+
+// 基础消息结构
+message Message {
+  MessageType type = 1;
+  oneof data {
+    AuthRegisterRequest auth_register = 2;
+    AuthLoginRequest auth_login = 3;
+    AuthValidateRequest auth_validate = 4;
+    GameCreateCharacterRequest game_create_character = 5;
+    GameGetCharactersRequest game_get_characters = 6;
+    GameGetCharacterRequest game_get_character = 7;
+    GameUpdateCharacterStatusRequest game_update_character_status = 8;
+    GameBattleRequest game_battle = 9;
+    BillGetTokenBalanceRequest bill_get_token_balance = 10;
+    BillAddTokenRequest bill_add_token = 11;
+    BillRemoveTokenRequest bill_remove_token = 12;
+    BillCreatePaymentRequest bill_create_payment = 13;
+    BillGetPaymentRequest bill_get_payment = 14;
+    Response response = 100;
+  }
+}
+
+// 认证相关消息
+message AuthRegisterRequest {
+  string username = 1;
+  string password = 2;
+  string email = 3;
+  string nickname = 4;
+}
+
+message AuthLoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message AuthValidateRequest {
+  string token = 1;
+}
+
+// 游戏相关消息
+message GameCreateCharacterRequest {
+  string user_id = 1;
+  string name = 2;
+}
+
+message GameGetCharactersRequest {
+  string user_id = 1;
+}
+
+message GameGetCharacterRequest {
+  string id = 1;
+}
+
+message GameUpdateCharacterStatusRequest {
+  string id = 1;
+  int32 status = 2;
+}
+
+message GameBattleRequest {
+  string character_id = 1;
+  int32 enemy_level = 2;
+}
+
+// 代币相关消息
+message BillGetTokenBalanceRequest {
+  string user_id = 1;
+  string token_type = 2;
+}
+
+message BillAddTokenRequest {
+  string user_id = 1;
+  string token_type = 2;
+  int64 amount = 3;
+}
+
+message BillRemoveTokenRequest {
+  string user_id = 1;
+  string token_type = 2;
+  int64 amount = 3;
+}
+
+// 支付相关消息
+message BillCreatePaymentRequest {
+  string user_id = 1;
+  int64 amount = 2;
+  string currency = 3;
+  string token_type = 4;
+  int64 token_amount = 5;
+  string payment_method = 6;
+}
+
+message BillGetPaymentRequest {
+  string order_id = 1;
+}
+
+// 响应消息
+message Response {
+  int32 code = 1;
+  string message = 2;
+  oneof data {
+    AuthResponse auth_response = 3;
+    GameCharacterResponse game_character_response = 4;
+    GameCharactersResponse game_characters_response = 5;
+    GameBattleResponse game_battle_response = 6;
+    BillTokenBalanceResponse bill_token_balance_response = 7;
+    BillPaymentResponse bill_payment_response = 8;
+  }
+}
+
+// 认证响应
+message AuthResponse {
+  string token = 1;
+  string user_id = 2;
+  string username = 3;
+  string nickname = 4;
+}
+
+// 游戏角色响应
+message GameCharacterResponse {
+  string id = 1;
+  string user_id = 2;
+  string name = 3;
+  int32 level = 4;
+  int32 exp = 5;
+  int32 hp = 6;
+  int32 mp = 7;
+  int32 attack = 8;
+  int32 defense = 9;
+  int32 status = 10;
+}
+
+// 游戏角色列表响应
+message GameCharactersResponse {
+  repeated GameCharacterResponse characters = 1;
+}
+
+// 游戏战斗响应
+message GameBattleResponse {
+  string character_id = 1;
+  int32 enemy_level = 2;
+  bool victory = 3;
+  int32 exp_gained = 4;
+  int32 gold_gained = 5;
+}
+
+// 代币余额响应
+message BillTokenBalanceResponse {
+  string user_id = 1;
+  string token_type = 2;
+  int64 balance = 3;
+  int64 locked = 4;
+}
+
+// 支付响应
+message BillPaymentResponse {
+  string order_id = 1;
+  string user_id = 2;
+  int64 amount = 3;
+  string currency = 4;
+  string token_type = 5;
+  int64 token_amount = 6;
+  string payment_method = 7;
+  string status = 8;
+  string transaction_id = 9;
+  string payment_url = 10;
+}
