@@ -1,0 +1,27 @@
+# Server Configuration
+server:
+  gateway:
+    port: 8080
+  gamelogic:
+    port: 9000
+  ssoauth:
+    port: 9090
+
+# MongoDB Configuration
+database:
+  host: localhost
+  port: 27017
+  user: admin
+  password: password
+  dbname: qp_game
+
+# WebSocket Configuration
+websocket:
+  path: /ws
+  read_buffer_size: 1024
+  write_buffer_size: 1024
+
+# JWT Configuration
+jwt:
+  secret: your_jwt_secret_key
+  expire_hours: 24
