@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package bill;
+
+option go_package = "github.com/aoyo/qp/pkg/proto/bill";
+
+// BillService 账单服务
+service BillService {
+  // CreatePayment 创建支付
+  rpc CreatePayment(CreatePaymentRequest) returns (CreatePaymentResponse) {}
+  // GetPayment 获取支付信息
+  rpc GetPayment(GetPaymentRequest) returns (GetPaymentResponse) {}
+  // UpdatePaymentStatus 更新支付状态
+  rpc UpdatePaymentStatus(UpdatePaymentStatusRequest) returns (UpdatePaymentStatusResponse) {}
+  // GetUserPayments 获取用户的所有支付记录
+  rpc GetUserPayments(GetUserPaymentsRequest) returns (GetUserPaymentsResponse) {}
+}
+
+// CreatePaymentRequest 创建支付请求
+message CreatePaymentRequest {
+  uint32 user_id = 1;
+  string product_id = 2;
+  string amount = 3;
+  string payment_method = 4;
+}
+
+// CreatePaymentResponse 创建支付响应
+message CreatePaymentResponse {
+  Payment payment = 1;
+  string error = 2;
+}
+
+// GetPaymentRequest 获取支付信息请求
+message GetPaymentRequest {
+  uint32 payment_id = 1;
+}
+
+// GetPaymentResponse 获取支付信息响应
+message GetPaymentResponse {
+  Payment payment = 1;
+  string error = 2;
+}
+
+// UpdatePaymentStatusRequest 更新支付状态请求
+message UpdatePaymentStatusRequest {
+  uint32 payment_id = 1;
+  string status = 2;
+}
+
+// UpdatePaymentStatusResponse 更新支付状态响应
+message UpdatePaymentStatusResponse {
+  string message = 1;
+  string error = 2;
+}
+
+// GetUserPaymentsRequest 获取用户支付记录请求
+message GetUserPaymentsRequest {
+  uint32 user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+// GetUserPaymentsResponse 获取用户支付记录响应
+message GetUserPaymentsResponse {
+  repeated Payment payments = 1;
+  int32 total = 2;
+  string error = 3;
+}
+
+// Payment 支付信息
+message Payment {
+  uint32 id = 1;
+  uint32 user_id = 2;
+  string product_id = 3;
+  string amount = 4;
+  string payment_method = 5;
+  string status = 6;
+  string transaction_id = 7;
+  int64 created_at = 8;
+  int64 updated_at = 9;
+}

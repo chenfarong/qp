@@ -3,14 +3,18 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 
 	"os"
 	"strconv"
 
+	"github.com/aoyo/qp/internal/ssoauth/grpc"
 	"github.com/aoyo/qp/internal/ssoauth/handler"
 	"github.com/aoyo/qp/internal/ssoauth/service"
 	"github.com/aoyo/qp/pkg/db"
+	"github.com/aoyo/qp/pkg/proto/auth"
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 )
 
@@ -60,15 +64,39 @@ func main() {
 	authService := service.NewAuthService(dbInstance, config.Jwt.Secret, config.Jwt.ExpireHours, config.Database.Dbname)
 	authHandler := handler.NewAuthHandler(authService)
 
+	// 启动gRPC服务器
+	go startGRPCServer(authService, config.Server.Ssoauth.Port+1000)
+
 	// 初始化路由
 	router := gin.Default()
 	authHandler.RegisterRoutes(router)
 
-	// 启动服务
+	// 启动HTTP服务
 	port := config.Server.Ssoauth.Port
 	log.Printf("SSO Auth service starting on port %d...", port)
 	if err := router.Run(":" + strconv.Itoa(port)); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
+	}
+}
+
+// startGRPCServer 启动gRPC服务器
+func startGRPCServer(authService *service.AuthService, port int) {
+	// 创建gRPC服务器
+	grpcServer := grpc.NewServer()
+
+	// 注册认证服务
+	auth.RegisterAuthServiceServer(grpcServer, grpc.NewAuthServer(authService))
+
+	// 监听端口
+	addr := fmt.Sprintf(":%d", port)
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+	}
+
+	log.Printf("SSO Auth gRPC service starting on port %d...", port)
+	if err := grpcServer.Serve(listener); err != nil {
+		log.Fatalf("Failed to start gRPC server: %v", err)
 	}
 }
 

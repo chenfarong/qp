@@ -5,16 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"sync"
 
 	"os"
 
+	"github.com/aoyo/qp/internal/gateway/grpc"
+	"github.com/aoyo/qp/pkg/proto/gateway"
 	"github.com/aoyo/qp/proto"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	pb "google.golang.org/protobuf/proto"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 )
 
@@ -54,6 +58,7 @@ type Config struct {
 // WebSocket连接管理器
 type WebSocketManager struct {
 	clients    map[*websocket.Conn]bool
+	userConns  map[uint32][]*websocket.Conn // 用户ID到连接的映射
 	register   chan *websocket.Conn
 	unregister chan *websocket.Conn
 	mutex      sync.RWMutex
@@ -63,6 +68,7 @@ type WebSocketManager struct {
 func NewWebSocketManager() *WebSocketManager {
 	return &WebSocketManager{
 		clients:    make(map[*websocket.Conn]bool),
+		userConns:  make(map[uint32][]*websocket.Conn),
 		register:   make(chan *websocket.Conn, 100),
 		unregister: make(chan *websocket.Conn, 100),
 	}
@@ -96,6 +102,87 @@ func (manager *WebSocketManager) GetClientCount() int {
 	return len(manager.clients)
 }
 
+// RegisterUserConn 注册用户连接
+func (manager *WebSocketManager) RegisterUserConn(userID uint32, conn *websocket.Conn) {
+	manager.mutex.Lock()
+	defer manager.mutex.Unlock()
+	manager.userConns[userID] = append(manager.userConns[userID], conn)
+}
+
+// UnregisterUserConn 注销用户连接
+func (manager *WebSocketManager) UnregisterUserConn(conn *websocket.Conn) {
+	manager.mutex.Lock()
+	defer manager.mutex.Unlock()
+	// 从所有用户的连接列表中移除该连接
+	for userID, conns := range manager.userConns {
+		newConns := []*websocket.Conn{}
+		for _, c := range conns {
+			if c != conn {
+				newConns = append(newConns, c)
+			}
+		}
+		if len(newConns) > 0 {
+			manager.userConns[userID] = newConns
+		} else {
+			delete(manager.userConns, userID)
+		}
+	}
+}
+
+// PushMessage 推送消息给指定用户
+func (manager *WebSocketManager) PushMessage(userID uint32, messageType string, messageData []byte, title, content string) (bool, error) {
+	manager.mutex.RLock()
+	conns, ok := manager.userConns[userID]
+	manager.mutex.RUnlock()
+
+	if !ok || len(conns) == 0 {
+		return false, nil
+	}
+
+	success := false
+	for _, conn := range conns {
+		err := conn.WriteMessage(websocket.BinaryMessage, messageData)
+		if err == nil {
+			success = true
+		}
+	}
+
+	return success, nil
+}
+
+// BroadcastMessage 广播消息给所有用户
+func (manager *WebSocketManager) BroadcastMessage(messageType string, messageData []byte, title, content string) (int, error) {
+	manager.mutex.RLock()
+	clients := make([]*websocket.Conn, 0, len(manager.clients))
+	for client := range manager.clients {
+		clients = append(clients, client)
+	}
+	manager.mutex.RUnlock()
+
+	broadcastCount := 0
+	for _, client := range clients {
+		err := client.WriteMessage(websocket.BinaryMessage, messageData)
+		if err == nil {
+			broadcastCount++
+		}
+	}
+
+	return broadcastCount, nil
+}
+
+// GetConnectedUsers 获取当前连接的用户列表
+func (manager *WebSocketManager) GetConnectedUsers() []uint32 {
+	manager.mutex.RLock()
+	defer manager.mutex.RUnlock()
+
+	userIDs := make([]uint32, 0, len(manager.userConns))
+	for userID := range manager.userConns {
+		userIDs = append(userIDs, userID)
+	}
+
+	return userIDs
+}
+
 // 升级HTTP连接为WebSocket连接
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -116,17 +203,41 @@ func main() {
 	wsManager := NewWebSocketManager()
 	go wsManager.Run()
 
+	// 启动gRPC服务器
+	go startGRPCServer(wsManager, config.Server.Gateway.Port+1000)
+
 	// 初始化路由
 	router := gin.Default()
 
 	// 注册路由
 	registerRoutes(router, config, wsManager)
 
-	// 启动服务
+	// 启动HTTP/WebSocket服务
 	port := config.Server.Gateway.Port
 	log.Printf("Gateway service starting on port %d...", port)
 	if err := router.Run(":" + strconv.Itoa(port)); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
+	}
+}
+
+// startGRPCServer 启动gRPC服务器
+func startGRPCServer(wsManager *WebSocketManager, port int) {
+	// 创建gRPC服务器
+	grpcServer := grpc.NewServer()
+
+	// 注册网关服务
+	gateway.RegisterGatewayServiceServer(grpcServer, grpc.NewGatewayServer(wsManager))
+
+	// 监听端口
+	addr := fmt.Sprintf(":%d", port)
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+	}
+
+	log.Printf("Gateway gRPC service starting on port %d...", port)
+	if err := grpcServer.Serve(listener); err != nil {
+		log.Fatalf("Failed to start gRPC server: %v", err)
 	}
 }
 
@@ -371,9 +482,12 @@ func proxyToService(targetURL string) gin.HandlerFunc {
 // handleClientConnection 处理客户端连接
 // 每个客户端连接分配一个独立的goroutine，持续运行直到连接关闭
 func handleClientConnection(conn *websocket.Conn, wsManager *WebSocketManager, config *Config) {
+	var userID uint32
+
 	// 连接关闭时注销
 	defer func() {
 		wsManager.unregister <- conn
+		wsManager.UnregisterUserConn(conn)
 	}()
 
 	// 持续读取和处理消息
@@ -410,6 +524,25 @@ func handleClientConnection(conn *websocket.Conn, wsManager *WebSocketManager, c
 			if err != nil {
 				log.Printf("Failed to write message: %v", err)
 				break
+			}
+
+			// 从响应中提取用户ID并注册连接
+			if response.Type == proto.MessageType_MSG_TYPE_RESPONSE {
+				if resp := response.GetResponse(); resp != nil {
+					if authResp := resp.GetAuthResponse(); authResp != nil {
+						// 解析用户ID
+						userIDStr := authResp.UserId
+						if userIDStr != "" {
+							userIDInt, err := strconv.ParseUint(userIDStr, 10, 32)
+							if err == nil {
+								userID = uint32(userIDInt)
+								// 注册用户连接
+								wsManager.RegisterUserConn(userID, conn)
+								log.Printf("User %d connected via WebSocket", userID)
+							}
+						}
+					}
+				}
 			}
 		}
 	}

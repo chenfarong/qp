@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package gateway;
+
+option go_package = "github.com/aoyo/qp/pkg/proto/gateway";
+
+// GatewayService 网关服务
+service GatewayService {
+  // PushMessage 推送消息给指定用户
+  rpc PushMessage(PushMessageRequest) returns (PushMessageResponse) {}
+  // BroadcastMessage 广播消息给所有用户
+  rpc BroadcastMessage(BroadcastMessageRequest) returns (BroadcastMessageResponse) {}
+  // GetConnectedUsers 获取当前连接的用户列表
+  rpc GetConnectedUsers(GetConnectedUsersRequest) returns (GetConnectedUsersResponse) {}
+}
+
+// PushMessageRequest 推送消息请求
+message PushMessageRequest {
+  uint32 user_id = 1;
+  string message_type = 2;
+  bytes message_data = 3;
+  string title = 4;
+  string content = 5;
+}
+
+// PushMessageResponse 推送消息响应
+message PushMessageResponse {
+  bool success = 1;
+  string error = 2;
+  int32 connected_clients = 3;
+}
+
+// BroadcastMessageRequest 广播消息请求
+message BroadcastMessageRequest {
+  string message_type = 1;
+  bytes message_data = 2;
+  string title = 3;
+  string content = 4;
+}
+
+// BroadcastMessageResponse 广播消息响应
+message BroadcastMessageResponse {
+  bool success = 1;
+  string error = 2;
+  int32 broadcast_count = 3;
+}
+
+// GetConnectedUsersRequest 获取连接用户列表请求
+message GetConnectedUsersRequest {
+}
+
+// GetConnectedUsersResponse 获取连接用户列表响应
+message GetConnectedUsersResponse {
+  repeated uint32 user_ids = 1;
+  int32 total_users = 2;
+  string error = 3;
+}

@@ -3,14 +3,18 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 	"strconv"
 
 	"os"
 
+	"github.com/aoyo/qp/internal/chat/grpc"
 	"github.com/aoyo/qp/internal/chat/handler"
 	"github.com/aoyo/qp/internal/chat/service"
 	"github.com/aoyo/qp/pkg/db"
+	"github.com/aoyo/qp/pkg/proto/chat"
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 )
 
@@ -56,6 +60,9 @@ func main() {
 	chatService := service.NewChatService(dbClient, config.Database.Dbname)
 	chatHandler := handler.NewChatHandler(chatService)
 
+	// 启动gRPC服务器
+	go startGRPCServer(chatService, config.Server.Chat.Port+1000)
+
 	// 初始化路由
 	router := gin.Default()
 
@@ -69,11 +76,32 @@ func main() {
 		})
 	})
 
-	// 启动服务
+	// 启动HTTP服务
 	port := config.Server.Chat.Port
 	log.Printf("Chat service starting on port %d...", port)
 	if err := router.Run(":" + strconv.Itoa(port)); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
+	}
+}
+
+// startGRPCServer 启动gRPC服务器
+func startGRPCServer(chatService *service.ChatService, port int) {
+	// 创建gRPC服务器
+	grpcServer := grpc.NewServer()
+
+	// 注册聊天服务
+	chat.RegisterChatServiceServer(grpcServer, grpc.NewChatServer(chatService))
+
+	// 监听端口
+	addr := fmt.Sprintf(":%d", port)
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+	}
+
+	log.Printf("Chat gRPC service starting on port %d...", port)
+	if err := grpcServer.Serve(listener); err != nil {
+		log.Fatalf("Failed to start gRPC server: %v", err)
 	}
 }
 

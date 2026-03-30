@@ -3,14 +3,18 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 	"strconv"
 
 	"os"
 
+	"github.com/aoyo/qp/internal/gamelogic/grpc"
 	"github.com/aoyo/qp/internal/gamelogic/handler"
 	"github.com/aoyo/qp/internal/gamelogic/service"
 	"github.com/aoyo/qp/pkg/db"
+	"github.com/aoyo/qp/pkg/proto/game"
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 )
 
@@ -56,15 +60,39 @@ func main() {
 	gameService := service.NewGameService(dbInstance, config.Database.Dbname)
 	gameHandler := handler.NewGameHandler(gameService)
 
+	// 启动gRPC服务器
+	go startGRPCServer(gameService, config.Server.Gamelogic.Port+1000)
+
 	// 初始化路由
 	router := gin.Default()
 	gameHandler.RegisterRoutes(router)
 
-	// 启动服务
+	// 启动HTTP服务
 	port := config.Server.Gamelogic.Port
 	log.Printf("Game Logic service starting on port %d...", port)
 	if err := router.Run(":" + strconv.Itoa(port)); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
+	}
+}
+
+// startGRPCServer 启动gRPC服务器
+func startGRPCServer(gameService *service.GameService, port int) {
+	// 创建gRPC服务器
+	grpcServer := grpc.NewServer()
+
+	// 注册游戏服务
+	game.RegisterGameServiceServer(grpcServer, grpc.NewGameServer(gameService))
+
+	// 监听端口
+	addr := fmt.Sprintf(":%d", port)
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+	}
+
+	log.Printf("Game Logic gRPC service starting on port %d...", port)
+	if err := grpcServer.Serve(listener); err != nil {
+		log.Fatalf("Failed to start gRPC server: %v", err)
 	}
 }
 
