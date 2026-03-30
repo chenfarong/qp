@@ -11,12 +11,27 @@ import (
 
 	"os"
 
-	protoutil "github.com/aoyo/qp/pkg/proto"
-	proto "github.com/aoyo/qp/proto"
+	"github.com/aoyo/qp/proto"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	pb "google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v3"
 )
+
+// protoutil 提供protobuf序列化和反序列化功能
+var protoutil = struct {
+	Serialize   func(*proto.Message) ([]byte, error)
+	Deserialize func([]byte) (*proto.Message, error)
+}{
+	Serialize: func(msg *proto.Message) ([]byte, error) {
+		return pb.Marshal(msg)
+	},
+	Deserialize: func(data []byte) (*proto.Message, error) {
+		msg := &proto.Message{}
+		err := pb.Unmarshal(data, msg)
+		return msg, err
+	},
+}
 
 // Config 配置结构
 type Config struct {
@@ -36,19 +51,17 @@ type Config struct {
 // WebSocket连接管理器
 type WebSocketManager struct {
 	clients    map[*websocket.Conn]bool
-	broadcast  chan []byte
 	register   chan *websocket.Conn
 	unregister chan *websocket.Conn
-	mutex      sync.Mutex
+	mutex      sync.RWMutex
 }
 
 // NewWebSocketManager 创建WebSocket管理器
 func NewWebSocketManager() *WebSocketManager {
 	return &WebSocketManager{
 		clients:    make(map[*websocket.Conn]bool),
-		broadcast:  make(chan []byte),
-		register:   make(chan *websocket.Conn),
-		unregister: make(chan *websocket.Conn),
+		register:   make(chan *websocket.Conn, 100),
+		unregister: make(chan *websocket.Conn, 100),
 	}
 }
 
@@ -60,6 +73,7 @@ func (manager *WebSocketManager) Run() {
 			manager.mutex.Lock()
 			manager.clients[client] = true
 			manager.mutex.Unlock()
+			log.Printf("Client connected. Total clients: %d", len(manager.clients))
 		case client := <-manager.unregister:
 			manager.mutex.Lock()
 			if _, ok := manager.clients[client]; ok {
@@ -67,18 +81,16 @@ func (manager *WebSocketManager) Run() {
 				client.Close()
 			}
 			manager.mutex.Unlock()
-		case message := <-manager.broadcast:
-			manager.mutex.Lock()
-			for client := range manager.clients {
-				err := client.WriteMessage(websocket.TextMessage, message)
-				if err != nil {
-					client.Close()
-					delete(manager.clients, client)
-				}
-			}
-			manager.mutex.Unlock()
+			log.Printf("Client disconnected. Total clients: %d", len(manager.clients))
 		}
 	}
+}
+
+// GetClientCount 获取当前连接数
+func (manager *WebSocketManager) GetClientCount() int {
+	manager.mutex.RLock()
+	defer manager.mutex.RUnlock()
+	return len(manager.clients)
 }
 
 // 升级HTTP连接为WebSocket连接
@@ -151,49 +163,9 @@ func registerRoutes(router *gin.Engine, config *Config, wsManager *WebSocketMana
 		// 注册新的WebSocket连接
 		wsManager.register <- conn
 
-		// 处理WebSocket消息
-		go func() {
-			defer func() {
-				wsManager.unregister <- conn
-			}()
-
-			for {
-				messageType, message, err := conn.ReadMessage()
-				if err != nil {
-					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-						log.Printf("WebSocket error: %v", err)
-					}
-					break
-				}
-
-				// 处理接收到的消息
-				if messageType == websocket.BinaryMessage {
-					// 反序列化protobuf消息
-					msg, err := protoutil.Deserialize(message)
-					if err != nil {
-						log.Printf("Failed to deserialize message: %v", err)
-						continue
-					}
-
-					// 处理消息
-					response := handleMessage(msg, config)
-
-					// 序列化响应消息
-					responseData, err := protoutil.Serialize(response)
-					if err != nil {
-						log.Printf("Failed to serialize response: %v", err)
-						continue
-					}
-
-					// 发送响应消息
-					err = conn.WriteMessage(websocket.BinaryMessage, responseData)
-					if err != nil {
-						log.Printf("Failed to write message: %v", err)
-						break
-					}
-				}
-			}
-		}()
+		// 为每个客户端连接分配一个独立的goroutine处理消息
+		// 这个goroutine会持续运行，直到连接关闭
+		go handleClientConnection(conn, wsManager, config)
 	})
 
 	// API路由组
@@ -241,7 +213,7 @@ func handleMessage(msg *proto.Message, config *Config) *proto.Message {
 			// 解析响应
 			var authResp struct {
 				Token    string `json:"token"`
-				UserID   string `json:"user_id"`
+				UserId   string `json:"user_id"`
 				Username string `json:"username"`
 				Nickname string `json:"nickname"`
 			}
@@ -259,7 +231,7 @@ func handleMessage(msg *proto.Message, config *Config) *proto.Message {
 						Data: &proto.Response_AuthResponse{
 							AuthResponse: &proto.AuthResponse{
 								Token:    authResp.Token,
-								UserID:   authResp.UserID,
+								UserId:   authResp.UserId,
 								Username: authResp.Username,
 								Nickname: authResp.Nickname,
 							},
@@ -287,7 +259,7 @@ func handleMessage(msg *proto.Message, config *Config) *proto.Message {
 			// 解析响应
 			var authResp struct {
 				Token    string `json:"token"`
-				UserID   string `json:"user_id"`
+				UserId   string `json:"user_id"`
 				Username string `json:"username"`
 				Nickname string `json:"nickname"`
 			}
@@ -305,7 +277,7 @@ func handleMessage(msg *proto.Message, config *Config) *proto.Message {
 						Data: &proto.Response_AuthResponse{
 							AuthResponse: &proto.AuthResponse{
 								Token:    authResp.Token,
-								UserID:   authResp.UserID,
+								UserId:   authResp.UserId,
 								Username: authResp.Username,
 								Nickname: authResp.Nickname,
 							},
@@ -380,5 +352,52 @@ func proxyToService(targetURL string) gin.HandlerFunc {
 
 		// 复制响应体
 		c.DataFromReader(resp.StatusCode, resp.ContentLength, resp.Header.Get("Content-Type"), resp.Body, nil)
+	}
+}
+
+// handleClientConnection 处理客户端连接
+// 每个客户端连接分配一个独立的goroutine，持续运行直到连接关闭
+func handleClientConnection(conn *websocket.Conn, wsManager *WebSocketManager, config *Config) {
+	// 连接关闭时注销
+	defer func() {
+		wsManager.unregister <- conn
+	}()
+
+	// 持续读取和处理消息
+	for {
+		messageType, message, err := conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("WebSocket error: %v", err)
+			}
+			break
+		}
+
+		// 处理接收到的消息
+		if messageType == websocket.BinaryMessage {
+			// 反序列化protobuf消息
+			msg, err := protoutil.Deserialize(message)
+			if err != nil {
+				log.Printf("Failed to deserialize message: %v", err)
+				continue
+			}
+
+			// 处理消息
+			response := handleMessage(msg, config)
+
+			// 序列化响应消息
+			responseData, err := protoutil.Serialize(response)
+			if err != nil {
+				log.Printf("Failed to serialize response: %v", err)
+				continue
+			}
+
+			// 发送响应消息
+			err = conn.WriteMessage(websocket.BinaryMessage, responseData)
+			if err != nil {
+				log.Printf("Failed to write message: %v", err)
+				break
+			}
+		}
 	}
 }

@@ -111,6 +111,87 @@ func (h *GameHandler) Battle(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// GetInventory 获取用户背包
+func (h *GameHandler) GetInventory(c *gin.Context) {
+	userIDStr := c.Query("user_id")
+	if userIDStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing user_id"})
+		return
+	}
+
+	resp, err := h.gameService.GetInventory(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// AddItem 添加物品到背包
+func (h *GameHandler) AddItem(c *gin.Context) {
+	var req service.AddItemRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.gameService.AddItem(req); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "item added successfully"})
+}
+
+// UseItem 使用物品
+func (h *GameHandler) UseItem(c *gin.Context) {
+	var req service.UseItemRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.gameService.UseItem(req); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "item used successfully"})
+}
+
+// RemoveItem 从背包中删除物品
+func (h *GameHandler) RemoveItem(c *gin.Context) {
+	var req service.RemoveItemRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.gameService.RemoveItem(req); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "item removed successfully"})
+}
+
+// EquipItem 装备或卸下物品
+func (h *GameHandler) EquipItem(c *gin.Context) {
+	var req service.EquipItemRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.gameService.EquipItem(req); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "item equipped successfully"})
+}
+
 // RegisterRoutes 注册路由
 func (h *GameHandler) RegisterRoutes(router *gin.Engine) {
 	gameGroup := router.Group("/api/game")
@@ -120,5 +201,12 @@ func (h *GameHandler) RegisterRoutes(router *gin.Engine) {
 		gameGroup.GET("/characters/:id", h.GetCharacter)
 		gameGroup.PUT("/characters/:id/status", h.UpdateCharacterStatus)
 		gameGroup.POST("/battle", h.Battle)
+		
+		// 背包相关路由
+		gameGroup.GET("/inventory", h.GetInventory)
+		gameGroup.POST("/inventory/items", h.AddItem)
+		gameGroup.POST("/inventory/items/use", h.UseItem)
+		gameGroup.POST("/inventory/items/remove", h.RemoveItem)
+		gameGroup.POST("/inventory/items/equip", h.EquipItem)
 	}
 }

@@ -2,13 +2,10 @@ package db
 
 import (
 	"context"
-	"fmt"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-)
-
-// DB 数据库实例
+) // DB 数据库实例
 type DB struct {
 	Client *mongo.Client
 	Ctx    context.Context
@@ -42,4 +39,3 @@ func (db *DB) GetCollection(dbName, collectionName string) *mongo.Collection {
 func (db *DB) Close() error {
 	return db.Client.Disconnect(db.Ctx)
 }
-

@@ -15,19 +15,21 @@ import (
 
 // AuthService 认证服务
 type AuthService struct {
-	db        *db.DB
-	jwtSecret string
-	expire    int
-	dbName    string
+	db            *db.DB
+	jwtSecret     string
+	expire        int
+	dbName        string
+	sessionExpire int // 会话过期时间（小时）
 }
 
 // NewAuthService 创建认证服务实例
 func NewAuthService(db *db.DB, jwtSecret string, expire int, dbName string) *AuthService {
 	return &AuthService{
-		db:        db,
-		jwtSecret: jwtSecret,
-		expire:    expire,
-		dbName:    dbName,
+		db:            db,
+		jwtSecret:     jwtSecret,
+		expire:        expire,
+		dbName:        dbName,
+		sessionExpire: 72, // 会话过期时间：3天（72小时）
 	}
 }
 
@@ -320,4 +322,119 @@ func (s *AuthService) GetUserByID(userID string) (*model.User, error) {
 	}
 
 	return &user, nil
+}
+
+// SessionRequest 会话请求
+type SessionRequest struct {
+	UserID    string `json:"user_id" binding:"required"`
+	Token     string `json:"token" binding:"required"`
+	IP        string `json:"ip"`
+	UserAgent string `json:"user_agent"`
+}
+
+// CreateSession 创建会话
+func (s *AuthService) CreateSession(req SessionRequest) (*model.Session, error) {
+	collection := s.db.GetCollection(s.dbName, model.Session{}.CollectionName())
+
+	// 解析用户ID
+	userID, err := primitive.ObjectIDFromHex(req.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 检查是否已存在会话
+	var existingSession model.Session
+	err = collection.FindOne(s.db.Ctx, bson.M{"user_id": userID, "token": req.Token}).Decode(&existingSession)
+	if err == nil {
+		// 会话已存在，更新过期时间
+		existingSession.ExpiresAt = time.Now().Add(time.Hour * time.Duration(s.sessionExpire))
+		existingSession.UpdatedAt = time.Now()
+		existingSession.IP = req.IP
+		existingSession.UserAgent = req.UserAgent
+
+		_, err = collection.UpdateOne(s.db.Ctx, bson.M{"_id": existingSession.ID}, bson.M{"$set": existingSession})
+		if err != nil {
+			return nil, err
+		}
+		return &existingSession, nil
+	} else if err != mongo.ErrNoDocuments {
+		return nil, err
+	}
+
+	// 创建新会话
+	now := time.Now()
+	session := model.Session{
+		ID:        primitive.NewObjectID(),
+		CreatedAt: now,
+		UpdatedAt: now,
+		UserID:    userID,
+		Token:     req.Token,
+		ExpiresAt: now.Add(time.Hour * time.Duration(s.sessionExpire)),
+		IP:        req.IP,
+		UserAgent: req.UserAgent,
+	}
+
+	_, err = collection.InsertOne(s.db.Ctx, session)
+	if err != nil {
+		return nil, err
+	}
+
+	return &session, nil
+}
+
+// GetSession 获取会话
+func (s *AuthService) GetSession(token string) (*model.Session, error) {
+	collection := s.db.GetCollection(s.dbName, model.Session{}.CollectionName())
+
+	var session model.Session
+	err := collection.FindOne(s.db.Ctx, bson.M{"token": token}).Decode(&session)
+	if err != nil {
+		return nil, err
+	}
+
+	// 检查会话是否过期
+	if time.Now().After(session.ExpiresAt) {
+		// 会话过期，删除
+		collection.DeleteOne(s.db.Ctx, bson.M{"_id": session.ID})
+		return nil, errors.New("session expired")
+	}
+
+	// 更新会话过期时间
+	session.ExpiresAt = time.Now().Add(time.Hour * time.Duration(s.sessionExpire))
+	session.UpdatedAt = time.Now()
+	_, err = collection.UpdateOne(s.db.Ctx, bson.M{"_id": session.ID}, bson.M{"$set": session})
+	if err != nil {
+		return nil, err
+	}
+
+	return &session, nil
+}
+
+// DeleteSession 删除会话
+func (s *AuthService) DeleteSession(token string) error {
+	collection := s.db.GetCollection(s.dbName, model.Session{}.CollectionName())
+
+	_, err := collection.DeleteOne(s.db.Ctx, bson.M{"token": token})
+	return err
+}
+
+// DeleteUserSessions 删除用户的所有会话
+func (s *AuthService) DeleteUserSessions(userID string) error {
+	collection := s.db.GetCollection(s.dbName, model.Session{}.CollectionName())
+
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return err
+	}
+
+	_, err = collection.DeleteMany(s.db.Ctx, bson.M{"user_id": objectID})
+	return err
+}
+
+// CleanExpiredSessions 清理过期会话
+func (s *AuthService) CleanExpiredSessions() error {
+	collection := s.db.GetCollection(s.dbName, model.Session{}.CollectionName())
+
+	_, err := collection.DeleteMany(s.db.Ctx, bson.M{"expires_at": bson.M{"$lt": time.Now()}})
+	return err
 }

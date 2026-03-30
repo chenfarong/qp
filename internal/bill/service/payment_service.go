@@ -42,11 +42,7 @@ func (s *PaymentService) CreatePayment(payment model.Payment) (*model.Payment, e
 	payment.Status = "pending"
 	payment.ExpiredAt = time.Now().Add(30 * time.Minute) // 30分钟过期
 
-	// 验证代币类型是否存在
-	tokenType, err := s.tokenService.GetTokenType(payment.TokenType)
-	if err != nil {
-		return nil, errors.New("invalid token type")
-	}
+
 
 	// 验证支付金额和代币数量
 	if payment.Amount <= 0 || payment.TokenAmount <= 0 {

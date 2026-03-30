@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/aoyo/qp/internal/ssoauth/service"
@@ -33,6 +34,19 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
+	// 创建会话
+	sessionReq := service.SessionRequest{
+		UserID:    resp.UserInfo.ID.Hex(),
+		Token:     resp.Token,
+		IP:        c.ClientIP(),
+		UserAgent: c.Request.UserAgent(),
+	}
+	_, err = h.authService.CreateSession(sessionReq)
+	if err != nil {
+		// 会话创建失败不影响注册
+		log.Println("Failed to create session:", err)
+	}
+
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -48,6 +62,19 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	// 创建会话
+	sessionReq := service.SessionRequest{
+		UserID:    resp.UserInfo.ID.Hex(),
+		Token:     resp.Token,
+		IP:        c.ClientIP(),
+		UserAgent: c.Request.UserAgent(),
+	}
+	_, err = h.authService.CreateSession(sessionReq)
+	if err != nil {
+		// 会话创建失败不影响登录
+		log.Println("Failed to create session:", err)
 	}
 
 	c.JSON(http.StatusOK, resp)
@@ -66,9 +93,17 @@ func (h *AuthHandler) Validate(c *gin.Context) {
 		token = token[7:]
 	}
 
+	// 验证JWT令牌
 	claims, err := h.authService.ValidateToken(token)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+		return
+	}
+
+	// 检查会话是否存在且有效
+	_, err = h.authService.GetSession(token)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "session expired or not found"})
 		return
 	}
 
@@ -101,7 +136,43 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 		return
 	}
 
+	// 创建新会话
+	sessionReq := service.SessionRequest{
+		UserID:    resp.UserInfo.ID.Hex(),
+		Token:     resp.Token,
+		IP:        c.ClientIP(),
+		UserAgent: c.Request.UserAgent(),
+	}
+	_, err = h.authService.CreateSession(sessionReq)
+	if err != nil {
+		// 会话创建失败不影响令牌刷新
+		log.Println("Failed to create session:", err)
+	}
+
 	c.JSON(http.StatusOK, resp)
+}
+
+// Logout 注销处理
+func (h *AuthHandler) Logout(c *gin.Context) {
+	token := c.GetHeader("Authorization")
+	if token == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing token"})
+		return
+	}
+
+	// 移除Bearer前缀
+	if len(token) > 7 && token[:7] == "Bearer " {
+		token = token[7:]
+	}
+
+	// 删除会话
+	err := h.authService.DeleteSession(token)
+	if err != nil {
+		// 会话删除失败不影响注销
+		log.Println("Failed to delete session:", err)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "logout successful"})
 }
 
 // RegisterRoutes 注册路由
@@ -112,5 +183,6 @@ func (h *AuthHandler) RegisterRoutes(router *gin.Engine) {
 		authGroup.POST("/login", h.Login)
 		authGroup.GET("/validate", h.Validate)
 		authGroup.POST("/refresh", h.Refresh)
+		authGroup.POST("/logout", h.Logout)
 	}
 }
