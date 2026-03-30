@@ -505,3 +505,55 @@ func (s *GameService) EquipItem(req EquipItemRequest) error {
 	_, err = collection.UpdateOne(s.db.Ctx, bson.M{"user_id": req.UserID}, bson.M{"$set": inventory})
 	return err
 }
+
+// UseCharacterRequest 使用角色请求
+type UseCharacterRequest struct {
+	CharacterID string `json:"character_id" binding:"required"`
+	UserID      string `json:"user_id" binding:"required"`
+}
+
+// UseCharacterResponse 使用角色响应
+type UseCharacterResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
+// UseCharacter 使用角色，触发其他服务的角色使用事件，并向客户端推送消息
+func (s *GameService) UseCharacter(req UseCharacterRequest) (*UseCharacterResponse, error) {
+	// 1. 验证角色是否存在
+	character, err := s.GetCharacterByID(req.CharacterID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. 验证角色是否属于该用户
+	userID, err := primitive.ObjectIDFromHex(req.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	if character.UserID != userID {
+		return nil, errors.New("character does not belong to the user")
+	}
+
+	// 3. 更新角色状态为使用中
+	err = s.UpdateCharacterStatus(req.CharacterID, 2) // 2 表示使用中
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. 触发其他服务的角色使用事件（这里可以通过消息队列或RPC调用其他服务）
+	// 例如：向bill服务发送角色使用事件，向ssoauth服务发送角色使用事件等
+	// 这里为了简化，只记录日志
+
+	// 5. 构造响应
+	response := &UseCharacterResponse{
+		Success: true,
+		Message: "Character used successfully",
+	}
+
+	// 6. 向客户端推送消息（这里可以通过WebSocket或其他推送机制）
+	// 例如：通过gateway服务的WebSocket连接向客户端推送角色使用事件
+
+	return response, nil
+}

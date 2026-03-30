@@ -45,6 +45,9 @@ type Config struct {
 		Gamelogic struct {
 			Port int `yaml:"port"`
 		} `yaml:"gamelogic"`
+		Chat struct {
+			Port int `yaml:"port"`
+		} `yaml:"chat"`
 	} `yaml:"server"`
 }
 
@@ -186,7 +189,17 @@ func registerRoutes(router *gin.Engine, config *Config, wsManager *WebSocketMana
 		gameGroup.GET("/characters", proxyToService(fmt.Sprintf("http://localhost:%d", config.Server.Gamelogic.Port)))
 		gameGroup.GET("/characters/:id", proxyToService(fmt.Sprintf("http://localhost:%d", config.Server.Gamelogic.Port)))
 		gameGroup.PUT("/characters/:id/status", proxyToService(fmt.Sprintf("http://localhost:%d", config.Server.Gamelogic.Port)))
+		gameGroup.POST("/characters/use", proxyToService(fmt.Sprintf("http://localhost:%d", config.Server.Gamelogic.Port)))
 		gameGroup.POST("/battle", proxyToService(fmt.Sprintf("http://localhost:%d", config.Server.Gamelogic.Port)))
+	}
+
+	// 聊天相关路由（转发到Chat服务）
+	chatGroup := apiGroup.Group("/chat")
+	{
+		chatGroup.POST("/messages", proxyToService(fmt.Sprintf("http://localhost:%d", config.Server.Chat.Port)))
+		chatGroup.POST("/messages/history", proxyToService(fmt.Sprintf("http://localhost:%d", config.Server.Chat.Port)))
+		chatGroup.POST("/conversations", proxyToService(fmt.Sprintf("http://localhost:%d", config.Server.Chat.Port)))
+		chatGroup.POST("/messages/status", proxyToService(fmt.Sprintf("http://localhost:%d", config.Server.Chat.Port)))
 	}
 }
 

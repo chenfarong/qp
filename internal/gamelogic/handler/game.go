@@ -192,6 +192,23 @@ func (h *GameHandler) EquipItem(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "item equipped successfully"})
 }
 
+// UseCharacter 使用角色
+func (h *GameHandler) UseCharacter(c *gin.Context) {
+	var req service.UseCharacterRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	resp, err := h.gameService.UseCharacter(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
 // RegisterRoutes 注册路由
 func (h *GameHandler) RegisterRoutes(router *gin.Engine) {
 	gameGroup := router.Group("/api/game")
@@ -200,6 +217,7 @@ func (h *GameHandler) RegisterRoutes(router *gin.Engine) {
 		gameGroup.GET("/characters", h.GetCharacters)
 		gameGroup.GET("/characters/:id", h.GetCharacter)
 		gameGroup.PUT("/characters/:id/status", h.UpdateCharacterStatus)
+		gameGroup.POST("/characters/use", h.UseCharacter)
 		gameGroup.POST("/battle", h.Battle)
 		
 		// 背包相关路由
