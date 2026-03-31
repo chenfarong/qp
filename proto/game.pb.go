@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.2
-// source: proto/game.proto
+// source: game.proto
 
 package proto
 
@@ -96,11 +96,11 @@ func (x MessageType) String() string {
 }
 
 func (MessageType) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_game_proto_enumTypes[0].Descriptor()
+	return file_game_proto_enumTypes[0].Descriptor()
 }
 
 func (MessageType) Type() protoreflect.EnumType {
-	return &file_proto_game_proto_enumTypes[0]
+	return &file_game_proto_enumTypes[0]
 }
 
 func (x MessageType) Number() protoreflect.EnumNumber {
@@ -109,7 +109,7 @@ func (x MessageType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use MessageType.Descriptor instead.
 func (MessageType) EnumDescriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{0}
+	return file_game_proto_rawDescGZIP(), []int{0}
 }
 
 // 基础消息结构
@@ -139,7 +139,7 @@ type Message struct {
 
 func (x *Message) Reset() {
 	*x = Message{}
-	mi := &file_proto_game_proto_msgTypes[0]
+	mi := &file_game_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -151,7 +151,7 @@ func (x *Message) String() string {
 func (*Message) ProtoMessage() {}
 
 func (x *Message) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[0]
+	mi := &file_game_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -164,7 +164,7 @@ func (x *Message) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Message.ProtoReflect.Descriptor instead.
 func (*Message) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{0}
+	return file_game_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Message) GetType() MessageType {
@@ -408,7 +408,7 @@ type AuthRegisterRequest struct {
 
 func (x *AuthRegisterRequest) Reset() {
 	*x = AuthRegisterRequest{}
-	mi := &file_proto_game_proto_msgTypes[1]
+	mi := &file_game_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -420,7 +420,7 @@ func (x *AuthRegisterRequest) String() string {
 func (*AuthRegisterRequest) ProtoMessage() {}
 
 func (x *AuthRegisterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[1]
+	mi := &file_game_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -433,7 +433,7 @@ func (x *AuthRegisterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthRegisterRequest.ProtoReflect.Descriptor instead.
 func (*AuthRegisterRequest) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{1}
+	return file_game_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *AuthRegisterRequest) GetUsername() string {
@@ -474,7 +474,7 @@ type AuthLoginRequest struct {
 
 func (x *AuthLoginRequest) Reset() {
 	*x = AuthLoginRequest{}
-	mi := &file_proto_game_proto_msgTypes[2]
+	mi := &file_game_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -486,7 +486,7 @@ func (x *AuthLoginRequest) String() string {
 func (*AuthLoginRequest) ProtoMessage() {}
 
 func (x *AuthLoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[2]
+	mi := &file_game_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -499,7 +499,7 @@ func (x *AuthLoginRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthLoginRequest.ProtoReflect.Descriptor instead.
 func (*AuthLoginRequest) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{2}
+	return file_game_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *AuthLoginRequest) GetUsername() string {
@@ -525,7 +525,7 @@ type AuthValidateRequest struct {
 
 func (x *AuthValidateRequest) Reset() {
 	*x = AuthValidateRequest{}
-	mi := &file_proto_game_proto_msgTypes[3]
+	mi := &file_game_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -537,7 +537,7 @@ func (x *AuthValidateRequest) String() string {
 func (*AuthValidateRequest) ProtoMessage() {}
 
 func (x *AuthValidateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[3]
+	mi := &file_game_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -550,7 +550,7 @@ func (x *AuthValidateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthValidateRequest.ProtoReflect.Descriptor instead.
 func (*AuthValidateRequest) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{3}
+	return file_game_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *AuthValidateRequest) GetToken() string {
@@ -571,7 +571,7 @@ type GameCreateCharacterRequest struct {
 
 func (x *GameCreateCharacterRequest) Reset() {
 	*x = GameCreateCharacterRequest{}
-	mi := &file_proto_game_proto_msgTypes[4]
+	mi := &file_game_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -583,7 +583,7 @@ func (x *GameCreateCharacterRequest) String() string {
 func (*GameCreateCharacterRequest) ProtoMessage() {}
 
 func (x *GameCreateCharacterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[4]
+	mi := &file_game_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -596,7 +596,7 @@ func (x *GameCreateCharacterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameCreateCharacterRequest.ProtoReflect.Descriptor instead.
 func (*GameCreateCharacterRequest) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{4}
+	return file_game_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GameCreateCharacterRequest) GetUserId() string {
@@ -622,7 +622,7 @@ type GameGetCharactersRequest struct {
 
 func (x *GameGetCharactersRequest) Reset() {
 	*x = GameGetCharactersRequest{}
-	mi := &file_proto_game_proto_msgTypes[5]
+	mi := &file_game_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -634,7 +634,7 @@ func (x *GameGetCharactersRequest) String() string {
 func (*GameGetCharactersRequest) ProtoMessage() {}
 
 func (x *GameGetCharactersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[5]
+	mi := &file_game_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -647,7 +647,7 @@ func (x *GameGetCharactersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameGetCharactersRequest.ProtoReflect.Descriptor instead.
 func (*GameGetCharactersRequest) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{5}
+	return file_game_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GameGetCharactersRequest) GetUserId() string {
@@ -666,7 +666,7 @@ type GameGetCharacterRequest struct {
 
 func (x *GameGetCharacterRequest) Reset() {
 	*x = GameGetCharacterRequest{}
-	mi := &file_proto_game_proto_msgTypes[6]
+	mi := &file_game_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -678,7 +678,7 @@ func (x *GameGetCharacterRequest) String() string {
 func (*GameGetCharacterRequest) ProtoMessage() {}
 
 func (x *GameGetCharacterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[6]
+	mi := &file_game_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -691,7 +691,7 @@ func (x *GameGetCharacterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameGetCharacterRequest.ProtoReflect.Descriptor instead.
 func (*GameGetCharacterRequest) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{6}
+	return file_game_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GameGetCharacterRequest) GetId() string {
@@ -711,7 +711,7 @@ type GameUpdateCharacterStatusRequest struct {
 
 func (x *GameUpdateCharacterStatusRequest) Reset() {
 	*x = GameUpdateCharacterStatusRequest{}
-	mi := &file_proto_game_proto_msgTypes[7]
+	mi := &file_game_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -723,7 +723,7 @@ func (x *GameUpdateCharacterStatusRequest) String() string {
 func (*GameUpdateCharacterStatusRequest) ProtoMessage() {}
 
 func (x *GameUpdateCharacterStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[7]
+	mi := &file_game_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -736,7 +736,7 @@ func (x *GameUpdateCharacterStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameUpdateCharacterStatusRequest.ProtoReflect.Descriptor instead.
 func (*GameUpdateCharacterStatusRequest) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{7}
+	return file_game_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GameUpdateCharacterStatusRequest) GetId() string {
@@ -763,7 +763,7 @@ type GameBattleRequest struct {
 
 func (x *GameBattleRequest) Reset() {
 	*x = GameBattleRequest{}
-	mi := &file_proto_game_proto_msgTypes[8]
+	mi := &file_game_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -775,7 +775,7 @@ func (x *GameBattleRequest) String() string {
 func (*GameBattleRequest) ProtoMessage() {}
 
 func (x *GameBattleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[8]
+	mi := &file_game_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -788,7 +788,7 @@ func (x *GameBattleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameBattleRequest.ProtoReflect.Descriptor instead.
 func (*GameBattleRequest) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{8}
+	return file_game_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GameBattleRequest) GetCharacterId() string {
@@ -816,7 +816,7 @@ type BillGetTokenBalanceRequest struct {
 
 func (x *BillGetTokenBalanceRequest) Reset() {
 	*x = BillGetTokenBalanceRequest{}
-	mi := &file_proto_game_proto_msgTypes[9]
+	mi := &file_game_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -828,7 +828,7 @@ func (x *BillGetTokenBalanceRequest) String() string {
 func (*BillGetTokenBalanceRequest) ProtoMessage() {}
 
 func (x *BillGetTokenBalanceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[9]
+	mi := &file_game_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -841,7 +841,7 @@ func (x *BillGetTokenBalanceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BillGetTokenBalanceRequest.ProtoReflect.Descriptor instead.
 func (*BillGetTokenBalanceRequest) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{9}
+	return file_game_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *BillGetTokenBalanceRequest) GetUserId() string {
@@ -869,7 +869,7 @@ type BillAddTokenRequest struct {
 
 func (x *BillAddTokenRequest) Reset() {
 	*x = BillAddTokenRequest{}
-	mi := &file_proto_game_proto_msgTypes[10]
+	mi := &file_game_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -881,7 +881,7 @@ func (x *BillAddTokenRequest) String() string {
 func (*BillAddTokenRequest) ProtoMessage() {}
 
 func (x *BillAddTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[10]
+	mi := &file_game_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -894,7 +894,7 @@ func (x *BillAddTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BillAddTokenRequest.ProtoReflect.Descriptor instead.
 func (*BillAddTokenRequest) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{10}
+	return file_game_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *BillAddTokenRequest) GetUserId() string {
@@ -929,7 +929,7 @@ type BillRemoveTokenRequest struct {
 
 func (x *BillRemoveTokenRequest) Reset() {
 	*x = BillRemoveTokenRequest{}
-	mi := &file_proto_game_proto_msgTypes[11]
+	mi := &file_game_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -941,7 +941,7 @@ func (x *BillRemoveTokenRequest) String() string {
 func (*BillRemoveTokenRequest) ProtoMessage() {}
 
 func (x *BillRemoveTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[11]
+	mi := &file_game_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -954,7 +954,7 @@ func (x *BillRemoveTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BillRemoveTokenRequest.ProtoReflect.Descriptor instead.
 func (*BillRemoveTokenRequest) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{11}
+	return file_game_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *BillRemoveTokenRequest) GetUserId() string {
@@ -993,7 +993,7 @@ type BillCreatePaymentRequest struct {
 
 func (x *BillCreatePaymentRequest) Reset() {
 	*x = BillCreatePaymentRequest{}
-	mi := &file_proto_game_proto_msgTypes[12]
+	mi := &file_game_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1005,7 +1005,7 @@ func (x *BillCreatePaymentRequest) String() string {
 func (*BillCreatePaymentRequest) ProtoMessage() {}
 
 func (x *BillCreatePaymentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[12]
+	mi := &file_game_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1018,7 +1018,7 @@ func (x *BillCreatePaymentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BillCreatePaymentRequest.ProtoReflect.Descriptor instead.
 func (*BillCreatePaymentRequest) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{12}
+	return file_game_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *BillCreatePaymentRequest) GetUserId() string {
@@ -1072,7 +1072,7 @@ type BillGetPaymentRequest struct {
 
 func (x *BillGetPaymentRequest) Reset() {
 	*x = BillGetPaymentRequest{}
-	mi := &file_proto_game_proto_msgTypes[13]
+	mi := &file_game_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1084,7 +1084,7 @@ func (x *BillGetPaymentRequest) String() string {
 func (*BillGetPaymentRequest) ProtoMessage() {}
 
 func (x *BillGetPaymentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[13]
+	mi := &file_game_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1097,7 +1097,7 @@ func (x *BillGetPaymentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BillGetPaymentRequest.ProtoReflect.Descriptor instead.
 func (*BillGetPaymentRequest) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{13}
+	return file_game_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *BillGetPaymentRequest) GetOrderId() string {
@@ -1127,7 +1127,7 @@ type Response struct {
 
 func (x *Response) Reset() {
 	*x = Response{}
-	mi := &file_proto_game_proto_msgTypes[14]
+	mi := &file_game_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1139,7 +1139,7 @@ func (x *Response) String() string {
 func (*Response) ProtoMessage() {}
 
 func (x *Response) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[14]
+	mi := &file_game_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1152,7 +1152,7 @@ func (x *Response) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Response.ProtoReflect.Descriptor instead.
 func (*Response) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{14}
+	return file_game_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Response) GetCode() int32 {
@@ -1283,7 +1283,7 @@ type AuthResponse struct {
 
 func (x *AuthResponse) Reset() {
 	*x = AuthResponse{}
-	mi := &file_proto_game_proto_msgTypes[15]
+	mi := &file_game_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1295,7 +1295,7 @@ func (x *AuthResponse) String() string {
 func (*AuthResponse) ProtoMessage() {}
 
 func (x *AuthResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[15]
+	mi := &file_game_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1308,7 +1308,7 @@ func (x *AuthResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthResponse.ProtoReflect.Descriptor instead.
 func (*AuthResponse) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{15}
+	return file_game_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *AuthResponse) GetToken() string {
@@ -1358,7 +1358,7 @@ type GameCharacterResponse struct {
 
 func (x *GameCharacterResponse) Reset() {
 	*x = GameCharacterResponse{}
-	mi := &file_proto_game_proto_msgTypes[16]
+	mi := &file_game_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1370,7 +1370,7 @@ func (x *GameCharacterResponse) String() string {
 func (*GameCharacterResponse) ProtoMessage() {}
 
 func (x *GameCharacterResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[16]
+	mi := &file_game_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1383,7 +1383,7 @@ func (x *GameCharacterResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameCharacterResponse.ProtoReflect.Descriptor instead.
 func (*GameCharacterResponse) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{16}
+	return file_game_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GameCharacterResponse) GetId() string {
@@ -1466,7 +1466,7 @@ type GameCharactersResponse struct {
 
 func (x *GameCharactersResponse) Reset() {
 	*x = GameCharactersResponse{}
-	mi := &file_proto_game_proto_msgTypes[17]
+	mi := &file_game_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1478,7 +1478,7 @@ func (x *GameCharactersResponse) String() string {
 func (*GameCharactersResponse) ProtoMessage() {}
 
 func (x *GameCharactersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[17]
+	mi := &file_game_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1491,7 +1491,7 @@ func (x *GameCharactersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameCharactersResponse.ProtoReflect.Descriptor instead.
 func (*GameCharactersResponse) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{17}
+	return file_game_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GameCharactersResponse) GetCharacters() []*GameCharacterResponse {
@@ -1515,7 +1515,7 @@ type GameBattleResponse struct {
 
 func (x *GameBattleResponse) Reset() {
 	*x = GameBattleResponse{}
-	mi := &file_proto_game_proto_msgTypes[18]
+	mi := &file_game_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1527,7 +1527,7 @@ func (x *GameBattleResponse) String() string {
 func (*GameBattleResponse) ProtoMessage() {}
 
 func (x *GameBattleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[18]
+	mi := &file_game_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1540,7 +1540,7 @@ func (x *GameBattleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameBattleResponse.ProtoReflect.Descriptor instead.
 func (*GameBattleResponse) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{18}
+	return file_game_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GameBattleResponse) GetCharacterId() string {
@@ -1591,7 +1591,7 @@ type BillTokenBalanceResponse struct {
 
 func (x *BillTokenBalanceResponse) Reset() {
 	*x = BillTokenBalanceResponse{}
-	mi := &file_proto_game_proto_msgTypes[19]
+	mi := &file_game_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1603,7 +1603,7 @@ func (x *BillTokenBalanceResponse) String() string {
 func (*BillTokenBalanceResponse) ProtoMessage() {}
 
 func (x *BillTokenBalanceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[19]
+	mi := &file_game_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1616,7 +1616,7 @@ func (x *BillTokenBalanceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BillTokenBalanceResponse.ProtoReflect.Descriptor instead.
 func (*BillTokenBalanceResponse) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{19}
+	return file_game_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *BillTokenBalanceResponse) GetUserId() string {
@@ -1666,7 +1666,7 @@ type BillPaymentResponse struct {
 
 func (x *BillPaymentResponse) Reset() {
 	*x = BillPaymentResponse{}
-	mi := &file_proto_game_proto_msgTypes[20]
+	mi := &file_game_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1678,7 +1678,7 @@ func (x *BillPaymentResponse) String() string {
 func (*BillPaymentResponse) ProtoMessage() {}
 
 func (x *BillPaymentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[20]
+	mi := &file_game_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1691,7 +1691,7 @@ func (x *BillPaymentResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BillPaymentResponse.ProtoReflect.Descriptor instead.
 func (*BillPaymentResponse) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{20}
+	return file_game_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *BillPaymentResponse) GetOrderId() string {
@@ -1764,11 +1764,12 @@ func (x *BillPaymentResponse) GetPaymentUrl() string {
 	return ""
 }
 
-var File_proto_game_proto protoreflect.FileDescriptor
+var File_game_proto protoreflect.FileDescriptor
 
-const file_proto_game_proto_rawDesc = "" +
+const file_game_proto_rawDesc = "" +
 	"\n" +
-	"\x10proto/game.proto\x12\x04game\"\xc6\b\n" +
+	"\n" +
+	"game.proto\x12\x04game\"\xc6\b\n" +
 	"\aMessage\x12%\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x11.game.MessageTypeR\x04type\x12@\n" +
 	"\rauth_register\x18\x02 \x01(\v2\x19.game.AuthRegisterRequestH\x00R\fauthRegister\x127\n" +
@@ -1916,20 +1917,20 @@ const file_proto_game_proto_rawDesc = "" +
 	"\x11MSG_TYPE_RESPONSE\x10dB\x1aZ\x18github.com/aoyo/qp/protob\x06proto3"
 
 var (
-	file_proto_game_proto_rawDescOnce sync.Once
-	file_proto_game_proto_rawDescData []byte
+	file_game_proto_rawDescOnce sync.Once
+	file_game_proto_rawDescData []byte
 )
 
-func file_proto_game_proto_rawDescGZIP() []byte {
-	file_proto_game_proto_rawDescOnce.Do(func() {
-		file_proto_game_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_game_proto_rawDesc), len(file_proto_game_proto_rawDesc)))
+func file_game_proto_rawDescGZIP() []byte {
+	file_game_proto_rawDescOnce.Do(func() {
+		file_game_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_game_proto_rawDesc), len(file_game_proto_rawDesc)))
 	})
-	return file_proto_game_proto_rawDescData
+	return file_game_proto_rawDescData
 }
 
-var file_proto_game_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_game_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
-var file_proto_game_proto_goTypes = []any{
+var file_game_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_game_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_game_proto_goTypes = []any{
 	(MessageType)(0),                         // 0: game.MessageType
 	(*Message)(nil),                          // 1: game.Message
 	(*AuthRegisterRequest)(nil),              // 2: game.AuthRegisterRequest
@@ -1953,7 +1954,7 @@ var file_proto_game_proto_goTypes = []any{
 	(*BillTokenBalanceResponse)(nil),         // 20: game.BillTokenBalanceResponse
 	(*BillPaymentResponse)(nil),              // 21: game.BillPaymentResponse
 }
-var file_proto_game_proto_depIdxs = []int32{
+var file_game_proto_depIdxs = []int32{
 	0,  // 0: game.Message.type:type_name -> game.MessageType
 	2,  // 1: game.Message.auth_register:type_name -> game.AuthRegisterRequest
 	3,  // 2: game.Message.auth_login:type_name -> game.AuthLoginRequest
@@ -1983,12 +1984,12 @@ var file_proto_game_proto_depIdxs = []int32{
 	0,  // [0:22] is the sub-list for field type_name
 }
 
-func init() { file_proto_game_proto_init() }
-func file_proto_game_proto_init() {
-	if File_proto_game_proto != nil {
+func init() { file_game_proto_init() }
+func file_game_proto_init() {
+	if File_game_proto != nil {
 		return
 	}
-	file_proto_game_proto_msgTypes[0].OneofWrappers = []any{
+	file_game_proto_msgTypes[0].OneofWrappers = []any{
 		(*Message_AuthRegister)(nil),
 		(*Message_AuthLogin)(nil),
 		(*Message_AuthValidate)(nil),
@@ -2004,7 +2005,7 @@ func file_proto_game_proto_init() {
 		(*Message_BillGetPayment)(nil),
 		(*Message_Response)(nil),
 	}
-	file_proto_game_proto_msgTypes[14].OneofWrappers = []any{
+	file_game_proto_msgTypes[14].OneofWrappers = []any{
 		(*Response_AuthResponse)(nil),
 		(*Response_GameCharacterResponse)(nil),
 		(*Response_GameCharactersResponse)(nil),
@@ -2016,18 +2017,18 @@ func file_proto_game_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_game_proto_rawDesc), len(file_proto_game_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_game_proto_rawDesc), len(file_game_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_proto_game_proto_goTypes,
-		DependencyIndexes: file_proto_game_proto_depIdxs,
-		EnumInfos:         file_proto_game_proto_enumTypes,
-		MessageInfos:      file_proto_game_proto_msgTypes,
+		GoTypes:           file_game_proto_goTypes,
+		DependencyIndexes: file_game_proto_depIdxs,
+		EnumInfos:         file_game_proto_enumTypes,
+		MessageInfos:      file_game_proto_msgTypes,
 	}.Build()
-	File_proto_game_proto = out.File
-	file_proto_game_proto_goTypes = nil
-	file_proto_game_proto_depIdxs = nil
+	File_game_proto = out.File
+	file_game_proto_goTypes = nil
+	file_game_proto_depIdxs = nil
 }

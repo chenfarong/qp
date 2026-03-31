@@ -2,6 +2,8 @@ package service
 
 import (
 	"errors"
+	"log"
+	"sync"
 	"time"
 
 	"github.com/aoyo/qp/internal/gamelogic/model"
@@ -11,18 +13,125 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// CharacterChannel 角色通道结构
+type CharacterChannel struct {
+	Character *model.Character
+	Ch        chan interface{}
+	LastUsed  time.Time
+}
+
 // GameService 游戏服务
 type GameService struct {
-	db     *db.DB
-	dbName string
+	db              *db.DB
+	dbName          string
+	characterCache  map[string]*CharacterChannel // 角色缓存，key为角色ID
+	cacheMutex      sync.RWMutex                 // 缓存互斥锁
+	cleanupInterval time.Duration                // 缓存清理间隔
 }
 
 // NewGameService 创建游戏服务实例
 func NewGameService(db *db.DB, dbName string) *GameService {
-	return &GameService{
-		db:     db,
-		dbName: dbName,
+	service := &GameService{
+		db:              db,
+		dbName:          dbName,
+		characterCache:  make(map[string]*CharacterChannel),
+		cleanupInterval: time.Hour, // 每小时清理一次
 	}
+
+	// 启动缓存清理 goroutine
+	go service.cleanupCache()
+
+	return service
+}
+
+// cleanupCache 清理过期的角色缓存
+func (s *GameService) cleanupCache() {
+	ticker := time.NewTicker(s.cleanupInterval)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		s.cacheMutex.Lock()
+		for characterID, cc := range s.characterCache {
+			// 清理超过24小时未使用的角色缓存
+			if time.Since(cc.LastUsed) > 24*time.Hour {
+				close(cc.Ch)
+				delete(s.characterCache, characterID)
+				log.Printf("Cleaned up character cache for character ID: %s", characterID)
+			}
+		}
+		s.cacheMutex.Unlock()
+	}
+}
+
+// cacheCharacter 将角色缓存到内存并分配channel
+func (s *GameService) cacheCharacter(character *model.Character) {
+	characterID := character.ID.Hex()
+
+	s.cacheMutex.Lock()
+	defer s.cacheMutex.Unlock()
+
+	// 检查角色是否已在缓存中
+	if _, exists := s.characterCache[characterID]; exists {
+		// 更新缓存中的角色信息
+		s.characterCache[characterID].Character = character
+		s.characterCache[characterID].LastUsed = time.Now()
+		return
+	}
+
+	// 创建角色通道
+	ch := make(chan interface{}, 100)
+
+	// 创建角色通道结构
+	cc := &CharacterChannel{
+		Character: character,
+		Ch:        ch,
+		LastUsed:  time.Now(),
+	}
+
+	// 存储到缓存
+	s.characterCache[characterID] = cc
+
+	// 启动角色消息处理 goroutine
+	go s.handleCharacterMessages(characterID, ch)
+
+	log.Printf("Character cached: %s", characterID)
+}
+
+// handleCharacterMessages 处理角色消息
+func (s *GameService) handleCharacterMessages(characterID string, ch chan interface{}) {
+	for {
+		select {
+		case msg, ok := <-ch:
+			if !ok {
+				// 通道已关闭
+				log.Printf("Character channel closed: %s", characterID)
+				return
+			}
+
+			// 处理消息
+			log.Printf("Processing message for character %s: %v", characterID, msg)
+
+			// 这里可以根据消息类型执行不同的处理逻辑
+			// 例如：更新角色状态、处理战斗请求、使用物品等
+
+			// 模拟消息处理延迟
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+}
+
+// getCharacterFromCache 从缓存中获取角色
+func (s *GameService) getCharacterFromCache(characterID string) (*CharacterChannel, bool) {
+	s.cacheMutex.RLock()
+	defer s.cacheMutex.RUnlock()
+
+	cc, exists := s.characterCache[characterID]
+	if exists {
+		// 更新最后使用时间
+		cc.LastUsed = time.Now()
+	}
+
+	return cc, exists
 }
 
 // CreateCharacterRequest 创建角色请求
@@ -93,6 +202,9 @@ func (s *GameService) CreateCharacter(req CreateCharacterRequest) (*CharacterRes
 		return nil, err
 	}
 
+	// 将角色缓存到内存并分配channel
+	s.cacheCharacter(&character)
+
 	return &CharacterResponse{
 		Character: character,
 	}, nil
@@ -123,6 +235,13 @@ func (s *GameService) GetCharactersByUserID(userID string) ([]model.Character, e
 
 // GetCharacterByID 根据ID获取角色信息
 func (s *GameService) GetCharacterByID(characterID string) (*model.Character, error) {
+	// 先从缓存中获取角色
+	cc, exists := s.getCharacterFromCache(characterID)
+	if exists {
+		return cc.Character, nil
+	}
+
+	// 缓存中不存在，从数据库获取
 	collection := s.db.GetCollection(s.dbName, model.Character{}.CollectionName())
 
 	objectID, err := primitive.ObjectIDFromHex(characterID)
@@ -134,6 +253,9 @@ func (s *GameService) GetCharacterByID(characterID string) (*model.Character, er
 	if err := collection.FindOne(s.db.Ctx, bson.M{"_id": objectID}).Decode(&character); err != nil {
 		return nil, err
 	}
+
+	// 将角色缓存到内存并分配channel
+	s.cacheCharacter(&character)
 
 	return &character, nil
 }
@@ -317,10 +439,10 @@ func (s *GameService) GetInventory(userID string) (*InventoryResponse, error) {
 
 // AddItemRequest 添加物品请求
 type AddItemRequest struct {
-	UserID    string `json:"user_id" binding:"required"`
-	ItemType  string `json:"item_type" binding:"required"`
-	ItemID    string `json:"item_id" binding:"required"`
-	Quantity  int64  `json:"quantity" binding:"required,min=1"`
+	UserID   string `json:"user_id" binding:"required"`
+	ItemType string `json:"item_type" binding:"required"`
+	ItemID   string `json:"item_id" binding:"required"`
+	Quantity int64  `json:"quantity" binding:"required,min=1"`
 }
 
 // AddItem 添加物品到背包
@@ -408,7 +530,7 @@ func (s *GameService) UseItem(req UseItemRequest) error {
 			if item.Quantity < req.Quantity {
 				return errors.New("insufficient item quantity")
 			}
-			
+
 			// 减少物品数量
 			inventory.Items[i].Quantity -= req.Quantity
 			if inventory.Items[i].Quantity <= 0 {
@@ -542,17 +664,31 @@ func (s *GameService) UseCharacter(req UseCharacterRequest) (*UseCharacterRespon
 		return nil, err
 	}
 
-	// 4. 触发其他服务的角色使用事件（这里可以通过消息队列或RPC调用其他服务）
+	// 4. 将角色缓存到内存并分配channel
+	s.cacheCharacter(character)
+
+	// 5. 向角色通道发送使用事件消息
+	cc, exists := s.getCharacterFromCache(req.CharacterID)
+	if exists {
+		cc.Ch <- map[string]interface{}{
+			"type":         "character_used",
+			"character_id": req.CharacterID,
+			"user_id":      req.UserID,
+			"timestamp":    time.Now(),
+		}
+	}
+
+	// 6. 触发其他服务的角色使用事件（这里可以通过消息队列或RPC调用其他服务）
 	// 例如：向bill服务发送角色使用事件，向ssoauth服务发送角色使用事件等
 	// 这里为了简化，只记录日志
 
-	// 5. 构造响应
+	// 7. 构造响应
 	response := &UseCharacterResponse{
 		Success: true,
 		Message: "Character used successfully",
 	}
 
-	// 6. 向客户端推送消息（这里可以通过WebSocket或其他推送机制）
+	// 8. 向客户端推送消息（这里可以通过WebSocket或其他推送机制）
 	// 例如：通过gateway服务的WebSocket连接向客户端推送角色使用事件
 
 	return response, nil
