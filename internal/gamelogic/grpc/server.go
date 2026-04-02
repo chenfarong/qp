@@ -30,7 +30,7 @@ func (s *GameServer) CreateCharacter(ctx context.Context, req *game.CreateCharac
 	}
 
 	// 调用服务
-	resp, err := s.gameService.CreateCharacter(createReq)
+	resp, err := s.gameService.CharacterService.CreateCharacter(createReq)
 	if err != nil {
 		return &game.CreateCharacterResponse{
 			Error: err.Error(),
@@ -61,7 +61,7 @@ func (s *GameServer) CreateCharacter(ctx context.Context, req *game.CreateCharac
 // GetCharacters 获取用户的所有角色
 func (s *GameServer) GetCharacters(ctx context.Context, req *game.GetCharactersRequest) (*game.GetCharactersResponse, error) {
 	// 调用服务
-	characters, err := s.gameService.GetCharactersByUserID(req.UserId)
+	characters, err := s.gameService.CharacterService.GetCharactersByUserID(req.UserId)
 	if err != nil {
 		return &game.GetCharactersResponse{
 			Error: err.Error(),
@@ -96,7 +96,7 @@ func (s *GameServer) GetCharacters(ctx context.Context, req *game.GetCharactersR
 // GetCharacter 获取角色详情
 func (s *GameServer) GetCharacter(ctx context.Context, req *game.GetCharacterRequest) (*game.GetCharacterResponse, error) {
 	// 调用服务
-	character, err := s.gameService.GetCharacterByID(req.CharacterId)
+	character, err := s.gameService.CharacterService.GetCharacterByID(req.CharacterId)
 	if err != nil {
 		return &game.GetCharacterResponse{
 			Error: err.Error(),
@@ -127,7 +127,7 @@ func (s *GameServer) GetCharacter(ctx context.Context, req *game.GetCharacterReq
 // UpdateCharacterStatus 更新角色状态
 func (s *GameServer) UpdateCharacterStatus(ctx context.Context, req *game.UpdateCharacterStatusRequest) (*game.UpdateCharacterStatusResponse, error) {
 	// 调用服务
-	err := s.gameService.UpdateCharacterStatus(req.CharacterId, int(req.Status))
+	err := s.gameService.CharacterService.UpdateCharacterStatus(req.CharacterId, int(req.Status))
 	if err != nil {
 		return &game.UpdateCharacterStatusResponse{
 			Error: err.Error(),
@@ -148,7 +148,7 @@ func (s *GameServer) Battle(ctx context.Context, req *game.BattleRequest) (*game
 	}
 
 	// 调用服务
-	resp, err := s.gameService.Battle(battleReq)
+	resp, err := s.gameService.BattleService.Battle(battleReq)
 	if err != nil {
 		return &game.BattleResponse{
 			Error: err.Error(),
@@ -162,3 +162,4 @@ func (s *GameServer) Battle(ctx context.Context, req *game.BattleRequest) (*game
 		Message:    resp.Message,
 	}, nil
 }
+
