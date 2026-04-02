@@ -29,7 +29,7 @@ func TestGameService(t *testing.T) {
 		Name:   "Test Character",
 	}
 
-	createCharResp, err := gameService.CreateCharacter(createCharReq)
+	createCharResp, err := gameService.CharacterService.CreateCharacter(createCharReq)
 	if err != nil {
 		t.Fatalf("Failed to create character: %v", err)
 	}
@@ -39,7 +39,7 @@ func TestGameService(t *testing.T) {
 	}
 
 	// 测试获取角色列表
-	characters, err := gameService.GetCharactersByUserID(userID)
+	characters, err := gameService.CharacterService.GetCharactersByUserID(userID)
 	if err != nil {
 		t.Fatalf("Failed to get characters: %v", err)
 	}
@@ -54,7 +54,7 @@ func TestGameService(t *testing.T) {
 		EnemyLevel:  1,
 	}
 
-	battleResp, err := gameService.Battle(battleReq)
+	battleResp, err := gameService.BattleService.Battle(battleReq)
 	if err != nil {
 		t.Fatalf("Failed to battle: %v", err)
 	}
@@ -65,3 +65,4 @@ func TestGameService(t *testing.T) {
 
 	t.Log("Game service tests passed!")
 }
+

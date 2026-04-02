@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -13,7 +14,10 @@ type DB struct {
 
 // InitDB 初始化MongoDB连接
 func InitDB(uri string) (*DB, error) {
-	ctx := context.Background()
+	// 设置连接超时
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
 		return nil, err
@@ -26,7 +30,7 @@ func InitDB(uri string) (*DB, error) {
 
 	return &DB{
 		Client: client,
-		Ctx:    ctx,
+		Ctx:    context.Background(),
 	}, nil
 }
 

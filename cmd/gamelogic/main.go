@@ -3,18 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
-	"net"
 	"strconv"
 
 	"os"
 
-	"github.com/aoyo/qp/internal/gamelogic/grpc"
-	"github.com/aoyo/qp/internal/gamelogic/handler"
-	"github.com/aoyo/qp/internal/gamelogic/service"
+	"github.com/aoyo/qp/internal/gamelogic"
 	"github.com/aoyo/qp/pkg/db"
-	"github.com/aoyo/qp/pkg/proto/game"
-	"github.com/gin-gonic/gin"
-	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 )
 
@@ -36,12 +30,15 @@ type Config struct {
 
 func main() {
 	// 加载配置
+	log.Println("Loading configuration...")
 	config, err := loadConfig()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
+	log.Println("Configuration loaded successfully")
 
 	// 初始化数据库
+	log.Println("Connecting to database...")
 	uri := fmt.Sprintf(
 		"mongodb://%s:%s@%s:%d/%s?authSource=admin",
 		config.Database.User,
@@ -50,22 +47,38 @@ func main() {
 		config.Database.Port,
 		config.Database.Dbname,
 	)
+	log.Printf("Database URI: %s", uri)
 
+	// 尝试连接数据库
 	dbInstance, err := db.InitDB(uri)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Printf("Warning: Failed to connect to database: %v", err)
+		log.Println("Continuing without database connection...")
+	} else {
+		log.Println("Database connected successfully")
 	}
 
-	// 初始化服务
-	gameService := service.NewGameService(dbInstance, config.Database.Dbname)
-	gameHandler := handler.NewGameHandler(gameService)
+	// 初始化游戏逻辑应用
+	log.Println("Initializing game logic application...")
+	app := gamelogic.GetApp(dbInstance, config.Database.Dbname)
+	log.Println("Game logic application initialized successfully")
 
-	// 启动gRPC服务器
-	go startGRPCServer(gameService, config.Server.Gamelogic.Port+1000)
+	// 启动游戏逻辑服务
+	log.Println("Starting game logic service...")
+	if err := gamelogic.StartGameLogic(dbInstance, config.Database.Dbname); err != nil {
+		log.Printf("Warning: Failed to start game logic service: %v", err)
+		log.Println("Continuing without game logic service...")
+	} else {
+		log.Println("Game logic service started successfully")
+	}
+
+	// 启动gRPC服务器（暂时注释掉，因为缺少proto文件）
+	// go startGRPCServer(app.CharacterService, config.Server.Gamelogic.Port+1000)
 
 	// 初始化路由
-	router := gin.Default()
-	gameHandler.RegisterRoutes(router)
+	log.Println("Initializing router...")
+	router := gamelogic.NewRouter(app)
+	log.Println("Router initialized successfully")
 
 	// 启动HTTP服务
 	port := config.Server.Gamelogic.Port
@@ -75,13 +88,14 @@ func main() {
 	}
 }
 
-// startGRPCServer 启动gRPC服务器
-func startGRPCServer(gameService *service.GameService, port int) {
+// startGRPCServer 启动gRPC服务器（暂时注释掉，因为缺少proto文件）
+/*
+func startGRPCServer(characterService *actor.CharacterService, port int) {
 	// 创建gRPC服务器
 	grpcServer := grpc.NewServer()
 
 	// 注册游戏服务
-	game.RegisterGameServiceServer(grpcServer, grpc.NewGameServer(gameService))
+	// game.RegisterGameServiceServer(grpcServer, grpc.NewGameServer(characterService))
 
 	// 监听端口
 	addr := fmt.Sprintf(":%d", port)
@@ -95,6 +109,7 @@ func startGRPCServer(gameService *service.GameService, port int) {
 		log.Fatalf("Failed to start gRPC server: %v", err)
 	}
 }
+*/
 
 // loadConfig 加载配置文件
 func loadConfig() (*Config, error) {
