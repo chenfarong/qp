@@ -2,3 +2,4 @@ bin
 go1.25.5.darwin-amd64.tar.gz
 xlsx2csv
 **/*.exe
+tmp/*.*
