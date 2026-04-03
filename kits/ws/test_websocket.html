@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebSocket 在线测试工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/protobufjs@7.2.5/dist/protobuf.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -215,6 +216,17 @@
             white-space: pre-wrap;
         }
 
+        .message .binary-content {
+            background: #e8f5e9;
+            padding: 5px;
+            margin-top: 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
         textarea {
             width: 100%;
             padding: 10px;
@@ -271,6 +283,53 @@
             color: #667eea;
         }
 
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        .file-input {
+            margin-top: 10px;
+        }
+
+        .file-input input[type="file"] {
+            display: none;
+        }
+
+        .file-input label {
+            display: inline-block;
+            padding: 8px 15px;
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .file-input label:hover {
+            background: #5568d3;
+        }
+
+        .proto-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e3f2fd;
+            border-radius: 5px;
+            font-size: 13px;
+        }
+
+        .proto-info .file-name {
+            font-weight: bold;
+            color: #1976d2;
+        }
+
+        .proto-info .message-count {
+            color: #666;
+        }
+
         @media (max-width: 768px) {
             .input-group {
                 flex-direction: column;
@@ -321,7 +380,29 @@
             </div>
 
             <div class="section">
+                <h3>Protobuf 配置</h3>
+                <div class="file-input">
+                    <label for="protoFile">选择 .proto 文件</label>
+                    <input type="file" id="protoFile" accept=".proto" onchange="loadProtoFile(event)">
+                </div>
+                <div id="protoInfo" class="proto-info" style="display: none;">
+                    <div class="file-name" id="protoFileName"></div>
+                    <div class="message-count" id="protoMessageCount"></div>
+                </div>
+                <div style="margin-top: 10px;">
+                    <label style="display: block; margin-bottom: 5px; font-size: 14px;">选择消息类型:</label>
+                    <select id="messageType" onchange="updateMessageTemplate()">
+                        <option value="">-- 请先加载 .proto 文件 --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="section">
                 <h3>发包设置</h3>
+                <div class="checkbox-group" style="margin-bottom: 10px;">
+                    <input type="checkbox" id="useProtobuf" onchange="toggleInputMode()">
+                    <label for="useProtobuf">使用 Protobuf (JSON 转 Binary)</label>
+                </div>
                 <textarea id="messageInput" placeholder="输入要发送的消息内容（支持 JSON 格式）"></textarea>
                 <div class="button-group" style="margin-top: 10px;">
                     <button class="btn-success" onclick="sendMessage()">发送消息</button>
@@ -378,6 +459,8 @@
         let sentCount = 0;
         let receivedCount = 0;
         let errorCount = 0;
+        let protoRoot = null;
+        let currentMessageType = null;
         
         // 初始化历史服务器地址
         function initServerHistory() {
@@ -443,6 +526,172 @@
             localStorage.setItem('wsPingInterval', pingInterval);
         }
 
+        // 加载 Proto 文件
+        async function loadProtoFile(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            try {
+                const content = await file.text();
+                protoRoot = await protobuf.parse(content).root;
+                
+                // 显示文件信息
+                document.getElementById('protoInfo').style.display = 'block';
+                // 确保只显示文件名，不显示路径
+                const fileName = file.name;
+                document.getElementById('protoFileName').textContent = '文件: ' + fileName;
+                
+                // 获取所有消息类型（包括嵌套的）
+                const messageTypes = [];
+                const messageTypeMap = new Map(); // 存储消息类型的完整路径
+                
+                // 递归遍历获取所有消息类型
+                function findMessageTypes(ns, prefix = '') {
+                    if (ns instanceof protobuf.Type) {
+                        const fullName = prefix ? prefix + '.' + ns.name : ns.name;
+                        messageTypes.push(ns.name);
+                        messageTypeMap.set(ns.name, fullName);
+                    }
+                    if (ns.nestedArray) {
+                        ns.nestedArray.forEach(nested => {
+                            const newPrefix = prefix ? prefix + '.' + nested.name : nested.name;
+                            findMessageTypes(nested, newPrefix);
+                        });
+                    }
+                }
+                
+                // 遍历根级嵌套
+                protoRoot.nestedArray.forEach(nested => {
+                    findMessageTypes(nested);
+                });
+                
+                document.getElementById('protoMessageCount').textContent = '消息类型数量: ' + messageTypes.length;
+                
+                // 填充消息类型下拉菜单
+                const messageTypeSelect = document.getElementById('messageType');
+                messageTypeSelect.innerHTML = '<option value="">-- 选择消息类型 --</option>';
+                messageTypes.forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    messageTypeSelect.appendChild(option);
+                });
+                
+                // 存储消息类型映射
+                window.messageTypeMap = messageTypeMap;
+                
+                addMessage('system', 'Proto 文件加载成功: ' + fileName);
+            } catch (error) {
+                addMessage('error', 'Proto 文件解析失败: ' + error.message);
+                errorCount++;
+                updateStats();
+            }
+        }
+
+        // 更新消息模板
+        function updateMessageTemplate() {
+            const messageType = document.getElementById('messageType').value;
+            if (!messageType || !protoRoot) {
+                return;
+            }
+
+            currentMessageType = messageType;
+            
+            // 尝试直接查找消息类型
+            let message;
+            try {
+                message = protoRoot.lookupType(messageType);
+            } catch (e) {
+                // 如果直接查找失败，尝试使用映射中的完整路径
+                if (window.messageTypeMap) {
+                    const fullName = window.messageTypeMap.get(messageType);
+                    if (fullName) {
+                        message = protoRoot.lookupType(fullName);
+                    }
+                }
+            }
+            
+            if (!message) {
+                addMessage('error', '找不到消息类型: ' + messageType);
+                return;
+            }
+            
+            // 生成空消息的 JSON 模板
+            const emptyMessage = message.create();
+            const template = JSON.stringify(emptyMessage, null, 2);
+            
+            document.getElementById('messageInput').value = template;
+            addMessage('system', '已加载消息类型: ' + messageType);
+        }
+
+        // 切换输入模式
+        function toggleInputMode() {
+            const useProtobuf = document.getElementById('useProtobuf').checked;
+            const placeholder = useProtobuf 
+                ? '输入 JSON 格式的消息数据' 
+                : '输入要发送的消息内容（支持 JSON 格式）';
+            document.getElementById('messageInput').placeholder = placeholder;
+        }
+
+        // JSON 转 Protobuf 二进制
+        function jsonToProtobuf(jsonString, messageType) {
+            if (!protoRoot || !messageType) {
+                throw new Error('请先加载 Proto 文件并选择消息类型');
+            }
+
+            // 尝试直接查找消息类型
+            let message;
+            try {
+                message = protoRoot.lookupType(messageType);
+            } catch (e) {
+                // 如果直接查找失败，尝试使用映射中的完整路径
+                if (window.messageTypeMap) {
+                    const fullName = window.messageTypeMap.get(messageType);
+                    if (fullName) {
+                        message = protoRoot.lookupType(fullName);
+                    }
+                }
+            }
+            
+            if (!message) {
+                throw new Error('找不到消息类型: ' + messageType);
+            }
+
+            const payload = message.fromObject(JSON.parse(jsonString));
+            const buffer = message.encode(payload).finish();
+            
+            return buffer;
+        }
+
+        // Protobuf 二进制转 JSON
+        function protobufToJson(buffer, messageType) {
+            if (!protoRoot || !messageType) {
+                throw new Error('请先加载 Proto 文件并选择消息类型');
+            }
+
+            // 尝试直接查找消息类型
+            let message;
+            try {
+                message = protoRoot.lookupType(messageType);
+            } catch (e) {
+                // 如果直接查找失败，尝试使用映射中的完整路径
+                if (window.messageTypeMap) {
+                    const fullName = window.messageTypeMap.get(messageType);
+                    if (fullName) {
+                        message = protoRoot.lookupType(fullName);
+                    }
+                }
+            }
+            
+            if (!message) {
+                throw new Error('找不到消息类型: ' + messageType);
+            }
+            const decoded = message.decode(new Uint8Array(buffer));
+            return message.toObject(decoded);
+        }
+
         function connect() {
             const serverUrl = document.getElementById('serverUrl').value;
             if (!serverUrl) {
@@ -474,8 +723,16 @@
 
                     const data = event.data;
                     const jsonDecode = document.getElementById('jsonDecode').checked;
+                    const useProtobuf = document.getElementById('useProtobuf').checked;
 
-                    if (jsonDecode) {
+                    if (useProtobuf && currentMessageType && data instanceof ArrayBuffer) {
+                        try {
+                            const jsonData = protobufToJson(new Uint8Array(data), currentMessageType);
+                            addMessage('incoming', '收到消息', 'Binary', JSON.stringify(jsonData, null, 2));
+                        } catch (e) {
+                            addMessage('incoming', '收到消息', 'Binary (解析失败)', arrayBufferToHex(data));
+                        }
+                    } else if (jsonDecode) {
                         try {
                             const jsonData = JSON.parse(data);
                             addMessage('incoming', '收到消息', data, JSON.stringify(jsonData, null, 2));
@@ -533,20 +790,42 @@
             }
 
             try {
-                ws.send(message);
-                sentCount++;
-                updateStats();
+                const useProtobuf = document.getElementById('useProtobuf').checked;
+                
+                if (useProtobuf) {
+                    if (!currentMessageType) {
+                        addMessage('error', '请先选择消息类型');
+                        errorCount++;
+                        updateStats();
+                        return;
+                    }
+                    
+                    // 转换为 Protobuf 二进制
+                    const buffer = jsonToProtobuf(message, currentMessageType);
+                    ws.send(buffer);
+                    
+                    sentCount++;
+                    updateStats();
+                    
+                    addMessage('outgoing', '发送消息', 'JSON', message);
+                    addMessage('outgoing', '发送消息', 'Binary', arrayBufferToHex(buffer));
+                } else {
+                    // 直接发送文本
+                    ws.send(message);
+                    sentCount++;
+                    updateStats();
 
-                const jsonDecode = document.getElementById('jsonDecode').checked;
-                if (jsonDecode) {
-                    try {
-                        const jsonData = JSON.parse(message);
-                        addMessage('outgoing', '发送消息', message, JSON.stringify(jsonData, null, 2));
-                    } catch (e) {
+                    const jsonDecode = document.getElementById('jsonDecode').checked;
+                    if (jsonDecode) {
+                        try {
+                            const jsonData = JSON.parse(message);
+                            addMessage('outgoing', '发送消息', message, JSON.stringify(jsonData, null, 2));
+                        } catch (e) {
+                            addMessage('outgoing', '发送消息', message);
+                        }
+                    } else {
                         addMessage('outgoing', '发送消息', message);
                     }
-                } else {
-                    addMessage('outgoing', '发送消息', message);
                 }
 
                 if (document.getElementById('clearAfterSend').checked) {
@@ -557,6 +836,12 @@
                 errorCount++;
                 updateStats();
             }
+        }
+
+        // ArrayBuffer 转 Hex 字符串
+        function arrayBufferToHex(buffer) {
+            const bytes = new Uint8Array(buffer);
+            return Array.from(bytes).map(byte => byte.toString(16).padStart(2, '0')).join(' ');
         }
 
         function toggleAutoSend() {
@@ -650,7 +935,7 @@
             document.getElementById('messageContainer').innerHTML = '';
         }
 
-        function addMessage(type, title, content, jsonContent = null) {
+        function addMessage(type, title, content, extraContent = null) {
             const container = document.getElementById('messageContainer');
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message ' + type;
@@ -660,8 +945,12 @@
             html += '<span class="type">' + title + ':</span>';
             html += '<span class="content">' + content + '</span>';
 
-            if (jsonContent) {
-                html += '<div class="json-content">' + jsonContent + '</div>';
+            if (extraContent) {
+                if (type === 'incoming' && content === 'Binary') {
+                    html += '<div class="binary-content">' + extraContent + '</div>';
+                } else {
+                    html += '<div class="json-content">' + extraContent + '</div>';
+                }
             }
 
             messageDiv.innerHTML = html;
