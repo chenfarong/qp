@@ -301,9 +301,22 @@
                     <button class="btn-primary" onclick="connect()">连接</button>
                     <button class="btn-danger" onclick="disconnect()">断开</button>
                 </div>
-                <div class="checkbox-group" style="margin-top: 10px;">
-                    <input type="checkbox" id="autoPing" checked>
-                    <label for="autoPing">自动发送 Ping (30秒)</label>
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="autoPing" checked>
+                        <label for="autoPing">自动发送 Ping</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label>间隔:</label>
+                        <input type="number" id="pingInterval" value="30" min="5" max="300" style="width: 80px; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                        <label>秒</label>
+                    </div>
+                </div>
+                <div style="margin-top: 10px;">
+                    <label style="display: block; margin-bottom: 5px; font-size: 14px;">历史服务器地址:</label>
+                    <select id="serverHistory" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 3px; font-size: 14px;">
+                        <option value="">-- 选择历史地址 --</option>
+                    </select>
                 </div>
             </div>
 
@@ -365,6 +378,70 @@
         let sentCount = 0;
         let receivedCount = 0;
         let errorCount = 0;
+        
+        // 初始化历史服务器地址
+        function initServerHistory() {
+            const history = getServerHistory();
+            const select = document.getElementById('serverHistory');
+            select.innerHTML = '<option value="">-- 选择历史地址 --</option>';
+            
+            history.forEach(url => {
+                const option = document.createElement('option');
+                option.value = url;
+                option.textContent = url;
+                select.appendChild(option);
+            });
+        }
+        
+        // 获取历史服务器地址
+        function getServerHistory() {
+            const history = localStorage.getItem('wsServerHistory');
+            return history ? JSON.parse(history) : [];
+        }
+        
+        // 添加服务器地址到历史记录
+        function addServerToHistory(url) {
+            let history = getServerHistory();
+            // 移除重复的地址
+            history = history.filter(item => item !== url);
+            // 添加到开头
+            history.unshift(url);
+            // 限制历史记录数量
+            if (history.length > 10) {
+                history = history.slice(0, 10);
+            }
+            localStorage.setItem('wsServerHistory', JSON.stringify(history));
+            initServerHistory();
+        }
+        
+        // 从本地存储加载设置
+        function loadSettings() {
+            const savedUrl = localStorage.getItem('wsServerUrl');
+            if (savedUrl) {
+                document.getElementById('serverUrl').value = savedUrl;
+            }
+            
+            const savedPing = localStorage.getItem('wsAutoPing');
+            if (savedPing) {
+                document.getElementById('autoPing').checked = savedPing === 'true';
+            }
+            
+            const savedPingInterval = localStorage.getItem('wsPingInterval');
+            if (savedPingInterval) {
+                document.getElementById('pingInterval').value = savedPingInterval;
+            }
+        }
+        
+        // 保存设置到本地存储
+        function saveSettings() {
+            const url = document.getElementById('serverUrl').value;
+            const autoPing = document.getElementById('autoPing').checked;
+            const pingInterval = document.getElementById('pingInterval').value;
+            
+            localStorage.setItem('wsServerUrl', url);
+            localStorage.setItem('wsAutoPing', autoPing);
+            localStorage.setItem('wsPingInterval', pingInterval);
+        }
 
         function connect() {
             const serverUrl = document.getElementById('serverUrl').value;
@@ -372,6 +449,10 @@
                 addMessage('system', '请输入服务器地址');
                 return;
             }
+
+            // 保存设置并添加到历史记录
+            saveSettings();
+            addServerToHistory(serverUrl);
 
             try {
                 ws = new WebSocket(serverUrl);
@@ -528,6 +609,12 @@
         function startPing() {
             if (document.getElementById('autoPing').checked) {
                 stopPing(); // 先停止之前的 ping 定时器
+                const interval = parseInt(document.getElementById('pingInterval').value);
+                if (isNaN(interval) || interval < 5) {
+                    addMessage('error', '请输入有效的 Ping 间隔时间（至少5秒）');
+                    return;
+                }
+                
                 pingInterval = setInterval(function() {
                     if (ws && ws.readyState === WebSocket.OPEN) {
                         const pingMsg = JSON.stringify({ type: 'ping' });
@@ -542,8 +629,8 @@
                     } else {
                         stopPing();
                     }
-                }, 30000); // 30秒发送一次 ping
-                addMessage('system', '开始自动发送 Ping (30秒)');
+                }, interval * 1000); // 使用用户设置的间隔时间
+                addMessage('system', '开始自动发送 Ping (' + interval + '秒)');
             }
         }
 
@@ -596,6 +683,7 @@
 
         // 监听 autoPing 复选框的状态变化
         document.getElementById('autoPing').addEventListener('change', function() {
+            saveSettings();
             if (ws && ws.readyState === WebSocket.OPEN) {
                 if (this.checked) {
                     startPing();
@@ -603,6 +691,29 @@
                     stopPing();
                 }
             }
+        });
+        
+        // 监听 pingInterval 输入框的变化
+        document.getElementById('pingInterval').addEventListener('change', function() {
+            saveSettings();
+            if (ws && ws.readyState === WebSocket.OPEN && document.getElementById('autoPing').checked) {
+                startPing(); // 重新启动 ping 定时器以应用新的间隔
+            }
+        });
+        
+        // 监听 serverHistory 下拉菜单的变化
+        document.getElementById('serverHistory').addEventListener('change', function() {
+            const selectedUrl = this.value;
+            if (selectedUrl) {
+                document.getElementById('serverUrl').value = selectedUrl;
+                saveSettings();
+            }
+        });
+
+        // 页面加载完成时初始化
+        window.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+            initServerHistory();
         });
 
         window.addEventListener('beforeunload', function() {
