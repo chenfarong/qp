@@ -634,28 +634,47 @@
                 const fieldName = field.name;
                 const fieldType = field.type;
                 const fieldRule = field.rule;
+                const resolvedType = field.resolvedType;
                 
                 // 根据字段类型生成默认值
                 if (fieldRule === 'repeated') {
-                    template[fieldName] = [];
+                    // 数组类型，需要判断元素类型
+                    if (resolvedType && resolvedType instanceof protobuf.Type) {
+                        // 数组元素是消息类型
+                        template[fieldName] = [generateJsonTemplate(resolvedType)];
+                    } else if (fieldType === 'string') {
+                        template[fieldName] = [''];
+                    } else if (fieldType === 'bool') {
+                        template[fieldName] = [false];
+                    } else if (fieldType === 'double' || fieldType === 'float') {
+                        template[fieldName] = [0.0];
+                    } else if (['int32', 'int64', 'uint32', 'uint64', 'sint32', 'sint64', 'fixed32', 'fixed64', 'sfixed32', 'sfixed64'].includes(fieldType)) {
+                        template[fieldName] = [0];
+                    } else if (fieldType === 'bytes') {
+                        template[fieldName] = [''];
+                    } else {
+                        template[fieldName] = [];
+                    }
                 } else if (fieldType === 'string') {
                     template[fieldName] = '';
                 } else if (fieldType === 'bool') {
                     template[fieldName] = false;
                 } else if (fieldType === 'double' || fieldType === 'float') {
                     template[fieldName] = 0.0;
-                } else if (fieldType === 'int32' || fieldType === 'int64' || fieldType === 'uint32' || fieldType === 'uint64' || fieldType === 'sint32' || fieldType === 'sint64' || fieldType === 'fixed32' || fieldType === 'fixed64' || fieldType === 'sfixed32' || fieldType === 'sfixed64') {
+                } else if (['int32', 'int64', 'uint32', 'uint64', 'sint32', 'sint64', 'fixed32', 'fixed64', 'sfixed32', 'sfixed64'].includes(fieldType)) {
                     template[fieldName] = 0;
                 } else if (fieldType === 'bytes') {
                     template[fieldName] = '';
+                } else if (resolvedType && resolvedType instanceof protobuf.Type) {
+                    // 嵌套消息类型 - 使用 resolvedType 获取实际的消息类型定义
+                    template[fieldName] = generateJsonTemplate(resolvedType);
+                } else if (resolvedType && resolvedType instanceof protobuf.Enum) {
+                    // 枚举类型 - 使用第一个枚举值作为默认值
+                    const enumValues = Object.values(resolvedType.values);
+                    template[fieldName] = enumValues.length > 0 ? enumValues[0] : 0;
                 } else {
-                    // 嵌套消息类型
-                    try {
-                        const nestedMessage = protoRoot.lookupType(fieldType);
-                        template[fieldName] = generateJsonTemplate(nestedMessage);
-                    } catch (e) {
-                        template[fieldName] = {};
-                    }
+                    // 枚举类型或其他类型
+                    template[fieldName] = null;
                 }
             });
             
