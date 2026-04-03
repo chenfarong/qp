@@ -17,8 +17,8 @@ import (
 	"github.com/aoyo/qp/proto"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	grpc_lib "google.golang.org/grpc"
 	pb "google.golang.org/protobuf/proto"
-	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 )
 
@@ -223,7 +223,7 @@ func main() {
 // startGRPCServer 启动gRPC服务器
 func startGRPCServer(wsManager *WebSocketManager, port int) {
 	// 创建gRPC服务器
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc_lib.NewServer()
 
 	// 注册网关服务
 	gateway.RegisterGatewayServiceServer(grpcServer, grpc.NewGatewayServer(wsManager))
@@ -484,6 +484,16 @@ func proxyToService(targetURL string) gin.HandlerFunc {
 func handleClientConnection(conn *websocket.Conn, wsManager *WebSocketManager, config *Config) {
 	var userID uint32
 
+	// 连接建立时发送欢迎消息
+	welcomeMsg := map[string]string{
+		"type":    "welcome",
+		"message": "WebSocket connection established successfully!",
+	}
+	welcomeData, _ := json.Marshal(welcomeMsg)
+	if err := conn.WriteMessage(websocket.TextMessage, welcomeData); err != nil {
+		log.Printf("Failed to send welcome message: %v", err)
+	}
+
 	// 连接关闭时注销
 	defer func() {
 		wsManager.unregister <- conn
@@ -501,7 +511,8 @@ func handleClientConnection(conn *websocket.Conn, wsManager *WebSocketManager, c
 		}
 
 		// 处理接收到的消息
-		if messageType == websocket.BinaryMessage {
+		switch messageType {
+		case websocket.BinaryMessage:
 			// 反序列化protobuf消息
 			msg, err := protoutil.Deserialize(message)
 			if err != nil {
@@ -543,6 +554,27 @@ func handleClientConnection(conn *websocket.Conn, wsManager *WebSocketManager, c
 						}
 					}
 				}
+			}
+		case websocket.TextMessage:
+			// 处理文本消息
+			log.Printf("Received text message: %s", string(message))
+
+			// 解析文本消息
+			var textMsg map[string]interface{}
+			if err := json.Unmarshal(message, &textMsg); err != nil {
+				log.Printf("Failed to parse text message: %v", err)
+				continue
+			}
+
+			// 发送确认消息
+			ackMsg := map[string]interface{}{
+				"type":    "ack",
+				"message": "Message received",
+				"data":    textMsg,
+			}
+			ackData, _ := json.Marshal(ackMsg)
+			if err := conn.WriteMessage(websocket.TextMessage, ackData); err != nil {
+				log.Printf("Failed to send ack message: %v", err)
 			}
 		}
 	}

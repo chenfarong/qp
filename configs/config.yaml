@@ -1,7 +1,7 @@
 # Server Configuration
 server:
   gateway:
-    port: 8080
+    port: 9080
   gamelogic:
     port: 9000
   ssoauth:
@@ -13,10 +13,10 @@ server:
 
 # MongoDB Configuration
 database:
-  host: localhost
+  host: 192.168.175.128
   port: 27017
   user: admin
-  password: password
+  password: 1234
   dbname: qp_game
 
 # WebSocket Configuration
