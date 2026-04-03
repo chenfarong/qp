@@ -618,12 +618,48 @@
                 return;
             }
             
-            // 生成空消息的 JSON 模板
-            const emptyMessage = message.create();
-            const template = JSON.stringify(emptyMessage, null, 2);
+            // 生成带注释的 JSON 模板
+            const template = generateJsonTemplate(message);
             
             document.getElementById('messageInput').value = template;
             addMessage('system', '已加载消息类型: ' + messageType);
+        }
+
+        // 生成带注释的 JSON 模板
+        function generateJsonTemplate(message) {
+            const fields = message.fieldsArray;
+            const template = {};
+            
+            fields.forEach(field => {
+                const fieldName = field.name;
+                const fieldType = field.type;
+                const fieldRule = field.rule;
+                
+                // 根据字段类型生成默认值
+                if (fieldRule === 'repeated') {
+                    template[fieldName] = [];
+                } else if (fieldType === 'string') {
+                    template[fieldName] = '';
+                } else if (fieldType === 'bool') {
+                    template[fieldName] = false;
+                } else if (fieldType === 'double' || fieldType === 'float') {
+                    template[fieldName] = 0.0;
+                } else if (fieldType === 'int32' || fieldType === 'int64' || fieldType === 'uint32' || fieldType === 'uint64' || fieldType === 'sint32' || fieldType === 'sint64' || fieldType === 'fixed32' || fieldType === 'fixed64' || fieldType === 'sfixed32' || fieldType === 'sfixed64') {
+                    template[fieldName] = 0;
+                } else if (fieldType === 'bytes') {
+                    template[fieldName] = '';
+                } else {
+                    // 嵌套消息类型
+                    try {
+                        const nestedMessage = protoRoot.lookupType(fieldType);
+                        template[fieldName] = generateJsonTemplate(nestedMessage);
+                    } catch (e) {
+                        template[fieldName] = {};
+                    }
+                }
+            });
+            
+            return JSON.stringify(template, null, 2);
         }
 
         // 切换输入模式
