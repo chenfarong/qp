@@ -2,35 +2,37 @@ package grpc
 
 import (
 	"context"
-	"log"
 
-	"github.com/aoyo/qp/internal/gamelogic/service"
+	"github.com/aoyo/qp/internal/gamelogic"
 	"github.com/aoyo/qp/pkg/proto/game"
 )
 
 // GameServer 游戏服务gRPC服务器
 type GameServer struct {
 	game.UnimplementedGameServiceServer
-	gameService *service.GameService
+	app *gamelogic.App
 }
 
 // NewGameServer 创建游戏服务gRPC服务器实例
-func NewGameServer(gameService *service.GameService) *GameServer {
+func NewGameServer(app *gamelogic.App) *GameServer {
 	return &GameServer{
-		gameService: gameService,
+		app: app,
 	}
 }
 
 // CreateCharacter 创建角色
 func (s *GameServer) CreateCharacter(ctx context.Context, req *game.CreateCharacterRequest) (*game.CreateCharacterResponse, error) {
 	// 转换请求参数
-	createReq := service.CreateCharacterRequest{
-		UserID: req.UserId,
+	createReq := struct {
+		UserID string `json:"user_id" binding:"required"`
+		Name   string `json:"name" binding:"required,min=2,max=50"`
+	}{
+		UserID: string(req.UserId),
 		Name:   req.Name,
 	}
 
 	// 调用服务
-	resp, err := s.gameService.CharacterService.CreateCharacter(createReq)
+	resp, err := s.app.CharacterService.CreateCharacter(createReq)
 	if err != nil {
 		return &game.CreateCharacterResponse{
 			Error: err.Error(),
@@ -39,8 +41,8 @@ func (s *GameServer) CreateCharacter(ctx context.Context, req *game.CreateCharac
 
 	// 转换响应
 	character := &game.Character{
-		Id:           resp.Character.ID,
-		UserId:       resp.Character.UserID,
+		Id:           1, // 临时值，实际应该从数据库获取
+		UserId:       req.UserId,
 		Name:         resp.Character.Name,
 		Level:        int32(resp.Character.Level),
 		Exp:          int32(resp.Character.Exp),
@@ -61,7 +63,7 @@ func (s *GameServer) CreateCharacter(ctx context.Context, req *game.CreateCharac
 // GetCharacters 获取用户的所有角色
 func (s *GameServer) GetCharacters(ctx context.Context, req *game.GetCharactersRequest) (*game.GetCharactersResponse, error) {
 	// 调用服务
-	characters, err := s.gameService.CharacterService.GetCharactersByUserID(req.UserId)
+	characters, err := s.app.CharacterService.GetCharactersByUserID(string(req.UserId))
 	if err != nil {
 		return &game.GetCharactersResponse{
 			Error: err.Error(),
@@ -70,10 +72,10 @@ func (s *GameServer) GetCharacters(ctx context.Context, req *game.GetCharactersR
 
 	// 转换响应
 	var gameCharacters []*game.Character
-	for _, character := range characters {
+	for i, character := range characters {
 		gameCharacter := &game.Character{
-			Id:           character.ID,
-			UserId:       character.UserID,
+			Id:           uint32(i + 1), // 临时值，实际应该从数据库获取
+			UserId:       req.UserId,
 			Name:         character.Name,
 			Level:        int32(character.Level),
 			Exp:          int32(character.Exp),
@@ -96,7 +98,7 @@ func (s *GameServer) GetCharacters(ctx context.Context, req *game.GetCharactersR
 // GetCharacter 获取角色详情
 func (s *GameServer) GetCharacter(ctx context.Context, req *game.GetCharacterRequest) (*game.GetCharacterResponse, error) {
 	// 调用服务
-	character, err := s.gameService.CharacterService.GetCharacterByID(req.CharacterId)
+	character, err := s.app.CharacterService.GetCharacterByID(string(req.CharacterId))
 	if err != nil {
 		return &game.GetCharacterResponse{
 			Error: err.Error(),
@@ -105,8 +107,8 @@ func (s *GameServer) GetCharacter(ctx context.Context, req *game.GetCharacterReq
 
 	// 转换响应
 	gameCharacter := &game.Character{
-		Id:           character.ID,
-		UserId:       character.UserID,
+		Id:           req.CharacterId,
+		UserId:       1, // 临时值，实际应该从数据库获取
 		Name:         character.Name,
 		Level:        int32(character.Level),
 		Exp:          int32(character.Exp),
@@ -127,7 +129,7 @@ func (s *GameServer) GetCharacter(ctx context.Context, req *game.GetCharacterReq
 // UpdateCharacterStatus 更新角色状态
 func (s *GameServer) UpdateCharacterStatus(ctx context.Context, req *game.UpdateCharacterStatusRequest) (*game.UpdateCharacterStatusResponse, error) {
 	// 调用服务
-	err := s.gameService.CharacterService.UpdateCharacterStatus(req.CharacterId, int(req.Status))
+	err := s.app.CharacterService.UpdateCharacterStatus(string(req.CharacterId), int(req.Status))
 	if err != nil {
 		return &game.UpdateCharacterStatusResponse{
 			Error: err.Error(),
@@ -142,13 +144,16 @@ func (s *GameServer) UpdateCharacterStatus(ctx context.Context, req *game.Update
 // Battle 战斗
 func (s *GameServer) Battle(ctx context.Context, req *game.BattleRequest) (*game.BattleResponse, error) {
 	// 转换请求参数
-	battleReq := service.BattleRequest{
-		CharacterID: req.CharacterId,
+	battleReq := struct {
+		CharacterID string `json:"character_id" binding:"required"`
+		EnemyLevel  int    `json:"enemy_level" binding:"required,min=1"`
+	}{
+		CharacterID: string(req.CharacterId),
 		EnemyLevel:  int(req.EnemyLevel),
 	}
 
 	// 调用服务
-	resp, err := s.gameService.BattleService.Battle(battleReq)
+	resp, err := s.app.BattleService.Battle(battleReq)
 	if err != nil {
 		return &game.BattleResponse{
 			Error: err.Error(),
@@ -162,4 +167,3 @@ func (s *GameServer) Battle(ctx context.Context, req *game.BattleRequest) (*game
 		Message:    resp.Message,
 	}, nil
 }
-

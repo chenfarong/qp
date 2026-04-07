@@ -17,6 +17,9 @@ type InventoryService struct {
 	dbName string
 }
 
+// 确保 InventoryService 实现了 Service 接口
+var _ interface{} = (*InventoryService)(nil)
+
 // NewInventoryService 创建背包服务实例
 func NewInventoryService(db *db.DB, dbName string) *InventoryService {
 	return &InventoryService{
@@ -269,8 +272,33 @@ func (s *InventoryService) UseCharacter(req actor.UseCharacterRequest) (*actor.U
 	return nil, errors.New("inventory service does not handle character usage")
 }
 
+// CharacterLogin 角色登录
+func (s *InventoryService) CharacterLogin(characterID string) error {
+	// 由于InventoryService不直接处理角色登录，这里返回错误
+	return errors.New("inventory service does not handle character login")
+}
+
+// CharacterLogout 角色登出
+func (s *InventoryService) CharacterLogout(characterID string) error {
+	// 由于InventoryService不直接处理角色登出，这里返回错误
+	return errors.New("inventory service does not handle character logout")
+}
+
+// CharacterOnline 角色上线
+func (s *InventoryService) CharacterOnline(characterID string) error {
+	// 由于InventoryService不直接处理角色上线，这里返回错误
+	return errors.New("inventory service does not handle character online")
+}
+
 // CharacterOffline 角色下线
 func (s *InventoryService) CharacterOffline(characterID string) error {
 	// 由于InventoryService不直接处理角色下线，这里返回错误
 	return errors.New("inventory service does not handle character offline")
+}
+
+// HandleInternalMessage 处理内部消息；未识别类型时返回 handled=false
+func (s *InventoryService) HandleInternalMessage(messageType string, messageData []byte) (bool, error) {
+	_ = messageType
+	_ = messageData
+	return false, nil
 }

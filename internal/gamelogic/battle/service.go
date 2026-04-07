@@ -12,12 +12,15 @@ type BattleService struct {
 	characterService *actor.CharacterService
 }
 
-// NewBattleService 创建战斗服务实例
-func NewBattleService(db *db.DB, dbName string) *BattleService {
+// 确保 BattleService 实现了 Service 接口
+var _ interface{} = (*BattleService)(nil)
+
+// NewBattleService 创建战斗服务实例（characterService 须与 App 共用，以保证在线角色内存一致）
+func NewBattleService(db *db.DB, dbName string, characterService *actor.CharacterService) *BattleService {
 	return &BattleService{
 		db:               db,
 		dbName:           dbName,
-		characterService: actor.NewCharacterService(db, dbName),
+		characterService: characterService,
 	}
 }
 
@@ -79,7 +82,27 @@ func (s *BattleService) UseCharacter(req actor.UseCharacterRequest) (*actor.UseC
 	return s.characterService.UseCharacter(req)
 }
 
+// CharacterLogin 角色登录
+func (s *BattleService) CharacterLogin(characterID string) error {
+	return s.characterService.CharacterLogin(characterID)
+}
+
+// CharacterLogout 角色登出
+func (s *BattleService) CharacterLogout(characterID string) error {
+	return s.characterService.CharacterLogout(characterID)
+}
+
+// CharacterOnline 角色上线
+func (s *BattleService) CharacterOnline(characterID string) error {
+	return s.characterService.CharacterOnline(characterID)
+}
+
 // CharacterOffline 角色下线
 func (s *BattleService) CharacterOffline(characterID string) error {
 	return s.characterService.CharacterOffline(characterID)
+}
+
+// HandleInternalMessage 处理内部消息；未识别类型时返回 handled=false
+func (s *BattleService) HandleInternalMessage(messageType string, messageData []byte) (bool, error) {
+	return s.characterService.HandleInternalMessage(messageType, messageData)
 }

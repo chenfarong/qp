@@ -10,19 +10,30 @@ import (
 
 // Service 统一服务接口
 type Service interface {
+	// 角色登录
+	CharacterLogin(characterID string) error
+	// 角色登出
+	CharacterLogout(characterID string) error
+	// 角色上线
+	CharacterOnline(characterID string) error
+	// 角色下线
+	CharacterOffline(characterID string) error
 	// 创建角色
 	CreateCharacter(req actor.CreateCharacterRequest) (*actor.CharacterResponse, error)
 	// 使用角色
 	UseCharacter(req actor.UseCharacterRequest) (*actor.UseCharacterResponse, error)
-	// 角色下线
-	CharacterOffline(characterID string) error
+
+
+	//增加处理内部消息的接口
+	HandleInternalMessage(messageType string, messageData []byte) (bool, error)
+
 }
 
 // App 游戏逻辑应用
 type App struct {
-	db              *db.DB
-	dbName          string
-	services        map[string]Service
+	db               *db.DB
+	dbName           string
+	services         map[string]Service
 	CharacterService *actor.CharacterService
 	BattleService    *battle.BattleService
 	InventoryService *bag.InventoryService
@@ -32,10 +43,10 @@ type App struct {
 func NewApp(db *db.DB, dbName string) *App {
 	// 创建角色服务
 	characterService := actor.NewCharacterService(db, dbName)
-	
-	// 创建战斗服务
-	battleService := battle.NewBattleService(db, dbName)
-	
+
+	// 创建战斗服务（与角色服务共用同一 CharacterService，在线数据只在一份内存中）
+	battleService := battle.NewBattleService(db, dbName, characterService)
+
 	// 创建背包服务
 	inventoryService := bag.NewInventoryService(db, dbName)
 
@@ -46,9 +57,9 @@ func NewApp(db *db.DB, dbName string) *App {
 	services["inventory"] = inventoryService
 
 	return &App{
-		db:              db,
-		dbName:          dbName,
-		services:        services,
+		db:               db,
+		dbName:           dbName,
+		services:         services,
 		CharacterService: characterService,
 		BattleService:    battleService,
 		InventoryService: inventoryService,
@@ -67,11 +78,11 @@ func (a *App) RegisterRoutes(router *gin.Engine) {
 		// 注册角色相关路由
 		characterHandler := actor.NewCharacterHandler(a.CharacterService)
 		characterHandler.RegisterRoutes(gameGroup)
-		
+
 		// 注册战斗相关路由
 		battleHandler := battle.NewBattleHandler(a.BattleService)
 		battleHandler.RegisterRoutes(gameGroup)
-		
+
 		// 注册背包相关路由
 		inventoryHandler := bag.NewInventoryHandler(a.InventoryService)
 		inventoryHandler.RegisterRoutes(gameGroup)

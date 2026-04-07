@@ -12,53 +12,70 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// CharacterChannel 角色通道结构
+// CharacterChannel 在线角色会话：每个角色独立 channel，由唯一 goroutine 消费。
 type CharacterChannel struct {
 	Character *Character
 	Ch        chan interface{}
-	LastUsed  time.Time
 }
 
 // CharacterService 角色服务
 type CharacterService struct {
-	db              *db.DB
-	dbName          string
-	characterCache  map[string]*CharacterChannel // 角色缓存，key为角色ID
-	cacheMutex      sync.RWMutex                 // 缓存互斥锁
-	cleanupInterval time.Duration                // 缓存清理间隔
+	db             *db.DB
+	dbName         string
+	characterCache map[string]*CharacterChannel // 仅在线角色；登出时删除
+	cacheMutex     sync.RWMutex
 }
+
+// 确保 CharacterService 实现了 Service 接口
+var _ interface{} = (*CharacterService)(nil)
 
 // NewCharacterService 创建角色服务实例
 func NewCharacterService(db *db.DB, dbName string) *CharacterService {
-	service := &CharacterService{
-		db:              db,
-		dbName:          dbName,
-		characterCache:  make(map[string]*CharacterChannel),
-		cleanupInterval: time.Hour, // 每小时清理一次
+	return &CharacterService{
+		db:             db,
+		dbName:         dbName,
+		characterCache: make(map[string]*CharacterChannel),
 	}
-
-	// 启动缓存清理 goroutine
-	go service.cleanupCache()
-
-	return service
 }
 
-// cleanupCache 清理过期的角色缓存
-func (s *CharacterService) cleanupCache() {
-	ticker := time.NewTicker(s.cleanupInterval)
-	defer ticker.Stop()
+// loadCharacterFromDB 从数据库加载角色（不写入在线缓存）
+func (s *CharacterService) loadCharacterFromDB(characterID string) (*Character, error) {
+	collection := s.db.GetCollection(s.dbName, Character{}.CollectionName())
 
-	for range ticker.C {
-		s.cacheMutex.Lock()
-		for characterID, cc := range s.characterCache {
-			// 清理超过24小时未使用的角色缓存
-			if time.Since(cc.LastUsed) > 24*time.Hour {
-				close(cc.Ch)
-				delete(s.characterCache, characterID)
-				log.Printf("Cleaned up character cache for character ID: %s", characterID)
-			}
-		}
-		s.cacheMutex.Unlock()
+	objectID, err := primitive.ObjectIDFromHex(characterID)
+	if err != nil {
+		return nil, err
+	}
+
+	var character Character
+	if err := collection.FindOne(s.db.Ctx, bson.M{"_id": objectID}).Decode(&character); err != nil {
+		return nil, err
+	}
+	return &character, nil
+}
+
+// removeCharacterFromCache 登出时关闭 channel、移除内存（对应 goroutine 随之退出）
+func (s *CharacterService) removeCharacterFromCache(characterID string) {
+	s.cacheMutex.Lock()
+	defer s.cacheMutex.Unlock()
+	cc, ok := s.characterCache[characterID]
+	if !ok {
+		return
+	}
+	close(cc.Ch)
+	delete(s.characterCache, characterID)
+}
+
+// syncCachedCharacter 若角色在线，用数据库最新数据刷新内存中的 Character
+func (s *CharacterService) syncCachedCharacter(characterID string) {
+	char, err := s.loadCharacterFromDB(characterID)
+	if err != nil {
+		return
+	}
+	s.cacheMutex.Lock()
+	defer s.cacheMutex.Unlock()
+	if cc, ok := s.characterCache[characterID]; ok {
+		cc.Character = char
 	}
 }
 
@@ -69,28 +86,21 @@ func (s *CharacterService) cacheCharacter(character *Character) {
 	s.cacheMutex.Lock()
 	defer s.cacheMutex.Unlock()
 
-	// 检查角色是否已在缓存中
-	if _, exists := s.characterCache[characterID]; exists {
-		// 更新缓存中的角色信息
-		s.characterCache[characterID].Character = character
-		s.characterCache[characterID].LastUsed = time.Now()
+	// 已在线则只刷新内存中的角色数据，不新建 goroutine/channel
+	if cc, exists := s.characterCache[characterID]; exists {
+		cc.Character = character
 		return
 	}
 
-	// 创建角色通道
 	ch := make(chan interface{}, 100)
-
-	// 创建角色通道结构
 	cc := &CharacterChannel{
 		Character: character,
 		Ch:        ch,
-		LastUsed:  time.Now(),
 	}
 
-	// 存储到缓存
 	s.characterCache[characterID] = cc
 
-	// 启动角色消息处理 goroutine
+	// 每个在线角色仅一个 goroutine，消费该角色专属 channel
 	go s.handleCharacterMessages(characterID, ch)
 
 	log.Printf("Character cached: %s", characterID)
@@ -125,11 +135,6 @@ func (s *CharacterService) getCharacterFromCache(characterID string) (*Character
 	defer s.cacheMutex.RUnlock()
 
 	cc, exists := s.characterCache[characterID]
-	if exists {
-		// 更新最后使用时间
-		cc.LastUsed = time.Now()
-	}
-
 	return cc, exists
 }
 
@@ -201,9 +206,6 @@ func (s *CharacterService) CreateCharacter(req CreateCharacterRequest) (*Charact
 		return nil, err
 	}
 
-	// 将角色缓存到内存并分配channel
-	s.cacheCharacter(&character)
-
 	return &CharacterResponse{
 		Character: character,
 	}, nil
@@ -232,31 +234,12 @@ func (s *CharacterService) GetCharactersByUserID(userID string) ([]Character, er
 	return characters, nil
 }
 
-// GetCharacterByID 根据ID获取角色信息
+// GetCharacterByID 根据ID获取角色信息：在线则读内存，否则只读库（不会把非在线角色写入内存）
 func (s *CharacterService) GetCharacterByID(characterID string) (*Character, error) {
-	// 先从缓存中获取角色
-	cc, exists := s.getCharacterFromCache(characterID)
-	if exists {
+	if cc, exists := s.getCharacterFromCache(characterID); exists {
 		return cc.Character, nil
 	}
-
-	// 缓存中不存在，从数据库获取
-	collection := s.db.GetCollection(s.dbName, Character{}.CollectionName())
-
-	objectID, err := primitive.ObjectIDFromHex(characterID)
-	if err != nil {
-		return nil, err
-	}
-
-	var character Character
-	if err := collection.FindOne(s.db.Ctx, bson.M{"_id": objectID}).Decode(&character); err != nil {
-		return nil, err
-	}
-
-	// 将角色缓存到内存并分配channel
-	s.cacheCharacter(&character)
-
-	return &character, nil
+	return s.loadCharacterFromDB(characterID)
 }
 
 // UpdateCharacterStatus 更新角色状态
@@ -269,7 +252,11 @@ func (s *CharacterService) UpdateCharacterStatus(characterID string, status int)
 	}
 
 	_, err = collection.UpdateOne(s.db.Ctx, bson.M{"_id": objectID}, bson.M{"$set": bson.M{"status": status, "updated_at": time.Now()}})
-	return err
+	if err != nil {
+		return err
+	}
+	s.syncCachedCharacter(characterID)
+	return nil
 }
 
 // AddExp 添加经验值
@@ -301,7 +288,11 @@ func (s *CharacterService) AddExp(characterID string, exp int) error {
 
 	character.UpdatedAt = time.Now()
 	_, err = collection.UpdateOne(s.db.Ctx, bson.M{"_id": objectID}, bson.M{"$set": character})
-	return err
+	if err != nil {
+		return err
+	}
+	s.syncCachedCharacter(characterID)
+	return nil
 }
 
 // getRequiredExp 获取升级所需经验值
@@ -323,13 +314,11 @@ type UseCharacterResponse struct {
 
 // UseCharacter 使用角色，触发其他服务的角色使用事件，并向客户端推送消息
 func (s *CharacterService) UseCharacter(req UseCharacterRequest) (*UseCharacterResponse, error) {
-	// 1. 验证角色是否存在
 	character, err := s.GetCharacterByID(req.CharacterID)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. 验证角色是否属于该用户
 	userID, err := primitive.ObjectIDFromHex(req.UserID)
 	if err != nil {
 		return nil, err
@@ -339,13 +328,15 @@ func (s *CharacterService) UseCharacter(req UseCharacterRequest) (*UseCharacterR
 		return nil, errors.New("character does not belong to the user")
 	}
 
-	// 3. 更新角色状态为使用中
 	err = s.UpdateCharacterStatus(req.CharacterID, 2) // 2 表示使用中
 	if err != nil {
 		return nil, err
 	}
 
-	// 4. 将角色缓存到内存并分配channel
+	character, err = s.loadCharacterFromDB(req.CharacterID)
+	if err != nil {
+		return nil, err
+	}
 	s.cacheCharacter(character)
 
 	// 5. 向角色通道发送使用事件消息
@@ -375,33 +366,109 @@ func (s *CharacterService) UseCharacter(req UseCharacterRequest) (*UseCharacterR
 	return response, nil
 }
 
-// CharacterOffline 角色下线
-func (s *CharacterService) CharacterOffline(characterID string) error {
-	// 1. 验证角色是否存在
-	_, err := s.GetCharacterByID(characterID)
-	if err != nil {
+// CharacterLogin 角色登录
+func (s *CharacterService) CharacterLogin(characterID string) error {
+	if _, err := s.loadCharacterFromDB(characterID); err != nil {
 		return err
 	}
 
-	// 2. 更新角色状态为离线
-	err = s.UpdateCharacterStatus(characterID, 0) // 0 表示离线
-	if err != nil {
+	if err := s.UpdateCharacterStatus(characterID, 1); err != nil { // 1 表示登录
 		return err
 	}
 
-	// 3. 清理角色缓存
-	s.cacheMutex.Lock()
-	cc, exists := s.characterCache[characterID]
+	character, err := s.loadCharacterFromDB(characterID)
+	if err != nil {
+		return err
+	}
+	s.cacheCharacter(character)
+
+	// 4. 向角色通道发送登录事件消息
+	cc, exists := s.getCharacterFromCache(characterID)
 	if exists {
-		close(cc.Ch)
-		delete(s.characterCache, characterID)
-		log.Printf("Character offline: %s", characterID)
+		cc.Ch <- map[string]interface{}{
+			"type":         "character_login",
+			"character_id": characterID,
+			"timestamp":    time.Now(),
+		}
 	}
-	s.cacheMutex.Unlock()
 
-	// 4. 触发其他服务的角色下线事件（这里可以通过消息队列或RPC调用其他服务）
-	// 例如：向bill服务发送角色下线事件，向ssoauth服务发送角色下线事件等
-	// 这里为了简化，只记录日志
-
+	log.Printf("Character login: %s", characterID)
 	return nil
+}
+
+// CharacterLogout 角色登出：更新库后从内存删除并关闭 channel（唯一清理在线会话的路径）
+func (s *CharacterService) CharacterLogout(characterID string) error {
+	if _, err := s.loadCharacterFromDB(characterID); err != nil {
+		return err
+	}
+
+	if err := s.UpdateCharacterStatus(characterID, 0); err != nil { // 0 表示离线
+		return err
+	}
+
+	s.removeCharacterFromCache(characterID)
+	log.Printf("Character logout: %s", characterID)
+	return nil
+}
+
+// CharacterOnline 角色上线
+func (s *CharacterService) CharacterOnline(characterID string) error {
+	if _, err := s.loadCharacterFromDB(characterID); err != nil {
+		return err
+	}
+
+	if err := s.UpdateCharacterStatus(characterID, 2); err != nil { // 2 表示上线
+		return err
+	}
+
+	character, err := s.loadCharacterFromDB(characterID)
+	if err != nil {
+		return err
+	}
+	s.cacheCharacter(character)
+
+	// 4. 向角色通道发送上线事件消息
+	cc, exists := s.getCharacterFromCache(characterID)
+	if exists {
+		cc.Ch <- map[string]interface{}{
+			"type":         "character_online",
+			"character_id": characterID,
+			"timestamp":    time.Now(),
+		}
+	}
+
+	log.Printf("Character online: %s", characterID)
+	return nil
+}
+
+// CharacterOffline 角色下线：只更新状态，保留内存中的在线数据与 channel/goroutine；登出才清内存
+func (s *CharacterService) CharacterOffline(characterID string) error {
+	if _, err := s.loadCharacterFromDB(characterID); err != nil {
+		return err
+	}
+
+	if err := s.UpdateCharacterStatus(characterID, 0); err != nil { // 0 表示离线
+		return err
+	}
+
+	if cc, ok := s.getCharacterFromCache(characterID); ok {
+		select {
+		case cc.Ch <- map[string]interface{}{
+			"type":         "character_offline",
+			"character_id": characterID,
+			"timestamp":    time.Now(),
+		}:
+		default:
+		}
+	}
+
+	log.Printf("Character offline: %s", characterID)
+	return nil
+}
+
+// HandleInternalMessage 处理内部消息；未识别类型时返回 handled=false
+func (s *CharacterService) HandleInternalMessage(messageType string, messageData []byte) (bool, error) {
+	_ = messageType
+	_ = messageData
+	return false, nil
 }
