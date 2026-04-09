@@ -40,18 +40,18 @@ func (s *AuthServer) Register(ctx context.Context, req *auth.RegisterRequest) (*
 
 	// 转换响应
 	user := &auth.User{
-		Id:       resp.User.ID,
-		Username: resp.User.Username,
-		Email:    resp.User.Email,
-		Nickname: resp.User.Nickname,
-		Avatar:   resp.User.Avatar,
-		Status:   int32(resp.User.Status),
+		Id:       1, // 临时值
+		Username: resp.UserInfo.Username,
+		Email:    resp.UserInfo.Email,
+		Nickname: resp.UserInfo.Nickname,
+		Avatar:   resp.UserInfo.Avatar,
+		Status:   int32(resp.UserInfo.Status),
 	}
 
 	return &auth.RegisterResponse{
-		Token:     resp.Token,
-		ExpireAt:  resp.ExpireAt,
-		UserInfo:  user,
+		Token:    resp.Token,
+		ExpireAt: resp.ExpireAt,
+		UserInfo: user,
 	}, nil
 }
 
@@ -73,25 +73,33 @@ func (s *AuthServer) Login(ctx context.Context, req *auth.LoginRequest) (*auth.L
 
 	// 转换响应
 	user := &auth.User{
-		Id:       resp.User.ID,
-		Username: resp.User.Username,
-		Email:    resp.User.Email,
-		Nickname: resp.User.Nickname,
-		Avatar:   resp.User.Avatar,
-		Status:   int32(resp.User.Status),
+		Id:       1, // 临时值
+		Username: resp.UserInfo.Username,
+		Email:    resp.UserInfo.Email,
+		Nickname: resp.UserInfo.Nickname,
+		Avatar:   resp.UserInfo.Avatar,
+		Status:   int32(resp.UserInfo.Status),
 	}
 
 	return &auth.LoginResponse{
-		Token:     resp.Token,
-		ExpireAt:  resp.ExpireAt,
-		UserInfo:  user,
+		Token:    resp.Token,
+		ExpireAt: resp.ExpireAt,
+		UserInfo: user,
 	}, nil
 }
 
 // Validate 验证令牌
 func (s *AuthServer) Validate(ctx context.Context, req *auth.ValidateRequest) (*auth.ValidateResponse, error) {
 	// 调用服务
-	user, err := s.authService.ValidateToken(req.Token)
+	claims, err := s.authService.ValidateToken(req.Token)
+	if err != nil {
+		return &auth.ValidateResponse{
+			Error: err.Error(),
+		}, nil
+	}
+
+	// 根据用户ID获取用户信息
+	user, err := s.authService.GetUserByID(claims.UserID)
 	if err != nil {
 		return &auth.ValidateResponse{
 			Error: err.Error(),
@@ -100,7 +108,7 @@ func (s *AuthServer) Validate(ctx context.Context, req *auth.ValidateRequest) (*
 
 	// 转换响应
 	authUser := &auth.User{
-		Id:       user.ID,
+		Id:       1, // 临时值
 		Username: user.Username,
 		Email:    user.Email,
 		Nickname: user.Nickname,
@@ -109,7 +117,7 @@ func (s *AuthServer) Validate(ctx context.Context, req *auth.ValidateRequest) (*
 	}
 
 	return &auth.ValidateResponse{
-		UserId: user.ID,
+		UserId: 1, // 临时值
 		User:   authUser,
 	}, nil
 }

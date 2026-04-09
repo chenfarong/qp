@@ -9,6 +9,7 @@ import (
 
 	"github.com/aoyo/qp/internal/gamelogic"
 	"github.com/aoyo/qp/pkg/db"
+	"github.com/aoyo/qp/pkg/etcd"
 	"gopkg.in/yaml.v3"
 )
 
@@ -26,6 +27,9 @@ type Config struct {
 		Password string `yaml:"password"`
 		Dbname   string `yaml:"dbname"`
 	} `yaml:"database"`
+	Etcd struct {
+		Endpoints []string `yaml:"endpoints"`
+	} `yaml:"etcd"`
 }
 
 func main() {
@@ -58,6 +62,17 @@ func main() {
 		log.Println("Database connected successfully")
 	}
 
+	// 初始化 etcd 客户端
+	log.Println("Connecting to etcd...")
+	etcdClient, err := etcd.NewClient(config.Etcd.Endpoints)
+	if err != nil {
+		log.Printf("Warning: Failed to connect to etcd: %v", err)
+		log.Println("Continuing without etcd connection...")
+	} else {
+		log.Println("Etcd connected successfully")
+		defer etcdClient.Close()
+	}
+
 	// 初始化游戏逻辑应用
 	log.Println("Initializing game logic application...")
 	app := gamelogic.GetApp(dbInstance, config.Database.Dbname)
@@ -70,6 +85,16 @@ func main() {
 		log.Println("Continuing without game logic service...")
 	} else {
 		log.Println("Game logic service started successfully")
+	}
+
+	// 注册服务到 etcd
+	if etcdClient != nil {
+		serviceAddress := fmt.Sprintf("localhost:%d", config.Server.Gamelogic.Port)
+		if err := etcdClient.RegisterService("gamelogic", serviceAddress); err != nil {
+			log.Printf("Warning: Failed to register service to etcd: %v", err)
+		} else {
+			log.Println("Service registered to etcd successfully")
+		}
 	}
 
 	// 启动gRPC服务器（暂时注释掉，因为缺少proto文件）

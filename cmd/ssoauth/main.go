@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"log"
 	"net"
-
-	"os"
 	"strconv"
 
-	"github.com/aoyo/qp/internal/ssoauth/grpc"
+	"os"
+
+	authgrpc "github.com/aoyo/qp/internal/ssoauth/grpc"
 	"github.com/aoyo/qp/internal/ssoauth/handler"
 	"github.com/aoyo/qp/internal/ssoauth/service"
 	"github.com/aoyo/qp/pkg/db"
+	"github.com/aoyo/qp/pkg/etcd"
 	"github.com/aoyo/qp/pkg/proto/auth"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -36,6 +37,9 @@ type Config struct {
 		Secret      string `yaml:"secret"`
 		ExpireHours int    `yaml:"expire_hours"`
 	} `yaml:"jwt"`
+	Etcd struct {
+		Endpoints []string `yaml:"endpoints"`
+	} `yaml:"etcd"`
 }
 
 func main() {
@@ -60,9 +64,30 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
+	// 初始化 etcd 客户端
+	log.Println("Connecting to etcd...")
+	etcdClient, err := etcd.NewClient(config.Etcd.Endpoints)
+	if err != nil {
+		log.Printf("Warning: Failed to connect to etcd: %v", err)
+		log.Println("Continuing without etcd connection...")
+	} else {
+		log.Println("Etcd connected successfully")
+		defer etcdClient.Close()
+	}
+
 	// 初始化服务
 	authService := service.NewAuthService(dbInstance, config.Jwt.Secret, config.Jwt.ExpireHours, config.Database.Dbname)
 	authHandler := handler.NewAuthHandler(authService)
+
+	// 注册服务到 etcd
+	if etcdClient != nil {
+		serviceAddress := fmt.Sprintf("localhost:%d", config.Server.Ssoauth.Port)
+		if err := etcdClient.RegisterService("ssoauth", serviceAddress); err != nil {
+			log.Printf("Warning: Failed to register service to etcd: %v", err)
+		} else {
+			log.Println("Service registered to etcd successfully")
+		}
+	}
 
 	// 启动gRPC服务器
 	go startGRPCServer(authService, config.Server.Ssoauth.Port+1000)
@@ -85,7 +110,7 @@ func startGRPCServer(authService *service.AuthService, port int) {
 	grpcServer := grpc.NewServer()
 
 	// 注册认证服务
-	auth.RegisterAuthServiceServer(grpcServer, grpc.NewAuthServer(authService))
+	auth.RegisterAuthServiceServer(grpcServer, authgrpc.NewAuthServer(authService))
 
 	// 监听端口
 	addr := fmt.Sprintf(":%d", port)

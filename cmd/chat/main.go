@@ -8,10 +8,11 @@ import (
 
 	"os"
 
-	"github.com/aoyo/qp/internal/chat/grpc"
+	chatgrpc "github.com/aoyo/qp/internal/chat/grpc"
 	"github.com/aoyo/qp/internal/chat/handler"
 	"github.com/aoyo/qp/internal/chat/service"
 	"github.com/aoyo/qp/pkg/db"
+	"github.com/aoyo/qp/pkg/etcd"
 	"github.com/aoyo/qp/pkg/proto/chat"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
@@ -32,6 +33,9 @@ type Config struct {
 		Password string `yaml:"password"`
 		Dbname   string `yaml:"dbname"`
 	} `yaml:"database"`
+	Etcd struct {
+		Endpoints []string `yaml:"endpoints"`
+	} `yaml:"etcd"`
 }
 
 func main() {
@@ -56,9 +60,30 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
+	// 初始化 etcd 客户端
+	log.Println("Connecting to etcd...")
+	etcdClient, err := etcd.NewClient(config.Etcd.Endpoints)
+	if err != nil {
+		log.Printf("Warning: Failed to connect to etcd: %v", err)
+		log.Println("Continuing without etcd connection...")
+	} else {
+		log.Println("Etcd connected successfully")
+		defer etcdClient.Close()
+	}
+
 	// 初始化服务
 	chatService := service.NewChatService(dbClient, config.Database.Dbname)
 	chatHandler := handler.NewChatHandler(chatService)
+
+	// 注册服务到 etcd
+	if etcdClient != nil {
+		serviceAddress := fmt.Sprintf("localhost:%d", config.Server.Chat.Port)
+		if err := etcdClient.RegisterService("chat", serviceAddress); err != nil {
+			log.Printf("Warning: Failed to register service to etcd: %v", err)
+		} else {
+			log.Println("Service registered to etcd successfully")
+		}
+	}
 
 	// 启动gRPC服务器
 	go startGRPCServer(chatService, config.Server.Chat.Port+1000)
@@ -90,7 +115,7 @@ func startGRPCServer(chatService *service.ChatService, port int) {
 	grpcServer := grpc.NewServer()
 
 	// 注册聊天服务
-	chat.RegisterChatServiceServer(grpcServer, grpc.NewChatServer(chatService))
+	chat.RegisterChatServiceServer(grpcServer, chatgrpc.NewChatServer(chatService))
 
 	// 监听端口
 	addr := fmt.Sprintf(":%d", port)

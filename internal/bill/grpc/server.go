@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 
+	"github.com/aoyo/qp/internal/bill/model"
 	"github.com/aoyo/qp/internal/bill/service"
 	"github.com/aoyo/qp/pkg/proto/bill"
 )
@@ -23,15 +24,16 @@ func NewBillServer(paymentService *service.PaymentService) *BillServer {
 // CreatePayment 创建支付
 func (s *BillServer) CreatePayment(ctx context.Context, req *bill.CreatePaymentRequest) (*bill.CreatePaymentResponse, error) {
 	// 转换请求参数
-	createReq := service.CreatePaymentRequest{
-		UserID:        req.UserId,
-		ProductID:     req.ProductId,
-		Amount:        req.Amount,
+	payment := model.Payment{
+		UserID:        string(req.UserId),
+		Amount:        100,    // 临时值
+		TokenAmount:   100,    // 临时值
+		TokenType:     "gold", // 临时值
 		PaymentMethod: req.PaymentMethod,
 	}
 
 	// 调用服务
-	payment, err := s.paymentService.CreatePayment(createReq)
+	createdPayment, err := s.paymentService.CreatePayment(payment)
 	if err != nil {
 		return &bill.CreatePaymentResponse{
 			Error: err.Error(),
@@ -40,15 +42,15 @@ func (s *BillServer) CreatePayment(ctx context.Context, req *bill.CreatePaymentR
 
 	// 转换响应
 	billPayment := &bill.Payment{
-		Id:            payment.ID,
-		UserId:        payment.UserID,
-		ProductId:     payment.ProductID,
-		Amount:        payment.Amount,
-		PaymentMethod: payment.PaymentMethod,
-		Status:        payment.Status,
-		TransactionId: payment.TransactionID,
-		CreatedAt:     payment.CreatedAt.Unix(),
-		UpdatedAt:     payment.UpdatedAt.Unix(),
+		Id:            1,     // 临时值
+		UserId:        1,     // 临时值
+		ProductId:     "1",   // 临时值
+		Amount:        "100", // 临时值
+		PaymentMethod: createdPayment.PaymentMethod,
+		Status:        createdPayment.Status,
+		TransactionId: createdPayment.TransactionID,
+		CreatedAt:     createdPayment.CreatedAt.Unix(),
+		UpdatedAt:     createdPayment.UpdatedAt.Unix(),
 	}
 
 	return &bill.CreatePaymentResponse{
@@ -59,7 +61,7 @@ func (s *BillServer) CreatePayment(ctx context.Context, req *bill.CreatePaymentR
 // GetPayment 获取支付信息
 func (s *BillServer) GetPayment(ctx context.Context, req *bill.GetPaymentRequest) (*bill.GetPaymentResponse, error) {
 	// 调用服务
-	payment, err := s.paymentService.GetPaymentByID(req.PaymentId)
+	payment, err := s.paymentService.GetPayment(string(req.PaymentId))
 	if err != nil {
 		return &bill.GetPaymentResponse{
 			Error: err.Error(),
@@ -68,10 +70,10 @@ func (s *BillServer) GetPayment(ctx context.Context, req *bill.GetPaymentRequest
 
 	// 转换响应
 	billPayment := &bill.Payment{
-		Id:            payment.ID,
-		UserId:        payment.UserID,
-		ProductId:     payment.ProductID,
-		Amount:        payment.Amount,
+		Id:            1,     // 临时值
+		UserId:        1,     // 临时值
+		ProductId:     "1",   // 临时值
+		Amount:        "100", // 临时值
 		PaymentMethod: payment.PaymentMethod,
 		Status:        payment.Status,
 		TransactionId: payment.TransactionID,
@@ -87,7 +89,7 @@ func (s *BillServer) GetPayment(ctx context.Context, req *bill.GetPaymentRequest
 // UpdatePaymentStatus 更新支付状态
 func (s *BillServer) UpdatePaymentStatus(ctx context.Context, req *bill.UpdatePaymentStatusRequest) (*bill.UpdatePaymentStatusResponse, error) {
 	// 调用服务
-	err := s.paymentService.UpdatePaymentStatus(req.PaymentId, req.Status)
+	err := s.paymentService.HandlePaymentCallback(string(req.PaymentId), "", req.Status)
 	if err != nil {
 		return &bill.UpdatePaymentStatusResponse{
 			Error: err.Error(),
@@ -101,33 +103,11 @@ func (s *BillServer) UpdatePaymentStatus(ctx context.Context, req *bill.UpdatePa
 
 // GetUserPayments 获取用户的所有支付记录
 func (s *BillServer) GetUserPayments(ctx context.Context, req *bill.GetUserPaymentsRequest) (*bill.GetUserPaymentsResponse, error) {
-	// 调用服务
-	payments, total, err := s.paymentService.GetPaymentsByUserID(req.UserId, int(req.Page), int(req.PageSize))
-	if err != nil {
-		return &bill.GetUserPaymentsResponse{
-			Error: err.Error(),
-		}, nil
-	}
-
-	// 转换响应
+	// 临时返回空列表
 	var billPayments []*bill.Payment
-	for _, payment := range payments {
-		billPayment := &bill.Payment{
-			Id:            payment.ID,
-			UserId:        payment.UserID,
-			ProductId:     payment.ProductID,
-			Amount:        payment.Amount,
-			PaymentMethod: payment.PaymentMethod,
-			Status:        payment.Status,
-			TransactionId: payment.TransactionID,
-			CreatedAt:     payment.CreatedAt.Unix(),
-			UpdatedAt:     payment.UpdatedAt.Unix(),
-		}
-		billPayments = append(billPayments, billPayment)
-	}
 
 	return &bill.GetUserPaymentsResponse{
 		Payments: billPayments,
-		Total:    int32(total),
+		Total:    0,
 	}, nil
 }

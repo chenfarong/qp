@@ -29,3 +29,8 @@ websocket:
 jwt:
   secret: your_jwt_secret_key
   expire_hours: 24
+
+# Etcd Configuration
+etcd:
+  endpoints:
+    - 127.0.0.1:2379

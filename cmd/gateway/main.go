@@ -13,6 +13,7 @@ import (
 	"os"
 
 	"github.com/aoyo/qp/internal/gateway/grpc"
+	"github.com/aoyo/qp/pkg/etcd"
 	"github.com/aoyo/qp/pkg/proto/gateway"
 	"github.com/aoyo/qp/proto"
 	"github.com/gin-gonic/gin"
@@ -53,6 +54,9 @@ type Config struct {
 			Port int `yaml:"port"`
 		} `yaml:"chat"`
 	} `yaml:"server"`
+	Etcd struct {
+		Endpoints []string `yaml:"endpoints"`
+	} `yaml:"etcd"`
 }
 
 // WebSocket连接管理器
@@ -197,6 +201,27 @@ func main() {
 	config, err := loadConfig()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	// 初始化 etcd 客户端
+	log.Println("Connecting to etcd...")
+	etcdClient, err := etcd.NewClient(config.Etcd.Endpoints)
+	if err != nil {
+		log.Printf("Warning: Failed to connect to etcd: %v", err)
+		log.Println("Continuing without etcd connection...")
+	} else {
+		log.Println("Etcd connected successfully")
+		defer etcdClient.Close()
+	}
+
+	// 注册服务到 etcd
+	if etcdClient != nil {
+		serviceAddress := fmt.Sprintf("localhost:%d", config.Server.Gateway.Port)
+		if err := etcdClient.RegisterService("gateway", serviceAddress); err != nil {
+			log.Printf("Warning: Failed to register service to etcd: %v", err)
+		} else {
+			log.Println("Service registered to etcd successfully")
+		}
 	}
 
 	// 初始化WebSocket管理器
