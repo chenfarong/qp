@@ -66,8 +66,8 @@ func (s *CharacterService) removeCharacterFromCache(characterID string) {
 	delete(s.characterCache, characterID)
 }
 
-// syncCachedCharacter 若角色在线，用数据库最新数据刷新内存中的 Character
-func (s *CharacterService) syncCachedCharacter(characterID string) {
+// SyncCachedCharacter 若角色在线，用数据库最新数据刷新内存中的 Character
+func (s *CharacterService) SyncCachedCharacter(characterID string) {
 	char, err := s.loadCharacterFromDB(characterID)
 	if err != nil {
 		return
@@ -200,6 +200,7 @@ func (s *CharacterService) CreateCharacter(req CreateCharacterRequest) (*Charact
 		Intelligence: 10,
 		Gold:         0,
 		Status:       1,
+		Items:        []InventoryItem{},
 	}
 
 	if _, err := collection.InsertOne(s.db.Ctx, character); err != nil {
@@ -255,7 +256,7 @@ func (s *CharacterService) UpdateCharacterStatus(characterID string, status int)
 	if err != nil {
 		return err
 	}
-	s.syncCachedCharacter(characterID)
+	s.SyncCachedCharacter(characterID)
 	return nil
 }
 
@@ -291,7 +292,7 @@ func (s *CharacterService) AddExp(characterID string, exp int) error {
 	if err != nil {
 		return err
 	}
-	s.syncCachedCharacter(characterID)
+	s.SyncCachedCharacter(characterID)
 	return nil
 }
 

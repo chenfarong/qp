@@ -1,26 +1,12 @@
 package bag
 
-import (
-	"time"
+import "github.com/aoyo/qp/internal/gamelogic/actor"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
-)
+// Item 背包物品，与 actor.Character.Items 同构
+type Item = actor.InventoryItem
 
-// Inventory 背包模型
-type Inventory struct {
-	ID        primitive.ObjectID `bson:"_id" json:"id"`
-	UserID    string             `bson:"user_id" json:"user_id"`
-	Items     []Item             `bson:"items" json:"items"`
-	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
-	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`
-}
-
-// Item 物品模型
-type Item struct {
-	ID         string    `bson:"id" json:"id"`
-	ItemType   string    `bson:"item_type" json:"item_type"`
-	ItemID     string    `bson:"item_id" json:"item_id"`
-	Quantity   int64     `bson:"quantity" json:"quantity"`
-	IsEquipped bool      `bson:"is_equipped" json:"is_equipped"`
-	CreatedAt  time.Time `bson:"created_at" json:"created_at"`
+// InventoryPayload API 中的背包片段（来自角色文档的 items 字段）
+type InventoryPayload struct {
+	CharacterID string                `json:"character_id"`
+	Items       []actor.InventoryItem `json:"items"`
 }

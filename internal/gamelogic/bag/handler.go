@@ -18,15 +18,15 @@ func NewInventoryHandler(inventoryService *InventoryService) *InventoryHandler {
 	}
 }
 
-// GetInventory 获取用户背包
+// GetInventory 获取角色背包（与角色同一文档）
 func (h *InventoryHandler) GetInventory(c *gin.Context) {
-	userIDStr := c.Query("user_id")
-	if userIDStr == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "missing user_id"})
+	characterID := c.Query("character_id")
+	if characterID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing character_id"})
 		return
 	}
 
-	resp, err := h.inventoryService.GetInventory(userIDStr)
+	resp, err := h.inventoryService.GetInventory(characterID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

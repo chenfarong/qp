@@ -23,10 +23,8 @@ type Service interface {
 	// 使用角色
 	UseCharacter(req actor.UseCharacterRequest) (*actor.UseCharacterResponse, error)
 
-
 	//增加处理内部消息的接口
 	HandleInternalMessage(messageType string, messageData []byte) (bool, error)
-
 }
 
 // App 游戏逻辑应用
@@ -47,8 +45,8 @@ func NewApp(db *db.DB, dbName string) *App {
 	// 创建战斗服务（与角色服务共用同一 CharacterService，在线数据只在一份内存中）
 	battleService := battle.NewBattleService(db, dbName, characterService)
 
-	// 创建背包服务
-	inventoryService := bag.NewInventoryService(db, dbName)
+	// 创建背包服务（与角色同表存储 items，变更后同步在线缓存）
+	inventoryService := bag.NewInventoryService(db, dbName, characterService)
 
 	// 初始化服务映射
 	services := make(map[string]Service)
