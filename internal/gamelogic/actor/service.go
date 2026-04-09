@@ -473,3 +473,23 @@ func (s *CharacterService) HandleInternalMessage(messageType string, messageData
 	_ = messageData
 	return false, nil
 }
+
+// OnStartup 启动时执行的操作
+func (s *CharacterService) OnStartup(ctx context.Context) error {
+	//打印日志
+	log.Printf("Character service started")
+	//创建数据库索引
+	collection := s.db.GetCollection(s.dbName, Character{}.CollectionName())
+	collection.Indexes().CreateOne(s.db.Ctx, mongo.IndexModel{
+		Keys: bson.M{"user_id": 1},
+		Options: options.Index().SetUnique(true),
+	})
+	return nil
+}
+
+// OnShutdown 关闭时执行的操作
+func (s *CharacterService) OnShutdown(ctx context.Context) error {
+	//打印日志		
+	log.Printf("Character service stopped")
+	return nil
+}
