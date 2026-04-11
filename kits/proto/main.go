@@ -22,24 +22,50 @@ const (
 )
 
 func main() {
+	// 自定义帮助信息
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s [options]\n\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Options:\n")
+		flag.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "\nExample:\n")
+		fmt.Fprintf(os.Stderr, "  %s --proto-dir=proto --output-dir=bin --lang=go\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "  %s --help\n", os.Args[0])
+	}
+
 	// 定义命令行参数
 	var (
-		protoDir  = flag.String("proto-dir", "", "Protocol buffer definition directory (required)")
-		outputDir = flag.String("output-dir", "", "Output directory (default: same as proto-dir)")
+		protoDir  = flag.String("proto-dir", "", "Protocol buffer definition directory (default: proto)")
+		outputDir = flag.String("output-dir", "", "Output directory (default: bin)")
 		lang      = flag.String("lang", "go", "Output language type: go, cpp, js, cocos, ts (default: go)")
 	)
 	flag.Parse()
 
-	// 验证必需参数
+	// 设置默认 proto 目录
 	if *protoDir == "" {
-		flag.Usage()
-		log.Fatalf("Error: --proto-dir is required")
+		*protoDir = "proto"
+		log.Printf("Using default proto directory: %s", *protoDir)
 	}
 
 	// 设置默认输出目录
 	if *outputDir == "" {
-		*outputDir = "tmp"
+		*outputDir = "bin"
+		log.Printf("Using default output directory: %s", *outputDir)
 	}
+
+	// 将相对路径转换为绝对路径
+	var err error
+	*protoDir, err = filepath.Abs(*protoDir)
+	if err != nil {
+		log.Fatalf("Failed to get absolute path for proto directory: %v", err)
+	}
+
+	*outputDir, err = filepath.Abs(*outputDir)
+	if err != nil {
+		log.Fatalf("Failed to get absolute path for output directory: %v", err)
+	}
+
+	log.Printf("Absolute proto directory: %s", *protoDir)
+	log.Printf("Absolute output directory: %s", *outputDir)
 
 	// 验证语言类型
 	validLangs := map[string]bool{
@@ -53,9 +79,12 @@ func main() {
 		log.Fatalf("Error: unsupported language type '%s'. Supported types: go, cpp, js, cocos, ts", *lang)
 	}
 
-	// 检查proto目录是否存在
+	// 检查proto目录是否存在，不存在则创建
 	if _, err := os.Stat(*protoDir); os.IsNotExist(err) {
-		log.Fatalf("Proto directory does not exist: %s", *protoDir)
+		if err := os.MkdirAll(*protoDir, 0755); err != nil {
+			log.Fatalf("Failed to create proto directory: %s", *protoDir)
+		}
+		log.Printf("Created proto directory: %s", *protoDir)
 	}
 
 	// 检查output目录是否存在，不存在则创建
@@ -63,6 +92,7 @@ func main() {
 		if err := os.MkdirAll(*outputDir, 0755); err != nil {
 			log.Fatalf("Failed to create output directory: %s", *outputDir)
 		}
+		log.Printf("Created output directory: %s", *outputDir)
 	}
 
 	// 读取proto目录下的所有.proto文件
