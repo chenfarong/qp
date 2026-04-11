@@ -9,13 +9,15 @@ import (
 
 	"github.com/aoyo/qp/internal/gamelogic"
 	"github.com/aoyo/qp/pkg/db"
+	"github.com/aoyo/qp/pkg/envmode"
 	"github.com/aoyo/qp/pkg/etcd"
 	"gopkg.in/yaml.v3"
 )
 
 // Config 配置结构
 type Config struct {
-	Server struct {
+	Sandbox bool `yaml:"sandbox"`
+	Server  struct {
 		Gamelogic struct {
 			Port int `yaml:"port"`
 		} `yaml:"gamelogic"`
@@ -62,15 +64,19 @@ func main() {
 		log.Println("Database connected successfully")
 	}
 
-	// 初始化 etcd 客户端
-	log.Println("Connecting to etcd...")
-	etcdClient, err := etcd.NewClient(config.Etcd.Endpoints)
-	if err != nil {
-		log.Printf("Warning: Failed to connect to etcd: %v", err)
-		log.Println("Continuing without etcd connection...")
+	var etcdClient *etcd.Client
+	if envmode.UseEtcd(config.Sandbox) {
+		log.Printf("%s：连接 etcd", envmode.SandboxLabel(config.Sandbox))
+		var errEtcd error
+		etcdClient, errEtcd = etcd.NewClient(config.Etcd.Endpoints)
+		if errEtcd != nil {
+			log.Printf("Warning: Failed to connect to etcd: %v", errEtcd)
+			log.Println("Continuing without etcd connection...")
+		} else {
+			defer etcdClient.Close()
+		}
 	} else {
-		log.Println("Etcd connected successfully")
-		defer etcdClient.Close()
+		log.Printf("%s：跳过 etcd", envmode.SandboxLabel(config.Sandbox))
 	}
 
 	// 初始化游戏逻辑应用

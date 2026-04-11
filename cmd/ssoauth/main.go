@@ -12,6 +12,7 @@ import (
 	"github.com/aoyo/qp/internal/ssoauth/handler"
 	"github.com/aoyo/qp/internal/ssoauth/service"
 	"github.com/aoyo/qp/pkg/db"
+	"github.com/aoyo/qp/pkg/envmode"
 	"github.com/aoyo/qp/pkg/etcd"
 	"github.com/aoyo/qp/pkg/proto/auth"
 	"github.com/gin-gonic/gin"
@@ -21,7 +22,8 @@ import (
 
 // Config 配置结构
 type Config struct {
-	Server struct {
+	Sandbox bool `yaml:"sandbox"`
+	Server  struct {
 		Ssoauth struct {
 			Port int `yaml:"port"`
 		} `yaml:"ssoauth"`
@@ -64,15 +66,20 @@ func main() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	// 初始化 etcd 客户端
-	log.Println("Connecting to etcd...")
-	etcdClient, err := etcd.NewClient(config.Etcd.Endpoints)
-	if err != nil {
-		log.Printf("Warning: Failed to connect to etcd: %v", err)
-		log.Println("Continuing without etcd connection...")
+	// 仅 sandbox 跳过 etcd；缺省或错误配置视为生产并连接 etcd
+	var etcdClient *etcd.Client
+	if envmode.UseEtcd(config.Sandbox) {
+		log.Printf("%s：连接 etcd", envmode.SandboxLabel(config.Sandbox))
+		var errEtcd error
+		etcdClient, errEtcd = etcd.NewClient(config.Etcd.Endpoints)
+		if errEtcd != nil {
+			log.Printf("Warning: Failed to connect to etcd: %v", errEtcd)
+			log.Println("Continuing without etcd connection...")
+		} else {
+			defer etcdClient.Close()
+		}
 	} else {
-		log.Println("Etcd connected successfully")
-		defer etcdClient.Close()
+		log.Printf("%s：跳过 etcd", envmode.SandboxLabel(config.Sandbox))
 	}
 
 	// 初始化服务

@@ -1,3 +1,7 @@
+# sandbox=true：开发/沙箱（不使用 etcd）
+# 不写 sandbox 或 sandbox=false：生产（连接 etcd）
+sandbox: true
+
 # Server Configuration
 server:
   gateway:

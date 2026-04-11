@@ -1,6 +1,7 @@
 package actor
 
 import (
+	"context"
 	"errors"
 	"log"
 	"sync"
@@ -10,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // CharacterChannel 在线角色会话：每个角色独立 channel，由唯一 goroutine 消费。
@@ -480,16 +482,19 @@ func (s *CharacterService) OnStartup(ctx context.Context) error {
 	log.Printf("Character service started")
 	//创建数据库索引
 	collection := s.db.GetCollection(s.dbName, Character{}.CollectionName())
-	collection.Indexes().CreateOne(s.db.Ctx, mongo.IndexModel{
-		Keys: bson.M{"user_id": 1},
-		Options: options.Index().SetUnique(true),
+	_, err := collection.Indexes().CreateOne(s.db.Ctx, mongo.IndexModel{
+		Keys:    bson.D{{Key: "user_id", Value: 1}},
+		Options: options.Index().SetName("idx_characters_user_id"),
 	})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 // OnShutdown 关闭时执行的操作
 func (s *CharacterService) OnShutdown(ctx context.Context) error {
-	//打印日志		
+	//打印日志
 	log.Printf("Character service stopped")
 	return nil
 }

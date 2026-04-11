@@ -1,6 +1,7 @@
 package bag
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -265,4 +266,16 @@ func (s *InventoryService) HandleInternalMessage(messageType string, messageData
 	_ = messageType
 	_ = messageData
 	return false, nil
+}
+
+// OnStartup 背包服务无独立启动逻辑
+func (s *InventoryService) OnStartup(ctx context.Context) error {
+	_ = ctx
+	return nil
+}
+
+// OnShutdown 背包服务无独立关闭逻辑
+func (s *InventoryService) OnShutdown(ctx context.Context) error {
+	_ = ctx
+	return nil
 }

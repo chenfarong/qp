@@ -1,6 +1,8 @@
 package battle
 
 import (
+	"context"
+
 	"github.com/aoyo/qp/internal/gamelogic/actor"
 	"github.com/aoyo/qp/pkg/db"
 )
@@ -105,4 +107,16 @@ func (s *BattleService) CharacterOffline(characterID string) error {
 // HandleInternalMessage 处理内部消息；未识别类型时返回 handled=false
 func (s *BattleService) HandleInternalMessage(messageType string, messageData []byte) (bool, error) {
 	return s.characterService.HandleInternalMessage(messageType, messageData)
+}
+
+// OnStartup 战斗服务无独立启动逻辑
+func (s *BattleService) OnStartup(ctx context.Context) error {
+	_ = ctx
+	return nil
+}
+
+// OnShutdown 战斗服务无独立关闭逻辑
+func (s *BattleService) OnShutdown(ctx context.Context) error {
+	_ = ctx
+	return nil
 }

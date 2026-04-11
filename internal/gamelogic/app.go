@@ -1,6 +1,8 @@
 package gamelogic
 
 import (
+	"context"
+
 	"github.com/aoyo/qp/internal/gamelogic/actor"
 	"github.com/aoyo/qp/internal/gamelogic/bag"
 	"github.com/aoyo/qp/internal/gamelogic/battle"
@@ -23,12 +25,10 @@ type Service interface {
 	// 使用角色
 	UseCharacter(req actor.UseCharacterRequest) (*actor.UseCharacterResponse, error)
 
-
 	// 启动时执行的操作
 	OnStartup(ctx context.Context) error
 	// 关闭时执行的操作
 	OnShutdown(ctx context.Context) error
-
 
 	//增加处理内部消息的接口
 	HandleInternalMessage(messageType string, messageData []byte) (bool, error)
