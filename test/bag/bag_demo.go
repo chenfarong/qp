@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"time"
 
@@ -51,6 +52,15 @@ func (s *MockInventoryService) GetInventory(characterID string) (*bag.InventoryR
 }
 
 func main() {
+	// 解析命令行参数
+	username := flag.String("username", "t1", "Username (default: t1)")
+	password := flag.String("password", "123456", "Password (default: 123456)")
+	flag.Parse()
+
+	// 打印用户名和密码
+	fmt.Printf("Username: %s\n", *username)
+	fmt.Printf("Password: %s\n\n", *password)
+
 	// 创建模拟背包服务
 	inventoryService := &MockInventoryService{}
 
