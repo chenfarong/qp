@@ -24,7 +24,8 @@ type Config struct {
 	Sandbox bool `yaml:"sandbox"`
 	Server  struct {
 		Bill struct {
-			Port int `yaml:"port"`
+			Port     int `yaml:"port"`
+			GrpcPort int `yaml:"grpc_port"`
 		} `yaml:"bill"`
 	} `yaml:"server"`
 	Database struct {
@@ -48,7 +49,10 @@ func main() {
 
 	host := "localhost"
 	port := config.Server.Bill.Port
-	grpcPort := port + 1000
+	grpcPort := config.Server.Bill.GrpcPort
+	if grpcPort == 0 {
+		grpcPort = port + 1000
+	}
 	dbURI := fmt.Sprintf(
 		"mongodb://%s:%s@%s:%d/%s?authSource=admin",
 		config.Database.User,

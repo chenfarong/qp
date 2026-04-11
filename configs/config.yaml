@@ -2,18 +2,23 @@
 # 不写 sandbox 或 sandbox=false：生产（连接 etcd）
 sandbox: true
 
-# Server Configuration
+# Server Configuration（HTTP port + gRPC 独立监听端口）
 server:
   gateway:
     port: 9080
+    grpc_port: 10080
   gamelogic:
     port: 9000
+    grpc_port: 10000
   ssoauth:
     port: 9090
+    grpc_port: 10090
   bill:
     port: 9100
+    grpc_port: 10100
   chat:
     port: 9110
+    grpc_port: 10110
 
 # MongoDB Configuration
 database:

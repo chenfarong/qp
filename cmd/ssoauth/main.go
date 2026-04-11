@@ -25,7 +25,8 @@ type Config struct {
 	Sandbox bool `yaml:"sandbox"`
 	Server  struct {
 		Ssoauth struct {
-			Port int `yaml:"port"`
+			Port     int `yaml:"port"`
+			GrpcPort int `yaml:"grpc_port"`
 		} `yaml:"ssoauth"`
 	} `yaml:"server"`
 	Database struct {
@@ -96,8 +97,11 @@ func main() {
 		}
 	}
 
-	// 启动gRPC服务器
-	go startGRPCServer(authService, config.Server.Ssoauth.Port+1000)
+	grpcPort := config.Server.Ssoauth.GrpcPort
+	if grpcPort == 0 {
+		grpcPort = config.Server.Ssoauth.Port + 1000
+	}
+	go startGRPCServer(authService, grpcPort)
 
 	// 初始化路由
 	router := gin.Default()

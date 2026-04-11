@@ -70,9 +70,9 @@ func (s *BillServer) GetPayment(ctx context.Context, req *bill.GetPaymentRequest
 
 	// 转换响应
 	billPayment := &bill.Payment{
-		Id:            1,     // 临时值
-		UserId:        1,     // 临时值
-		ProductId:     "1",   // 临时值
+		Id:            1, // 临时值
+		UserId:        1, // 临时值
+		ProductId:     "1", // 临时值
 		Amount:        "100", // 临时值
 		PaymentMethod: payment.PaymentMethod,
 		Status:        payment.Status,

@@ -25,7 +25,8 @@ type Config struct {
 	Sandbox bool `yaml:"sandbox"`
 	Server  struct {
 		Chat struct {
-			Port int `yaml:"port"`
+			Port     int `yaml:"port"`
+			GrpcPort int `yaml:"grpc_port"`
 		} `yaml:"chat"`
 	} `yaml:"server"`
 	Database struct {
@@ -91,8 +92,11 @@ func main() {
 		}
 	}
 
-	// 启动gRPC服务器
-	go startGRPCServer(chatService, config.Server.Chat.Port+1000)
+	grpcPort := config.Server.Chat.GrpcPort
+	if grpcPort == 0 {
+		grpcPort = config.Server.Chat.Port + 1000
+	}
+	go startGRPCServer(chatService, grpcPort)
 
 	// 初始化路由
 	router := gin.Default()

@@ -3,14 +3,18 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 	"strconv"
 
 	"os"
 
 	"github.com/aoyo/qp/internal/gamelogic"
+	gamelogicgrpc "github.com/aoyo/qp/internal/gamelogic/grpc"
 	"github.com/aoyo/qp/pkg/db"
 	"github.com/aoyo/qp/pkg/envmode"
 	"github.com/aoyo/qp/pkg/etcd"
+	"github.com/aoyo/qp/pkg/proto/game"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 )
 
@@ -19,7 +23,8 @@ type Config struct {
 	Sandbox bool `yaml:"sandbox"`
 	Server  struct {
 		Gamelogic struct {
-			Port int `yaml:"port"`
+			Port     int `yaml:"port"`
+			GrpcPort int `yaml:"grpc_port"`
 		} `yaml:"gamelogic"`
 	} `yaml:"server"`
 	Database struct {
@@ -103,8 +108,11 @@ func main() {
 		}
 	}
 
-	// 启动gRPC服务器（暂时注释掉，因为缺少proto文件）
-	// go startGRPCServer(app.CharacterService, config.Server.Gamelogic.Port+1000)
+	grpcPort := config.Server.Gamelogic.GrpcPort
+	if grpcPort == 0 {
+		grpcPort = config.Server.Gamelogic.Port + 1000
+	}
+	go startGRPCServer(app, grpcPort)
 
 	// 初始化路由
 	log.Println("Initializing router...")
@@ -119,28 +127,19 @@ func main() {
 	}
 }
 
-// startGRPCServer 启动gRPC服务器（暂时注释掉，因为缺少proto文件）
-/*
-func startGRPCServer(characterService *actor.CharacterService, port int) {
-	// 创建gRPC服务器
+func startGRPCServer(app *gamelogic.App, port int) {
 	grpcServer := grpc.NewServer()
-
-	// 注册游戏服务
-	// game.RegisterGameServiceServer(grpcServer, grpc.NewGameServer(characterService))
-
-	// 监听端口
+	game.RegisterGameServiceServer(grpcServer, gamelogicgrpc.NewGameServer(app))
 	addr := fmt.Sprintf(":%d", port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		log.Fatalf("Failed to listen gRPC: %v", err)
 	}
-
 	log.Printf("Game Logic gRPC service starting on port %d...", port)
 	if err := grpcServer.Serve(listener); err != nil {
 		log.Fatalf("Failed to start gRPC server: %v", err)
 	}
 }
-*/
 
 // loadConfig 加载配置文件
 func loadConfig() (*Config, error) {
