@@ -54,14 +54,24 @@ func main() {
 	if grpcPort == 0 {
 		grpcPort = port + 1000
 	}
-	dbURI := fmt.Sprintf(
-		"mongodb://%s:%s@%s:%d/%s?authSource=admin",
-		config.Database.User,
-		config.Database.Password,
-		config.Database.Host,
-		config.Database.Port,
-		config.Database.Dbname,
-	)
+	var dbURI string
+	if config.Database.User != "" && config.Database.Password != "" {
+		dbURI = fmt.Sprintf(
+			"mongodb://%s:%s@%s:%d/%s?authSource=admin",
+			config.Database.User,
+			config.Database.Password,
+			config.Database.Host,
+			config.Database.Port,
+			config.Database.Dbname,
+		)
+	} else {
+		dbURI = fmt.Sprintf(
+			"mongodb://%s:%d/%s",
+			config.Database.Host,
+			config.Database.Port,
+			config.Database.Dbname,
+		)
+	}
 	dbName := config.Database.Dbname
 
 	// 初始化数据库连接

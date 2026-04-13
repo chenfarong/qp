@@ -8,7 +8,7 @@ import (
 
 	"os"
 
-	"github.com/aoyo/qp/internal/ssoauth/grpc"
+	authgrpc "github.com/aoyo/qp/internal/ssoauth/grpc"
 	"github.com/aoyo/qp/internal/ssoauth/handler"
 	"github.com/aoyo/qp/internal/ssoauth/service"
 	"github.com/aoyo/qp/pkg/db"
@@ -54,18 +54,31 @@ func main() {
 	}
 
 	// 初始化数据库
-	uri := fmt.Sprintf(
-		"mongodb://%s:%s@%s:%d/%s?authSource=admin",
-		config.Database.User,
-		config.Database.Password,
-		config.Database.Host,
-		config.Database.Port,
-		config.Database.Dbname,
-	)
+	var uri string
+	if config.Database.User != "" && config.Database.Password != "" {
+		uri = fmt.Sprintf(
+			"mongodb://%s:%s@%s:%d/%s?authSource=admin",
+			config.Database.User,
+			config.Database.Password,
+			config.Database.Host,
+			config.Database.Port,
+			config.Database.Dbname,
+		)
+	} else {
+		uri = fmt.Sprintf(
+			"mongodb://%s:%d/%s",
+			config.Database.Host,
+			config.Database.Port,
+			config.Database.Dbname,
+		)
+	}
 
 	dbInstance, err := db.InitDB(uri)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Printf("Warning: Failed to connect to database: %v", err)
+		log.Println("Continuing without database connection...")
+	} else {
+		defer dbInstance.Close()
 	}
 
 	// 仅 sandbox 跳过 etcd；缺省或错误配置视为生产并连接 etcd

@@ -50,18 +50,31 @@ func main() {
 	}
 
 	// 初始化数据库
-	uri := fmt.Sprintf(
-		"mongodb://%s:%s@%s:%d/%s?authSource=admin",
-		config.Database.User,
-		config.Database.Password,
-		config.Database.Host,
-		config.Database.Port,
-		config.Database.Dbname,
-	)
+	var uri string
+	if config.Database.User != "" && config.Database.Password != "" {
+		uri = fmt.Sprintf(
+			"mongodb://%s:%s@%s:%d/%s?authSource=admin",
+			config.Database.User,
+			config.Database.Password,
+			config.Database.Host,
+			config.Database.Port,
+			config.Database.Dbname,
+		)
+	} else {
+		uri = fmt.Sprintf(
+			"mongodb://%s:%d/%s",
+			config.Database.Host,
+			config.Database.Port,
+			config.Database.Dbname,
+		)
+	}
 
 	dbClient, err := db.InitDB(uri)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Printf("Warning: Failed to connect to database: %v", err)
+		log.Println("Continuing without database connection...")
+	} else {
+		defer dbClient.Close()
 	}
 
 	var etcdClient *etcd.Client

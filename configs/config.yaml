@@ -24,8 +24,8 @@ server:
 database:
   host: 192.168.175.128
   port: 27017
-  user: admin
-  password: 1234
+  user: ""
+  password: ""
   dbname: qp_game
 
 # WebSocket Configuration

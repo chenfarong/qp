@@ -51,14 +51,24 @@ func main() {
 
 	// 初始化数据库
 	log.Println("Connecting to database...")
-	uri := fmt.Sprintf(
-		"mongodb://%s:%s@%s:%d/%s?authSource=admin",
-		config.Database.User,
-		config.Database.Password,
-		config.Database.Host,
-		config.Database.Port,
-		config.Database.Dbname,
-	)
+	var uri string
+	if config.Database.User != "" && config.Database.Password != "" {
+		uri = fmt.Sprintf(
+			"mongodb://%s:%s@%s:%d/%s?authSource=admin",
+			config.Database.User,
+			config.Database.Password,
+			config.Database.Host,
+			config.Database.Port,
+			config.Database.Dbname,
+		)
+	} else {
+		uri = fmt.Sprintf(
+			"mongodb://%s:%d/%s",
+			config.Database.Host,
+			config.Database.Port,
+			config.Database.Dbname,
+		)
+	}
 	log.Printf("Database URI: %s", uri)
 
 	// 尝试连接数据库
