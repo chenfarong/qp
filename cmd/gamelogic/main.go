@@ -14,6 +14,7 @@ import (
 	"github.com/aoyo/qp/pkg/envmode"
 	"github.com/aoyo/qp/pkg/etcd"
 	"github.com/aoyo/qp/pkg/proto/game"
+	"github.com/aoyo/qp/pkg/utils"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 )
@@ -119,12 +120,41 @@ func main() {
 	router := gamelogic.NewRouter(app)
 	log.Println("Router initialized successfully")
 
+	// 打印欢迎日志
+	printWelcomeLog("Game Logic", config.Server.Gamelogic.Port, grpcPort, config.Database.Host, config.Database.Port, config.Database.Dbname)
+
 	// 启动HTTP服务
 	port := config.Server.Gamelogic.Port
 	log.Printf("Game Logic service starting on port %d...", port)
 	if err := router.Run(":" + strconv.Itoa(port)); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
+}
+
+// printWelcomeLog 打印欢迎日志
+func printWelcomeLog(serverType string, httpPort, grpcPort int, dbHost string, dbPort int, dbName string) {
+	// 获取git信息
+	gitInfo, err := utils.GetGitInfo()
+	if err != nil {
+		log.Printf("Warning: Failed to get git info: %v", err)
+	}
+
+	// 打印欢迎日志
+	log.Println("")
+	log.Println("===============================================================")
+	log.Printf("🎉 %s Server Welcome! 🎉", serverType)
+	log.Println("===============================================================")
+	log.Printf("🌐 Server Type: %s", serverType)
+	log.Printf("🚪 HTTP Port: %d", httpPort)
+	log.Printf("🔗 gRPC Port: %d", grpcPort)
+	log.Printf("🗄️  Database: %s:%d/%s", dbHost, dbPort, dbName)
+	if gitInfo != nil {
+		log.Printf("📝 Git Branch: %s", gitInfo.Branch)
+		log.Printf("🔖 Git Commit: %s", gitInfo.CommitHash)
+		log.Printf("💬 Git Message: %s", gitInfo.CommitMsg)
+	}
+	log.Println("===============================================================")
+	log.Println("")
 }
 
 func startGRPCServer(app *gamelogic.App, port int) {

@@ -16,6 +16,7 @@ import (
 	"github.com/aoyo/qp/pkg/envmode"
 	"github.com/aoyo/qp/pkg/etcd"
 	"github.com/aoyo/qp/pkg/proto/gateway"
+	"github.com/aoyo/qp/pkg/utils"
 	"github.com/aoyo/qp/proto"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -248,12 +249,43 @@ func main() {
 	// 注册路由
 	registerRoutes(router, config, wsManager)
 
+	// 打印欢迎日志
+	printWelcomeLog("Gateway", config.Server.Gateway.Port, grpcPort, "", 0, "")
+
 	// 启动HTTP/WebSocket服务
 	port := config.Server.Gateway.Port
 	log.Printf("Gateway service starting on port %d...", port)
 	if err := router.Run(":" + strconv.Itoa(port)); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
+}
+
+// printWelcomeLog 打印欢迎日志
+func printWelcomeLog(serverType string, httpPort, grpcPort int, dbHost string, dbPort int, dbName string) {
+	// 获取git信息
+	gitInfo, err := utils.GetGitInfo()
+	if err != nil {
+		log.Printf("Warning: Failed to get git info: %v", err)
+	}
+
+	// 打印欢迎日志
+	log.Println("")
+	log.Println("===============================================================")
+	log.Printf("🎉 %s Server Welcome! 🎉", serverType)
+	log.Println("===============================================================")
+	log.Printf("🌐 Server Type: %s", serverType)
+	log.Printf("🚪 HTTP Port: %d", httpPort)
+	log.Printf("🔗 gRPC Port: %d", grpcPort)
+	if dbHost != "" {
+		log.Printf("🗄️  Database: %s:%d/%s", dbHost, dbPort, dbName)
+	}
+	if gitInfo != nil {
+		log.Printf("📝 Git Branch: %s", gitInfo.Branch)
+		log.Printf("🔖 Git Commit: %s", gitInfo.CommitHash)
+		log.Printf("💬 Git Message: %s", gitInfo.CommitMsg)
+	}
+	log.Println("===============================================================")
+	log.Println("")
 }
 
 // startGRPCServer 启动gRPC服务器
