@@ -19,6 +19,8 @@ server:
   chat:
     port: 9110
     grpc_port: 10110
+  logger:
+    udp_port: 514
 
 # MongoDB Configuration
 database:

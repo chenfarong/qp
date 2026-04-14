@@ -15,6 +15,7 @@ import (
 	"github.com/aoyo/qp/internal/gateway/grpc"
 	"github.com/aoyo/qp/pkg/envmode"
 	"github.com/aoyo/qp/pkg/etcd"
+	"github.com/aoyo/qp/pkg/logger"
 	"github.com/aoyo/qp/pkg/proto/gateway"
 	"github.com/aoyo/qp/pkg/utils"
 	"github.com/aoyo/qp/proto"
@@ -57,6 +58,9 @@ type Config struct {
 		Chat struct {
 			Port int `yaml:"port"`
 		} `yaml:"chat"`
+		Logger struct {
+			UdpPort int `yaml:"udp_port"`
+		} `yaml:"logger"`
 	} `yaml:"server"`
 	Etcd struct {
 		Endpoints []string `yaml:"endpoints"`
@@ -222,13 +226,29 @@ func main() {
 		log.Printf("%s：跳过 etcd", envmode.SandboxLabel(config.Sandbox))
 	}
 
+	// 初始化日志客户端
+	logClient, err := logger.NewClient(fmt.Sprintf("localhost:%d", config.Server.Logger.UdpPort), fmt.Sprintf("gateway://localhost:%d", config.Server.Gateway.Port))
+	if err != nil {
+		log.Printf("Warning: Failed to initialize log client: %v", err)
+	} else {
+		defer logClient.Close()
+		// 发送测试日志
+		logClient.Warn("Gateway server starting")
+	}
+
 	// 注册服务到 etcd
 	if etcdClient != nil {
 		serviceAddress := fmt.Sprintf("localhost:%d", config.Server.Gateway.Port)
 		if err := etcdClient.RegisterService("gateway", serviceAddress); err != nil {
 			log.Printf("Warning: Failed to register service to etcd: %v", err)
+			if logClient != nil {
+				logClient.Warn(fmt.Sprintf("Failed to register service to etcd: %v", err))
+			}
 		} else {
 			log.Println("Service registered to etcd successfully")
+			if logClient != nil {
+				logClient.Warn("Service registered to etcd successfully")
+			}
 		}
 	}
 
@@ -552,18 +572,18 @@ func messageToJSON(msg *proto.Message) string {
 				tokenRespMap["balance"] = tokenResp.Balance
 				respMap["data"] = tokenRespMap
 			case resp.GetBillPaymentResponse() != nil:
-			paymentResp := resp.GetBillPaymentResponse()
-			paymentRespMap := make(map[string]interface{})
-			paymentRespMap["order_id"] = paymentResp.OrderId
-			paymentRespMap["user_id"] = paymentResp.UserId
-			paymentRespMap["amount"] = paymentResp.Amount
-			paymentRespMap["currency"] = paymentResp.Currency
-			paymentRespMap["token_type"] = paymentResp.TokenType
-			paymentRespMap["token_amount"] = paymentResp.TokenAmount
-			paymentRespMap["status"] = paymentResp.Status
-			paymentRespMap["transaction_id"] = paymentResp.TransactionId
-			paymentRespMap["payment_url"] = paymentResp.PaymentUrl
-			respMap["data"] = paymentRespMap
+				paymentResp := resp.GetBillPaymentResponse()
+				paymentRespMap := make(map[string]interface{})
+				paymentRespMap["order_id"] = paymentResp.OrderId
+				paymentRespMap["user_id"] = paymentResp.UserId
+				paymentRespMap["amount"] = paymentResp.Amount
+				paymentRespMap["currency"] = paymentResp.Currency
+				paymentRespMap["token_type"] = paymentResp.TokenType
+				paymentRespMap["token_amount"] = paymentResp.TokenAmount
+				paymentRespMap["status"] = paymentResp.Status
+				paymentRespMap["transaction_id"] = paymentResp.TransactionId
+				paymentRespMap["payment_url"] = paymentResp.PaymentUrl
+				respMap["data"] = paymentRespMap
 			}
 
 			msgMap["data"] = respMap

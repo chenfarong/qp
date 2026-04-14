@@ -15,6 +15,7 @@ import (
 	"github.com/aoyo/qp/pkg/db"
 	"github.com/aoyo/qp/pkg/envmode"
 	"github.com/aoyo/qp/pkg/etcd"
+	"github.com/aoyo/qp/pkg/logger"
 	"github.com/aoyo/qp/pkg/proto/bill"
 	"github.com/aoyo/qp/pkg/proto/gateway"
 	"github.com/aoyo/qp/pkg/utils"
@@ -32,6 +33,9 @@ type Config struct {
 			Port     int `yaml:"port"`
 			GrpcPort int `yaml:"grpc_port"`
 		} `yaml:"bill"`
+		Logger struct {
+			UdpPort int `yaml:"udp_port"`
+		} `yaml:"logger"`
 	} `yaml:"server"`
 	Database struct {
 		Host     string `yaml:"host"`
@@ -112,13 +116,29 @@ func main() {
 	tokenService := service.NewTokenService(dbInstance, dbName)
 	paymentService := service.NewPaymentService(dbInstance, dbName, tokenService)
 
+	// 初始化日志客户端
+	logClient, err := logger.NewClient(fmt.Sprintf("localhost:%d", config.Server.Logger.UdpPort), fmt.Sprintf("bill://localhost:%d", port))
+	if err != nil {
+		log.Printf("Warning: Failed to initialize log client: %v", err)
+	} else {
+		defer logClient.Close()
+		// 发送测试日志
+		logClient.Warn("Bill server starting")
+	}
+
 	// 注册服务到 etcd
 	if etcdClient != nil {
 		serviceAddress := fmt.Sprintf("localhost:%d", port)
 		if err := etcdClient.RegisterService("bill", serviceAddress); err != nil {
 			log.Printf("Warning: Failed to register service to etcd: %v", err)
+			if logClient != nil {
+				logClient.Warn(fmt.Sprintf("Failed to register service to etcd: %v", err))
+			}
 		} else {
 			log.Println("Service registered to etcd successfully")
+			if logClient != nil {
+				logClient.Warn("Service registered to etcd successfully")
+			}
 		}
 	}
 

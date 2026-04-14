@@ -16,6 +16,7 @@ import (
 	"github.com/aoyo/qp/pkg/db"
 	"github.com/aoyo/qp/pkg/envmode"
 	"github.com/aoyo/qp/pkg/etcd"
+	"github.com/aoyo/qp/pkg/logger"
 	"github.com/aoyo/qp/pkg/proto/chat"
 	"github.com/aoyo/qp/pkg/proto/gateway"
 	"github.com/aoyo/qp/pkg/utils"
@@ -33,6 +34,9 @@ type Config struct {
 			Port     int `yaml:"port"`
 			GrpcPort int `yaml:"grpc_port"`
 		} `yaml:"chat"`
+		Logger struct {
+			UdpPort int `yaml:"udp_port"`
+		} `yaml:"logger"`
 	} `yaml:"server"`
 	Database struct {
 		Host     string `yaml:"host"`
@@ -100,13 +104,29 @@ func main() {
 	chatService := service.NewChatService(dbClient, config.Database.Dbname)
 	chatHandler := handler.NewChatHandler(chatService)
 
+	// 初始化日志客户端
+	logClient, err := logger.NewClient(fmt.Sprintf("localhost:%d", config.Server.Logger.UdpPort), fmt.Sprintf("chat://localhost:%d", config.Server.Chat.Port))
+	if err != nil {
+		log.Printf("Warning: Failed to initialize log client: %v", err)
+	} else {
+		defer logClient.Close()
+		// 发送测试日志
+		logClient.Warn("Chat server starting")
+	}
+
 	// 注册服务到 etcd
 	if etcdClient != nil {
 		serviceAddress := fmt.Sprintf("localhost:%d", config.Server.Chat.Port)
 		if err := etcdClient.RegisterService("chat", serviceAddress); err != nil {
 			log.Printf("Warning: Failed to register service to etcd: %v", err)
+			if logClient != nil {
+				logClient.Warn(fmt.Sprintf("Failed to register service to etcd: %v", err))
+			}
 		} else {
 			log.Println("Service registered to etcd successfully")
+			if logClient != nil {
+				logClient.Warn("Service registered to etcd successfully")
+			}
 		}
 	}
 
