@@ -149,9 +149,9 @@ func generateGoCode(protoFile, protoDir, outputDir string) error {
 	// 使用protoc命令生成Go代码和gRPC代码
 	cmd := exec.Command(
 		"protoc",
-		"--go_out="+outputDir,
+		"--go_out=../pkg/proto",
 		"--go_opt=paths=source_relative",
-		"--go-grpc_out="+outputDir,
+		"--go-grpc_out=../pkg/proto",
 		"--go-grpc_opt=paths=source_relative",
 		filepath.Base(protoFile),
 	)

@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"log"
 
 	"github.com/aoyo/qp/pkg/proto/gateway"
 )
@@ -9,7 +10,16 @@ import (
 // GatewayServer 网关服务gRPC服务器
 type GatewayServer struct {
 	gateway.UnimplementedGatewayServiceServer
-	messagePusher MessagePusher
+	messagePusher  MessagePusher
+	protocolRanges map[string]*ProtocolRange // 服务名称到协议范围的映射
+}
+
+// ProtocolRange 协议编号范围
+type ProtocolRange struct {
+	ServiceName    string
+	ServiceAddress string
+	StartProtocol  int32
+	EndProtocol    int32
 }
 
 // MessagePusher 消息推送接口
@@ -22,7 +32,8 @@ type MessagePusher interface {
 // NewGatewayServer 创建网关服务gRPC服务器实例
 func NewGatewayServer(messagePusher MessagePusher) *GatewayServer {
 	return &GatewayServer{
-		messagePusher: messagePusher,
+		messagePusher:  messagePusher,
+		protocolRanges: make(map[string]*ProtocolRange),
 	}
 }
 
@@ -48,7 +59,7 @@ func (s *GatewayServer) PushMessage(ctx context.Context, req *gateway.PushMessag
 	connectedUsers := s.messagePusher.GetConnectedUsers()
 
 	return &gateway.PushMessageResponse{
-		Success:         success,
+		Success:          success,
 		ConnectedClients: int32(len(connectedUsers)),
 	}, nil
 }
@@ -84,5 +95,25 @@ func (s *GatewayServer) GetConnectedUsers(ctx context.Context, req *gateway.GetC
 	return &gateway.GetConnectedUsersResponse{
 		UserIds:    connectedUsers,
 		TotalUsers: int32(len(connectedUsers)),
+	}, nil
+}
+
+// RegisterProtocolRange 注册服务能接收的协议编号段
+func (s *GatewayServer) RegisterProtocolRange(ctx context.Context, req *gateway.RegisterProtocolRangeRequest) (*gateway.RegisterProtocolRangeResponse, error) {
+	// 存储协议编号范围
+	s.protocolRanges[req.ServiceName] = &ProtocolRange{
+		ServiceName:    req.ServiceName,
+		ServiceAddress: req.ServiceAddress,
+		StartProtocol:  req.StartProtocol,
+		EndProtocol:    req.EndProtocol,
+	}
+
+	// 打印日志
+	log.Printf("Service %s registered protocol range: %d-%d at %s",
+		req.ServiceName, req.StartProtocol, req.EndProtocol, req.ServiceAddress)
+
+	return &gateway.RegisterProtocolRangeResponse{
+		Success: true,
+		Error:   "",
 	}, nil
 }

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
 	"strconv"
+	"time"
 
 	"os"
 
@@ -14,8 +16,10 @@ import (
 	"github.com/aoyo/qp/pkg/envmode"
 	"github.com/aoyo/qp/pkg/etcd"
 	"github.com/aoyo/qp/pkg/proto/game"
+	"github.com/aoyo/qp/pkg/proto/gateway"
 	"github.com/aoyo/qp/pkg/utils"
 	"google.golang.org/grpc"
+	grpc_lib "google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 )
 
@@ -133,6 +137,9 @@ func main() {
 	// 打印欢迎日志
 	printWelcomeLog("Game Logic", config.Server.Gamelogic.Port, grpcPort, config.Database.Host, config.Database.Port, config.Database.Dbname)
 
+	// 向gateway注册协议编号段
+	go registerToGateway("gamelogic", fmt.Sprintf("localhost:%d", config.Server.Gamelogic.Port), 101, 200)
+
 	// 启动HTTP服务
 	port := config.Server.Gamelogic.Port
 	log.Printf("Game Logic service starting on port %d...", port)
@@ -196,4 +203,42 @@ func loadConfig() (*Config, error) {
 	}
 
 	return &config, nil
+}
+
+// registerToGateway 向gateway注册协议编号段
+func registerToGateway(serviceName string, serviceAddress string, startProtocol, endProtocol int32) {
+	// 连接gateway的gRPC服务
+	conn, err := grpc_lib.Dial("localhost:50051", grpc_lib.WithInsecure(), grpc_lib.WithTimeout(5*time.Second))
+	if err != nil {
+		log.Printf("Warning: Failed to connect to gateway: %v", err)
+		return
+	}
+	defer conn.Close()
+
+	// 创建gateway客户端
+	client := gateway.NewGatewayServiceClient(conn)
+
+	// 创建注册请求
+	req := &gateway.RegisterProtocolRangeRequest{
+		ServiceName:    serviceName,
+		ServiceAddress: serviceAddress,
+		StartProtocol:  startProtocol,
+		EndProtocol:    endProtocol,
+	}
+
+	// 发送注册请求
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	resp, err := client.RegisterProtocolRange(ctx, req)
+	if err != nil {
+		log.Printf("Warning: Failed to register protocol range to gateway: %v", err)
+		return
+	}
+
+	if resp.Success {
+		log.Printf("Successfully registered protocol range %d-%d to gateway", startProtocol, endProtocol)
+	} else {
+		log.Printf("Failed to register protocol range to gateway: %s", resp.Error)
+	}
 }
