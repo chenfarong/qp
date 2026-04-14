@@ -382,6 +382,205 @@ func registerRoutes(router *gin.Engine, config *Config, wsManager *WebSocketMana
 	}
 }
 
+// messageToJSON 将Message转换为JSON格式
+func messageToJSON(msg *proto.Message) string {
+	// 创建一个map来存储消息内容
+	msgMap := make(map[string]interface{})
+	msgMap["type"] = msg.Type.String()
+
+	// 根据消息类型处理Data字段
+	switch msg.Type {
+	case proto.MessageType_MSG_TYPE_AUTH_REGISTER:
+		if req := msg.GetAuthRegister(); req != nil {
+			reqMap := make(map[string]interface{})
+			reqMap["username"] = req.Username
+			reqMap["password"] = "******" // 密码脱敏
+			reqMap["email"] = req.Email
+			reqMap["nickname"] = req.Nickname
+			msgMap["data"] = reqMap
+		}
+	case proto.MessageType_MSG_TYPE_AUTH_LOGIN:
+		if req := msg.GetAuthLogin(); req != nil {
+			reqMap := make(map[string]interface{})
+			reqMap["username"] = req.Username
+			reqMap["password"] = "******" // 密码脱敏
+			msgMap["data"] = reqMap
+		}
+	case proto.MessageType_MSG_TYPE_AUTH_VALIDATE:
+		if req := msg.GetAuthValidate(); req != nil {
+			reqMap := make(map[string]interface{})
+			reqMap["token"] = req.Token
+			msgMap["data"] = reqMap
+		}
+	case proto.MessageType_MSG_TYPE_GAME_CREATE_CHARACTER:
+		if req := msg.GetGameCreateCharacter(); req != nil {
+			reqMap := make(map[string]interface{})
+			reqMap["user_id"] = req.UserId
+			reqMap["name"] = req.Name
+			msgMap["data"] = reqMap
+		}
+	case proto.MessageType_MSG_TYPE_GAME_GET_CHARACTERS:
+		if req := msg.GetGameGetCharacters(); req != nil {
+			reqMap := make(map[string]interface{})
+			reqMap["user_id"] = req.UserId
+			msgMap["data"] = reqMap
+		}
+	case proto.MessageType_MSG_TYPE_GAME_GET_CHARACTER:
+		if req := msg.GetGameGetCharacter(); req != nil {
+			reqMap := make(map[string]interface{})
+			reqMap["id"] = req.Id
+			msgMap["data"] = reqMap
+		}
+	case proto.MessageType_MSG_TYPE_GAME_UPDATE_CHARACTER_STATUS:
+		if req := msg.GetGameUpdateCharacterStatus(); req != nil {
+			reqMap := make(map[string]interface{})
+			reqMap["id"] = req.Id
+			reqMap["status"] = req.Status
+			msgMap["data"] = reqMap
+		}
+	case proto.MessageType_MSG_TYPE_GAME_BATTLE:
+		if req := msg.GetGameBattle(); req != nil {
+			reqMap := make(map[string]interface{})
+			reqMap["character_id"] = req.CharacterId
+			reqMap["enemy_level"] = req.EnemyLevel
+			msgMap["data"] = reqMap
+		}
+	case proto.MessageType_MSG_TYPE_BILL_GET_TOKEN_BALANCE:
+		if req := msg.GetBillGetTokenBalance(); req != nil {
+			reqMap := make(map[string]interface{})
+			reqMap["user_id"] = req.UserId
+			reqMap["token_type"] = req.TokenType
+			msgMap["data"] = reqMap
+		}
+	case proto.MessageType_MSG_TYPE_BILL_ADD_TOKEN:
+		if req := msg.GetBillAddToken(); req != nil {
+			reqMap := make(map[string]interface{})
+			reqMap["user_id"] = req.UserId
+			reqMap["token_type"] = req.TokenType
+			reqMap["amount"] = req.Amount
+			msgMap["data"] = reqMap
+		}
+	case proto.MessageType_MSG_TYPE_BILL_REMOVE_TOKEN:
+		if req := msg.GetBillRemoveToken(); req != nil {
+			reqMap := make(map[string]interface{})
+			reqMap["user_id"] = req.UserId
+			reqMap["token_type"] = req.TokenType
+			reqMap["amount"] = req.Amount
+			msgMap["data"] = reqMap
+		}
+	case proto.MessageType_MSG_TYPE_BILL_CREATE_PAYMENT:
+		if req := msg.GetBillCreatePayment(); req != nil {
+			reqMap := make(map[string]interface{})
+			reqMap["user_id"] = req.UserId
+			reqMap["amount"] = req.Amount
+			reqMap["currency"] = req.Currency
+			reqMap["token_type"] = req.TokenType
+			reqMap["token_amount"] = req.TokenAmount
+			reqMap["payment_method"] = req.PaymentMethod
+			msgMap["data"] = reqMap
+		}
+	case proto.MessageType_MSG_TYPE_BILL_GET_PAYMENT:
+		if req := msg.GetBillGetPayment(); req != nil {
+			reqMap := make(map[string]interface{})
+			reqMap["order_id"] = req.OrderId
+			msgMap["data"] = reqMap
+		}
+	case proto.MessageType_MSG_TYPE_RESPONSE:
+		if resp := msg.GetResponse(); resp != nil {
+			respMap := make(map[string]interface{})
+			respMap["code"] = resp.Code
+			respMap["message"] = resp.Message
+
+			// 处理响应数据
+			switch {
+			case resp.GetAuthResponse() != nil:
+				authResp := resp.GetAuthResponse()
+				authRespMap := make(map[string]interface{})
+				authRespMap["token"] = authResp.Token
+				authRespMap["user_id"] = authResp.UserId
+				authRespMap["username"] = authResp.Username
+				authRespMap["nickname"] = authResp.Nickname
+				respMap["data"] = authRespMap
+			case resp.GetGameCharacterResponse() != nil:
+				charResp := resp.GetGameCharacterResponse()
+				charRespMap := make(map[string]interface{})
+				charRespMap["id"] = charResp.Id
+				charRespMap["user_id"] = charResp.UserId
+				charRespMap["name"] = charResp.Name
+				charRespMap["level"] = charResp.Level
+				charRespMap["exp"] = charResp.Exp
+				charRespMap["hp"] = charResp.Hp
+				charRespMap["mp"] = charResp.Mp
+				charRespMap["attack"] = charResp.Attack
+				charRespMap["defense"] = charResp.Defense
+				charRespMap["status"] = charResp.Status
+				respMap["data"] = charRespMap
+			case resp.GetGameCharactersResponse() != nil:
+				charsResp := resp.GetGameCharactersResponse()
+				charsRespMap := make(map[string]interface{})
+				characters := make([]interface{}, 0, len(charsResp.Characters))
+				for _, char := range charsResp.Characters {
+					charMap := make(map[string]interface{})
+					charMap["id"] = char.Id
+					charMap["user_id"] = char.UserId
+					charMap["name"] = char.Name
+					charMap["level"] = char.Level
+					charMap["exp"] = char.Exp
+					charMap["hp"] = char.Hp
+					charMap["mp"] = char.Mp
+					charMap["attack"] = char.Attack
+					charMap["defense"] = char.Defense
+					charMap["status"] = char.Status
+					characters = append(characters, charMap)
+				}
+				charsRespMap["characters"] = characters
+				respMap["data"] = charsRespMap
+			case resp.GetGameBattleResponse() != nil:
+				battleResp := resp.GetGameBattleResponse()
+				battleRespMap := make(map[string]interface{})
+				battleRespMap["character_id"] = battleResp.CharacterId
+				battleRespMap["enemy_level"] = battleResp.EnemyLevel
+				battleRespMap["victory"] = battleResp.Victory
+				battleRespMap["exp_gained"] = battleResp.ExpGained
+				battleRespMap["gold_gained"] = battleResp.GoldGained
+				respMap["data"] = battleRespMap
+			case resp.GetBillTokenBalanceResponse() != nil:
+				tokenResp := resp.GetBillTokenBalanceResponse()
+				tokenRespMap := make(map[string]interface{})
+				tokenRespMap["user_id"] = tokenResp.UserId
+				tokenRespMap["token_type"] = tokenResp.TokenType
+				tokenRespMap["balance"] = tokenResp.Balance
+				respMap["data"] = tokenRespMap
+			case resp.GetBillPaymentResponse() != nil:
+			paymentResp := resp.GetBillPaymentResponse()
+			paymentRespMap := make(map[string]interface{})
+			paymentRespMap["order_id"] = paymentResp.OrderId
+			paymentRespMap["user_id"] = paymentResp.UserId
+			paymentRespMap["amount"] = paymentResp.Amount
+			paymentRespMap["currency"] = paymentResp.Currency
+			paymentRespMap["token_type"] = paymentResp.TokenType
+			paymentRespMap["token_amount"] = paymentResp.TokenAmount
+			paymentRespMap["status"] = paymentResp.Status
+			paymentRespMap["transaction_id"] = paymentResp.TransactionId
+			paymentRespMap["payment_url"] = paymentResp.PaymentUrl
+			respMap["data"] = paymentRespMap
+			}
+
+			msgMap["data"] = respMap
+		}
+	default:
+		msgMap["data"] = "Unknown message type"
+	}
+
+	// 转换为JSON
+	jsonData, err := json.MarshalIndent(msgMap, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("{\"error\": \"Failed to marshal message: %v\"}", err)
+	}
+
+	return string(jsonData)
+}
+
 // handleMessage 处理接收到的protobuf消息
 func handleMessage(msg *proto.Message, config *Config) *proto.Message {
 	// 根据消息类型处理
@@ -587,6 +786,10 @@ func handleClientConnection(conn *websocket.Conn, wsManager *WebSocketManager, c
 				log.Printf("Failed to deserialize message: %v", err)
 				continue
 			}
+
+			// 转换为JSON并打印日志
+			jsonMsg := messageToJSON(msg)
+			log.Printf("Received protobuf message: %s", jsonMsg)
 
 			// 处理消息
 			response := handleMessage(msg, config)

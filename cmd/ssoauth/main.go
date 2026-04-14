@@ -17,7 +17,6 @@ import (
 	"github.com/aoyo/qp/pkg/proto/auth"
 	"github.com/aoyo/qp/pkg/utils"
 	"github.com/gin-gonic/gin"
-	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 )
 
