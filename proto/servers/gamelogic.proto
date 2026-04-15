@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package proto;
+
+// GameCreateCharacterRequest 创建角色请求
+message GameCreateCharacterRequest {
+  string user_id = 1;      // 用户ID
+  string character_name = 2; // 角色名称
+  int32 character_type = 3;  // 角色类型
+}
+
+// GameCreateCharacterResponse 创建角色响应
+message GameCreateCharacterResponse {
+  bool success = 1;           // 是否成功
+  uint32 character_id = 2;    // 角色ID
+  string message = 3;         // 消息
+}
+
+// GameGetCharactersRequest 获取角色列表请求
+message GameGetCharactersRequest {
+  string user_id = 1;        // 用户ID
+}
+
+// GameGetCharactersResponse 获取角色列表响应
+message GameGetCharactersResponse {
+  bool success = 1;                // 是否成功
+  repeated Character characters = 2; // 角色列表
+  string message = 3;              // 消息
+}
+
+// Character 角色信息
+message Character {
+  uint32 id = 1;           // 角色ID
+  string name = 2;         // 角色名称
+  int32 type = 3;          // 角色类型
+  int32 level = 4;         // 等级
+  int32 exp = 5;           // 经验
+  int32 hp = 6;             // 生命值
+  int32 mp = 7;             // 法力值
+  int32 status = 8;        // 状态
+  int64 created_at = 9;     // 创建时间
+  int64 updated_at = 10;    // 更新时间
+}
+
+// GameGetCharacterRequest 获取单个角色请求
+message GameGetCharacterRequest {
+  uint32 character_id = 1; // 角色ID
+}
+
+// GameGetCharacterResponse 获取单个角色响应
+message GameGetCharacterResponse {
+  bool success = 1;        // 是否成功
+  Character character = 2; // 角色信息
+  string message = 3;      // 消息
+}
+
+// GameUpdateCharacterStatusRequest 更新角色状态请求
+message GameUpdateCharacterStatusRequest {
+  uint32 character_id = 1; // 角色ID
+  int32 status = 2;         // 状态
+}
+
+// GameUpdateCharacterStatusResponse 更新角色状态响应
+message GameUpdateCharacterStatusResponse {
+  bool success = 1;      // 是否成功
+  string message = 2;    // 消息
+}
+
+// GameBattleRequest 战斗请求
+message GameBattleRequest {
+  uint32 character_id = 1;  // 角色ID
+  uint32 target_id = 2;      // 目标ID
+  int32 battle_type = 3;     // 战斗类型
+}
+
+// GameBattleResponse 战斗响应
+message GameBattleResponse {
+  bool success = 1;        // 是否成功
+  int32 result = 2;      // 战斗结果
+  int32 reward_exp = 3;   // 奖励经验
+  int32 reward_gold = 4;  // 奖励金币
+  string message = 5;     // 消息
+}
+
+// GameGetBagRequest 获取背包请求
+message GameGetBagRequest {
+  uint32 character_id = 1; // 角色ID
+}
+
+// GameGetBagResponse 获取背包响应
+message GameGetBagResponse {
+  bool success = 1;           // 是否成功
+  repeated BagItem items = 2; // 背包物品
+  string message = 3;         // 消息
+}
+
+// BagItem 背包物品
+message BagItem {
+  uint32 id = 1;         // 物品ID
+  uint32 character_id = 2; // 角色ID
+  uint32 item_id = 3;    // 物品模板ID
+  int32 count = 4;       // 数量
+  int32 slot = 5;        // 槽位
+  int64 created_at = 6;  // 创建时间
+  int64 updated_at = 7;  // 更新时间
+}

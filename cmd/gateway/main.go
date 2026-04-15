@@ -13,12 +13,15 @@ import (
 
 	"os"
 
-	"github.com/aoyo/qp/github.com/aoyo/qp/proto"
 	"github.com/aoyo/qp/internal/gateway/grpc"
 	"github.com/aoyo/qp/pkg/envmode"
 	"github.com/aoyo/qp/pkg/etcd"
 	"github.com/aoyo/qp/pkg/logger"
+	"github.com/aoyo/qp/pkg/proto/game"
 	"github.com/aoyo/qp/pkg/proto/gateway"
+	"github.com/aoyo/qp/pkg/proto/proto"
+	"github.com/aoyo/qp/pkg/protocol"
+	"github.com/aoyo/qp/pkg/router"
 	"github.com/aoyo/qp/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -29,11 +32,17 @@ import (
 
 // protoutil 提供protobuf序列化和反序列化功能
 var protoutil = struct {
-	Marshal   func(pb.Message) ([]byte, error)
-	Unmarshal func([]byte, pb.Message) error
+	Serialize   func(*proto.Message) ([]byte, error)
+	Deserialize func([]byte) (*proto.Message, error)
 }{
-	Marshal:   pb.Marshal,
-	Unmarshal: pb.Unmarshal,
+	Serialize: func(msg *proto.Message) ([]byte, error) {
+		return pb.Marshal(msg)
+	},
+	Deserialize: func(data []byte) (*proto.Message, error) {
+		msg := &proto.Message{}
+		err := pb.Unmarshal(data, msg)
+		return msg, err
+	},
 }
 
 // Config 配置结构
@@ -48,7 +57,8 @@ type Config struct {
 			Port int `yaml:"port"`
 		} `yaml:"ssoauth"`
 		Gamelogic struct {
-			Port int `yaml:"port"`
+			Port     int `yaml:"port"`
+			GrpcPort int `yaml:"grpc_port"`
 		} `yaml:"gamelogic"`
 		Chat struct {
 			Port int `yaml:"port"`
@@ -146,9 +156,20 @@ func (manager *WebSocketManager) PushMessage(userID uint32, messageType string, 
 		return false, nil
 	}
 
+	// 编码协议数据包
+	encodedData, err := protocol.Encode(
+		protocol.MessageTypeNotify,
+		protocol.CompressFlagNone,
+		0, // 通知消息使用0作为消息ID
+		messageData,
+	)
+	if err != nil {
+		return false, err
+	}
+
 	success := false
 	for _, conn := range conns {
-		err := conn.WriteMessage(websocket.BinaryMessage, messageData)
+		err := conn.WriteMessage(websocket.BinaryMessage, encodedData)
 		if err == nil {
 			success = true
 		}
@@ -166,9 +187,20 @@ func (manager *WebSocketManager) BroadcastMessage(messageType string, messageDat
 	}
 	manager.mutex.RUnlock()
 
+	// 编码协议数据包
+	encodedData, err := protocol.Encode(
+		protocol.MessageTypeNotify,
+		protocol.CompressFlagNone,
+		0, // 通知消息使用0作为消息ID
+		messageData,
+	)
+	if err != nil {
+		return 0, err
+	}
+
 	broadcastCount := 0
 	for _, client := range clients {
-		err := client.WriteMessage(websocket.BinaryMessage, messageData)
+		err := client.WriteMessage(websocket.BinaryMessage, encodedData)
 		if err == nil {
 			broadcastCount++
 		}
@@ -251,6 +283,9 @@ func main() {
 	wsManager := NewWebSocketManager()
 	go wsManager.Run()
 
+	// 初始化路由器
+	r := setupRouter()
+
 	// 启动gRPC服务器
 	grpcPort := config.Server.Gateway.GrpcPort
 	if grpcPort == 0 {
@@ -261,11 +296,24 @@ func main() {
 		startGRPCServer(wsManager, grpcPort)
 	}()
 
+	// 初始化gamelogic gRPC客户端
+	gamelogicGrpcPort := config.Server.Gamelogic.GrpcPort
+	if gamelogicGrpcPort == 0 {
+		gamelogicGrpcPort = config.Server.Gamelogic.Port + 1000
+	}
+	gamelogicConn, err := grpc_lib.Dial(fmt.Sprintf("localhost:%d", gamelogicGrpcPort), grpc_lib.WithInsecure())
+	if err != nil {
+		log.Printf("Warning: Failed to connect to gamelogic gRPC: %v", err)
+	} else {
+		gamelogicClient = game.NewGameServiceClient(gamelogicConn)
+		log.Println("Connected to gamelogic gRPC server successfully")
+	}
+
 	// 初始化路由
 	router := gin.Default()
 
 	// 注册路由
-	registerRoutes(router, config, wsManager)
+	registerRoutes(router, config, wsManager, r)
 
 	// 打印欢迎日志
 	printWelcomeLog("Gateway", config.Server.Gateway.Port, grpcPort, "", 0, "")
@@ -364,7 +412,7 @@ func loadConfig() (*Config, error) {
 }
 
 // registerRoutes 注册路由
-func registerRoutes(router *gin.Engine, config *Config, wsManager *WebSocketManager) {
+func registerRoutes(router *gin.Engine, config *Config, wsManager *WebSocketManager, r *router.Router) {
 	// 健康检查
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
@@ -384,7 +432,7 @@ func registerRoutes(router *gin.Engine, config *Config, wsManager *WebSocketMana
 
 		// 为每个客户端连接分配一个独立的goroutine处理消息
 		// 这个goroutine会持续运行，直到连接关闭
-		go handleClientConnection(conn, wsManager, config)
+		go handleClientConnection(conn, wsManager, config, r)
 	})
 
 	// API路由组
@@ -465,13 +513,13 @@ func messageToJSON(msg *proto.Message) string {
 	case proto.MessageType_MSG_TYPE_GAME_GET_CHARACTER:
 		if req := msg.GetGameGetCharacter(); req != nil {
 			reqMap := make(map[string]interface{})
-			reqMap["id"] = req.Id
+			reqMap["character_id"] = req.CharacterId
 			msgMap["data"] = reqMap
 		}
 	case proto.MessageType_MSG_TYPE_GAME_UPDATE_CHARACTER_STATUS:
 		if req := msg.GetGameUpdateCharacterStatus(); req != nil {
 			reqMap := make(map[string]interface{})
-			reqMap["id"] = req.Id
+			reqMap["character_id"] = req.CharacterId
 			reqMap["status"] = req.Status
 			msgMap["data"] = reqMap
 		}
@@ -482,44 +530,19 @@ func messageToJSON(msg *proto.Message) string {
 			reqMap["enemy_level"] = req.EnemyLevel
 			msgMap["data"] = reqMap
 		}
-	case proto.MessageType_MSG_TYPE_BILL_GET_TOKEN_BALANCE:
-		if req := msg.GetBillGetTokenBalance(); req != nil {
-			reqMap := make(map[string]interface{})
-			reqMap["user_id"] = req.UserId
-			reqMap["token_type"] = req.TokenType
-			msgMap["data"] = reqMap
-		}
-	case proto.MessageType_MSG_TYPE_BILL_ADD_TOKEN:
-		if req := msg.GetBillAddToken(); req != nil {
-			reqMap := make(map[string]interface{})
-			reqMap["user_id"] = req.UserId
-			reqMap["token_type"] = req.TokenType
-			reqMap["amount"] = req.Amount
-			msgMap["data"] = reqMap
-		}
-	case proto.MessageType_MSG_TYPE_BILL_REMOVE_TOKEN:
-		if req := msg.GetBillRemoveToken(); req != nil {
-			reqMap := make(map[string]interface{})
-			reqMap["user_id"] = req.UserId
-			reqMap["token_type"] = req.TokenType
-			reqMap["amount"] = req.Amount
-			msgMap["data"] = reqMap
-		}
 	case proto.MessageType_MSG_TYPE_BILL_CREATE_PAYMENT:
 		if req := msg.GetBillCreatePayment(); req != nil {
 			reqMap := make(map[string]interface{})
 			reqMap["user_id"] = req.UserId
+			reqMap["product_id"] = req.ProductId
 			reqMap["amount"] = req.Amount
-			reqMap["currency"] = req.Currency
-			reqMap["token_type"] = req.TokenType
-			reqMap["token_amount"] = req.TokenAmount
 			reqMap["payment_method"] = req.PaymentMethod
 			msgMap["data"] = reqMap
 		}
 	case proto.MessageType_MSG_TYPE_BILL_GET_PAYMENT:
 		if req := msg.GetBillGetPayment(); req != nil {
 			reqMap := make(map[string]interface{})
-			reqMap["order_id"] = req.OrderId
+			reqMap["payment_id"] = req.PaymentId
 			msgMap["data"] = reqMap
 		}
 	case proto.MessageType_MSG_TYPE_RESPONSE:
@@ -538,25 +561,12 @@ func messageToJSON(msg *proto.Message) string {
 				authRespMap["username"] = authResp.Username
 				authRespMap["nickname"] = authResp.Nickname
 				respMap["data"] = authRespMap
-			case resp.GetGameCharacterResponse() != nil:
-				charResp := resp.GetGameCharacterResponse()
-				charRespMap := make(map[string]interface{})
-				charRespMap["id"] = charResp.Id
-				charRespMap["user_id"] = charResp.UserId
-				charRespMap["name"] = charResp.Name
-				charRespMap["level"] = charResp.Level
-				charRespMap["exp"] = charResp.Exp
-				charRespMap["hp"] = charResp.Hp
-				charRespMap["mp"] = charResp.Mp
-				charRespMap["attack"] = charResp.Attack
-				charRespMap["defense"] = charResp.Defense
-				charRespMap["status"] = charResp.Status
-				respMap["data"] = charRespMap
-			case resp.GetGameCharactersResponse() != nil:
-				charsResp := resp.GetGameCharactersResponse()
-				charsRespMap := make(map[string]interface{})
-				characters := make([]interface{}, 0, len(charsResp.Characters))
-				for _, char := range charsResp.Characters {
+			case resp.GetGameResponse() != nil:
+				gameResp := resp.GetGameResponse()
+				gameRespMap := make(map[string]interface{})
+				switch {
+				case gameResp.GetCharacter() != nil:
+					char := gameResp.GetCharacter()
 					charMap := make(map[string]interface{})
 					charMap["id"] = char.Id
 					charMap["user_id"] = char.UserId
@@ -565,42 +575,118 @@ func messageToJSON(msg *proto.Message) string {
 					charMap["exp"] = char.Exp
 					charMap["hp"] = char.Hp
 					charMap["mp"] = char.Mp
-					charMap["attack"] = char.Attack
-					charMap["defense"] = char.Defense
+					charMap["strength"] = char.Strength
+					charMap["agility"] = char.Agility
+					charMap["intelligence"] = char.Intelligence
+					charMap["gold"] = char.Gold
 					charMap["status"] = char.Status
-					characters = append(characters, charMap)
+					gameRespMap["character"] = charMap
+				case gameResp.GetCharacters() != nil:
+					chars := gameResp.GetCharacters()
+					characters := make([]interface{}, 0, len(chars.Items))
+					for _, char := range chars.Items {
+						charMap := make(map[string]interface{})
+						charMap["id"] = char.Id
+						charMap["user_id"] = char.UserId
+						charMap["name"] = char.Name
+						charMap["level"] = char.Level
+						charMap["exp"] = char.Exp
+						charMap["hp"] = char.Hp
+						charMap["mp"] = char.Mp
+						charMap["strength"] = char.Strength
+						charMap["agility"] = char.Agility
+						charMap["intelligence"] = char.Intelligence
+						charMap["gold"] = char.Gold
+						charMap["status"] = char.Status
+						characters = append(characters, charMap)
+					}
+					gameRespMap["characters"] = characters
+				case gameResp.GetBattleResult() != nil:
+					battleResult := gameResp.GetBattleResult()
+					battleMap := make(map[string]interface{})
+					battleMap["victory"] = battleResult.Victory
+					battleMap["exp_gained"] = battleResult.ExpGained
+					battleMap["gold_gained"] = battleResult.GoldGained
+					battleMap["message"] = battleResult.Message
+					gameRespMap["battle_result"] = battleMap
+				case gameResp.GetBagItems() != nil:
+					bagItems := gameResp.GetBagItems()
+					items := make([]interface{}, 0, len(bagItems.Items))
+					for _, item := range bagItems.Items {
+						itemMap := make(map[string]interface{})
+						itemMap["item_id"] = item.ItemId
+						itemMap["item_cfg_id"] = item.ItemCfgId
+						itemMap["num"] = item.Num
+						items = append(items, itemMap)
+					}
+					gameRespMap["bag_items"] = items
 				}
-				charsRespMap["characters"] = characters
-				respMap["data"] = charsRespMap
-			case resp.GetGameBattleResponse() != nil:
-				battleResp := resp.GetGameBattleResponse()
-				battleRespMap := make(map[string]interface{})
-				battleRespMap["character_id"] = battleResp.CharacterId
-				battleRespMap["enemy_level"] = battleResp.EnemyLevel
-				battleRespMap["victory"] = battleResp.Victory
-				battleRespMap["exp_gained"] = battleResp.ExpGained
-				battleRespMap["gold_gained"] = battleResp.GoldGained
-				respMap["data"] = battleRespMap
-			case resp.GetBillTokenBalanceResponse() != nil:
-				tokenResp := resp.GetBillTokenBalanceResponse()
-				tokenRespMap := make(map[string]interface{})
-				tokenRespMap["user_id"] = tokenResp.UserId
-				tokenRespMap["token_type"] = tokenResp.TokenType
-				tokenRespMap["balance"] = tokenResp.Balance
-				respMap["data"] = tokenRespMap
-			case resp.GetBillPaymentResponse() != nil:
-				paymentResp := resp.GetBillPaymentResponse()
-				paymentRespMap := make(map[string]interface{})
-				paymentRespMap["order_id"] = paymentResp.OrderId
-				paymentRespMap["user_id"] = paymentResp.UserId
-				paymentRespMap["amount"] = paymentResp.Amount
-				paymentRespMap["currency"] = paymentResp.Currency
-				paymentRespMap["token_type"] = paymentResp.TokenType
-				paymentRespMap["token_amount"] = paymentResp.TokenAmount
-				paymentRespMap["status"] = paymentResp.Status
-				paymentRespMap["transaction_id"] = paymentResp.TransactionId
-				paymentRespMap["payment_url"] = paymentResp.PaymentUrl
-				respMap["data"] = paymentRespMap
+				respMap["data"] = gameRespMap
+			case resp.GetBillResponse() != nil:
+				billResp := resp.GetBillResponse()
+				billRespMap := make(map[string]interface{})
+				switch {
+				case billResp.GetPayment() != nil:
+					payment := billResp.GetPayment()
+					paymentMap := make(map[string]interface{})
+					paymentMap["id"] = payment.Id
+					paymentMap["user_id"] = payment.UserId
+					paymentMap["product_id"] = payment.ProductId
+					paymentMap["amount"] = payment.Amount
+					paymentMap["payment_method"] = payment.PaymentMethod
+					paymentMap["status"] = payment.Status
+					paymentMap["transaction_id"] = payment.TransactionId
+					paymentMap["created_at"] = payment.CreatedAt
+					paymentMap["updated_at"] = payment.UpdatedAt
+					billRespMap["payment"] = paymentMap
+				case billResp.GetPayments() != nil:
+					payments := billResp.GetPayments()
+					paymentList := make([]interface{}, 0, len(payments.Items))
+					for _, payment := range payments.Items {
+						paymentMap := make(map[string]interface{})
+						paymentMap["id"] = payment.Id
+						paymentMap["user_id"] = payment.UserId
+						paymentMap["product_id"] = payment.ProductId
+						paymentMap["amount"] = payment.Amount
+						paymentMap["payment_method"] = payment.PaymentMethod
+						paymentMap["status"] = payment.Status
+						paymentMap["transaction_id"] = payment.TransactionId
+						paymentMap["created_at"] = payment.CreatedAt
+						paymentMap["updated_at"] = payment.UpdatedAt
+						paymentList = append(paymentList, paymentMap)
+					}
+					billRespMap["payments"] = paymentList
+				case billResp.GetTotal() != 0:
+					billRespMap["total"] = billResp.GetTotal()
+				}
+				respMap["data"] = billRespMap
+			case resp.GetChatResponse() != nil:
+				chatResp := resp.GetChatResponse()
+				chatRespMap := make(map[string]interface{})
+				switch {
+				case chatResp.GetChatMessage() != nil:
+					// 这里应该是获取ChatMessage，但是我们的protobuf定义中可能没有这个字段
+					// 暂时跳过
+				case chatResp.GetChatMessages() != nil:
+					// 这里应该是获取ChatMessages，但是我们的protobuf定义中可能没有这个字段
+					// 暂时跳过
+				case chatResp.GetConversations() != nil:
+					conversations := chatResp.GetConversations()
+					conversationList := make([]interface{}, 0, len(conversations.Items))
+					for _, conversation := range conversations.Items {
+						conversationMap := make(map[string]interface{})
+						conversationMap["id"] = conversation.Id
+						conversationMap["user_ids"] = conversation.UserIds
+						conversationMap["last_message"] = conversation.LastMessage
+						conversationMap["last_message_time"] = conversation.LastMessageTime
+						conversationMap["unread_count"] = conversation.UnreadCount
+						conversationMap["created_at"] = conversation.CreatedAt
+						conversationMap["updated_at"] = conversation.UpdatedAt
+						conversationList = append(conversationList, conversationMap)
+					}
+					chatRespMap["conversations"] = conversationList
+				}
+				respMap["data"] = chatRespMap
 			}
 
 			msgMap["data"] = respMap
@@ -619,121 +705,9 @@ func messageToJSON(msg *proto.Message) string {
 }
 
 // handleMessage 处理接收到的protobuf消息
-func handleMessage(msg *proto.Message, config *Config) *proto.Message {
-	// 根据消息类型处理
-	switch msg.Type {
-	case proto.MessageType_MSG_TYPE_AUTH_REGISTER:
-		// 处理注册请求
-		if req := msg.GetAuthRegister(); req != nil {
-			// 构建请求数据
-			data, err := json.Marshal(req)
-			if err != nil {
-				return createErrorResponse(500, "Failed to marshal request")
-			}
-
-			// 发送请求到SsoAuth服务
-			resp, err := http.Post(fmt.Sprintf("http://localhost:%d/api/auth/register", config.Server.Ssoauth.Port), "application/json", bytes.NewBuffer(data))
-			if err != nil {
-				return createErrorResponse(500, "Failed to send request")
-			}
-			defer resp.Body.Close()
-
-			// 解析响应
-			var authResp struct {
-				Token    string `json:"token"`
-				UserId   string `json:"user_id"`
-				Username string `json:"username"`
-				Nickname string `json:"nickname"`
-			}
-			if err := json.NewDecoder(resp.Body).Decode(&authResp); err != nil {
-				return createErrorResponse(500, "Failed to decode response")
-			}
-
-			// 构建响应消息
-			return &proto.Message{
-				Type: proto.MessageType_MSG_TYPE_RESPONSE,
-				Data: &proto.Message_Response{
-					Response: &proto.Response{
-						Code:    200,
-						Message: "success",
-						Data: &proto.Response_AuthResponse{
-							AuthResponse: &proto.AuthResponse{
-								Token:    authResp.Token,
-								UserId:   authResp.UserId,
-								Username: authResp.Username,
-								Nickname: authResp.Nickname,
-							},
-						},
-					},
-				},
-			}
-		}
-	case proto.MessageType_MSG_TYPE_AUTH_LOGIN:
-		// 处理登录请求
-		if req := msg.GetAuthLogin(); req != nil {
-			// 构建请求数据
-			data, err := json.Marshal(req)
-			if err != nil {
-				return createErrorResponse(500, "Failed to marshal request")
-			}
-
-			// 发送请求到SsoAuth服务
-			resp, err := http.Post(fmt.Sprintf("http://localhost:%d/api/auth/login", config.Server.Ssoauth.Port), "application/json", bytes.NewBuffer(data))
-			if err != nil {
-				return createErrorResponse(500, "Failed to send request")
-			}
-			defer resp.Body.Close()
-
-			// 解析响应
-			var authResp struct {
-				Token    string `json:"token"`
-				UserId   string `json:"user_id"`
-				Username string `json:"username"`
-				Nickname string `json:"nickname"`
-			}
-			if err := json.NewDecoder(resp.Body).Decode(&authResp); err != nil {
-				return createErrorResponse(500, "Failed to decode response")
-			}
-
-			// 构建响应消息
-			return &proto.Message{
-				Type: proto.MessageType_MSG_TYPE_RESPONSE,
-				Data: &proto.Message_Response{
-					Response: &proto.Response{
-						Code:    200,
-						Message: "success",
-						Data: &proto.Response_AuthResponse{
-							AuthResponse: &proto.AuthResponse{
-								Token:    authResp.Token,
-								UserId:   authResp.UserId,
-								Username: authResp.Username,
-								Nickname: authResp.Nickname,
-							},
-						},
-					},
-				},
-			}
-		}
-	// 其他消息类型的处理...
-	default:
-		return createErrorResponse(400, "Unknown message type")
-	}
-
-	// 默认返回错误响应
-	return createErrorResponse(400, "Invalid message")
-}
-
-// createErrorResponse 创建错误响应
-func createErrorResponse(code int32, message string) *proto.Message {
-	return &proto.Message{
-		Type: proto.MessageType_MSG_TYPE_RESPONSE,
-		Data: &proto.Message_Response{
-			Response: &proto.Response{
-				Code:    code,
-				Message: message,
-			},
-		},
-	}
+func handleMessage(msg *proto.Message, config *Config, r *router.Router) *proto.Message {
+	// 使用路由器处理消息
+	return r.Handle(msg)
 }
 
 // proxyToService 代理到指定服务
@@ -785,7 +759,7 @@ func proxyToService(targetURL string) gin.HandlerFunc {
 
 // handleClientConnection 处理客户端连接
 // 每个客户端连接分配一个独立的goroutine，持续运行直到连接关闭
-func handleClientConnection(conn *websocket.Conn, wsManager *WebSocketManager, config *Config) {
+func handleClientConnection(conn *websocket.Conn, wsManager *WebSocketManager, config *Config, r *router.Router) {
 	// 添加panic recovery
 	defer func() {
 		if r := recover(); r != nil {
@@ -828,8 +802,15 @@ func handleClientConnection(conn *websocket.Conn, wsManager *WebSocketManager, c
 		// 处理接收到的消息
 		switch messageType {
 		case websocket.BinaryMessage:
+			// 解码协议数据包
+			packet, err := protocol.Decode(bytes.NewReader(message))
+			if err != nil {
+				log.Printf("Failed to decode protocol packet: %v", err)
+				continue
+			}
+
 			// 反序列化protobuf消息
-			msg, err := protoutil.Deserialize(message)
+			msg, err := protoutil.Deserialize(packet.Data)
 			if err != nil {
 				log.Printf("Failed to deserialize message: %v", err)
 				continue
@@ -837,10 +818,11 @@ func handleClientConnection(conn *websocket.Conn, wsManager *WebSocketManager, c
 
 			// 转换为JSON并打印日志
 			jsonMsg := messageToJSON(msg)
-			log.Printf("Received protobuf message: %s", jsonMsg)
+			log.Printf("Received protobuf message (Type: %c, Compress: %c, ID: %d): %s",
+				packet.MessageType, packet.CompressFlag, packet.MessageID, jsonMsg)
 
 			// 处理消息
-			response := handleMessage(msg, config)
+			response := handleMessage(msg, config, r)
 
 			// 序列化响应消息
 			responseData, err := protoutil.Serialize(response)
@@ -849,8 +831,20 @@ func handleClientConnection(conn *websocket.Conn, wsManager *WebSocketManager, c
 				continue
 			}
 
+			// 编码协议数据包
+			encodedData, err := protocol.Encode(
+				protocol.MessageTypeResponse,
+				protocol.CompressFlagNone,
+				packet.MessageID, // 使用相同的消息ID作为响应
+				responseData,
+			)
+			if err != nil {
+				log.Printf("Failed to encode protocol packet: %v", err)
+				continue
+			}
+
 			// 发送响应消息
-			err = conn.WriteMessage(websocket.BinaryMessage, responseData)
+			err = conn.WriteMessage(websocket.BinaryMessage, encodedData)
 			if err != nil {
 				log.Printf("Failed to write message: %v", err)
 				break

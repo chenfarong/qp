@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package proto;
+
+// BillCreatePaymentRequest 创建支付请求
+message BillCreatePaymentRequest {
+  string user_id = 1;       // 用户ID
+  uint32 character_id = 2;   // 角色ID
+  int32 amount = 3;          // 金额
+  int32 pay_type = 4;        // 支付类型
+  string order_id = 5;       // 订单ID
+}
+
+// BillCreatePaymentResponse 创建支付响应
+message BillCreatePaymentResponse {
+  bool success = 1;        // 是否成功
+  uint32 payment_id = 2;   // 支付ID
+  string pay_url = 3;      // 支付链接
+  string message = 4;      // 消息
+}
+
+// BillGetPaymentRequest 获取支付信息请求
+message BillGetPaymentRequest {
+  uint32 payment_id = 1;    // 支付ID
+}
+
+// BillGetPaymentResponse 获取支付信息响应
+message BillGetPaymentResponse {
+  bool success = 1;        // 是否成功
+  Payment payment = 2;    // 支付信息
+  string message = 3;     // 消息
+}
+
+// Payment 支付信息
+message Payment {
+  uint32 id = 1;           // 支付ID
+  string user_id = 2;      // 用户ID
+  uint32 character_id = 3; // 角色ID
+  int32 amount = 4;        // 金额
+  int32 pay_type = 5;      // 支付类型
+  int32 status = 6;        // 状态
+  string order_id = 7;      // 订单ID
+  int64 created_at = 8;    // 创建时间
+  int64 updated_at = 9;    // 更新时间
+}
+
+// BillUpdatePaymentStatusRequest 更新支付状态请求
+message BillUpdatePaymentStatusRequest {
+  uint32 payment_id = 1;   // 支付ID
+  int32 status = 2;         // 状态
+}
+
+// BillUpdatePaymentStatusResponse 更新支付状态响应
+message BillUpdatePaymentStatusResponse {
+  bool success = 1;      // 是否成功
+  string message = 2;    // 消息
+}
+
+// BillGetUserPaymentsRequest 获取用户支付列表请求
+message BillGetUserPaymentsRequest {
+  string user_id = 1;       // 用户ID
+  int32 page = 2;           // 页码
+  int32 page_size = 3;      // 每页大小
+}
+
+// BillGetUserPaymentsResponse 获取用户支付列表响应
+message BillGetUserPaymentsResponse {
+  bool success = 1;            // 是否成功
+  repeated Payment payments = 2; // 支付列表
+  int32 total = 3;             // 总数
+  string message = 4;         // 消息
+}

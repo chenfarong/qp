@@ -13,6 +13,7 @@ import (
 
 	"github.com/aoyo/qp/internal/gamelogic"
 	gamelogicgrpc "github.com/aoyo/qp/internal/gamelogic/grpc"
+	gamelogicprotocol "github.com/aoyo/qp/internal/gamelogic/protocol"
 	"github.com/aoyo/qp/pkg/db"
 	"github.com/aoyo/qp/pkg/envmode"
 	"github.com/aoyo/qp/pkg/etcd"
@@ -148,9 +149,22 @@ func main() {
 	if grpcPort == 0 {
 		grpcPort = config.Server.Gamelogic.Port + 1000
 	}
+
+	// 计算协议服务器端口
+	protocolPort := config.Server.Gamelogic.Port + 2000
+
 	go func() {
 		defer recoverPanic(logClient, "Game Logic gRPC")
 		startGRPCServer(app, grpcPort)
+	}()
+
+	// 启动协议服务器
+	go func() {
+		defer recoverPanic(logClient, "Game Logic Protocol")
+		protocolServer := gamelogicprotocol.NewServer(app)
+		if err := protocolServer.Start(fmt.Sprintf(":%d", protocolPort)); err != nil {
+			log.Printf("Failed to start protocol server: %v", err)
+		}
 	}()
 
 	// 初始化路由
@@ -159,7 +173,7 @@ func main() {
 	log.Println("Router initialized successfully")
 
 	// 打印欢迎日志
-	printWelcomeLog("Game Logic", config.Server.Gamelogic.Port, grpcPort, config.Database.Host, config.Database.Port, config.Database.Dbname)
+	printWelcomeLog("Game Logic", config.Server.Gamelogic.Port, grpcPort, protocolPort, config.Database.Host, config.Database.Port, config.Database.Dbname)
 
 	// 向gateway注册协议编号段
 	go func() {
@@ -170,7 +184,7 @@ func main() {
 	// 启动HTTP服务
 	port := config.Server.Gamelogic.Port
 	log.Printf("Game Logic service starting on port %d...", port)
-	
+
 	// 主服务器启动，添加panic recovery
 	defer recoverPanic(logClient, "Game Logic HTTP")
 	if err := router.Run(":" + strconv.Itoa(port)); err != nil {
@@ -179,7 +193,7 @@ func main() {
 }
 
 // printWelcomeLog 打印欢迎日志
-func printWelcomeLog(serverType string, httpPort, grpcPort int, dbHost string, dbPort int, dbName string) {
+func printWelcomeLog(serverType string, httpPort, grpcPort, protocolPort int, dbHost string, dbPort int, dbName string) {
 	// 获取git信息
 	gitInfo, err := utils.GetGitInfo()
 	if err != nil {
@@ -194,6 +208,7 @@ func printWelcomeLog(serverType string, httpPort, grpcPort int, dbHost string, d
 	log.Printf("🌐 Server Type: %s", serverType)
 	log.Printf("🚪 HTTP Port: %d", httpPort)
 	log.Printf("🔗 gRPC Port: %d", grpcPort)
+	log.Printf("📡 Protocol Port: %d", protocolPort)
 	log.Printf("🗄️  Database: %s:%d/%s", dbHost, dbPort, dbName)
 	if gitInfo != nil {
 		log.Printf("📝 Git Branch: %s", gitInfo.Branch)
