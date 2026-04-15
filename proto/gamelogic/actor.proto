@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package protocli;
+
+option go_package = "zgame/pb/golang";
+
+message ActorCreateRequest
+{
+
+}
+
+message ActorCreateResponse
+{
+    string aid=1;
+}
+
+
+message ActorUseRequest
+{
+    string aid=1;
+}
+

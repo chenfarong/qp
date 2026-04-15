@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package protocli;
+
+option go_package = "zgame/pb/golang";
+
+//单物品信息
+message ItemData
+{
+  int64 item_id = 1; //唯一编号
+  int32 item_cfg_id = 2; //配表id
+  int64 num = 3; //数量
+}
+
+
+// 添加物品请求
+message AddItemRequest {
+  string item_id = 1;       // 物品ID
+  int32 count = 2;          // 数量
+}
+
+// 添加物品响应
+message AddItemResponse {
+  bool success = 1;         // 是否成功
+  string message = 2;       // 消息
+}
+
+// 移除物品请求
+message RemoveItemRequest {
+  string item_id = 1;       // 物品ID
+  int32 count = 2;          // 数量
+}
+
+// 移除物品响应
+message RemoveItemResponse {
+  bool success = 1;         // 是否成功
+  string message = 2;       // 消息
+}
+
+// 获取背包请求
+message GetBagRequest {
+}
+
+// 获取背包响应
+message GetBagResponse {
+  bool success = 1;         // 是否成功
+  map<string, int32> bag = 2; // 背包物品
+  string message = 3;       // 消息
+}
+
+//使用道具
+message BagItemUseRequest {
+  int64 item_id = 1;  //背包物品中的编号
+  int64 num = 2; //使用数量
+}
+
+//使用道具返回
+message BagItemUseResponse {
+  bool success = 1;         // 是否成功
+  string message = 2;       // 消息
+  ItemData item_data = 3; //请求物品的信息
+}
+

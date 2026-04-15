@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package protocli;
+
+option go_package = "zgame/pb/golang";
+
+// 添加英雄请求
+message AddHeroRequest {
+  string hero_id = 1;       // 英雄ID
+}
+
+// 添加英雄响应
+message AddHeroResponse {
+  bool success = 1;         // 是否成功
+  string message = 2;       // 消息
+}
+
+// 移除英雄请求
+message RemoveHeroRequest {
+  string hero_id = 1;       // 英雄ID
+}
+
+// 移除英雄响应
+message RemoveHeroResponse {
+  bool success = 1;         // 是否成功
+  string message = 2;       // 消息
+}
+
+// 获取英雄列表请求
+message GetHeroesRequest {
+}
+
+// 获取英雄列表响应
+message GetHeroesResponse {
+  bool success = 1;         // 是否成功
+  repeated string heroes = 2; // 英雄列表
+  string message = 3;       // 消息
+}
