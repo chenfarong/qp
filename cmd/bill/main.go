@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"runtime/debug"
 	"time"
 
 	"os"
@@ -95,7 +96,10 @@ func main() {
 	printWelcomeLog("Bill", port, grpcPort, config.Database.Host, config.Database.Port, config.Database.Dbname)
 
 	// 向gateway注册协议编号段
-	go registerToGateway("bill", fmt.Sprintf("localhost:%d", port), 301, 400)
+	go func() {
+		defer recoverPanic(logClient, "Bill Gateway Registration")
+		registerToGateway("bill", fmt.Sprintf("localhost:%d", port), 301, 400)
+	}()
 
 	var etcdClient *etcd.Client
 	if envmode.UseEtcd(config.Sandbox) {
@@ -143,7 +147,10 @@ func main() {
 	}
 
 	// 启动gRPC服务器
-	go startGRPCServer(paymentService, grpcPort)
+	go func() {
+		defer recoverPanic(logClient, "Bill gRPC")
+		startGRPCServer(paymentService, grpcPort)
+	}()
 
 	// 初始化处理器
 	billHandler := handler.NewBillHandler(tokenService, paymentService)
@@ -155,6 +162,7 @@ func main() {
 	// 启动HTTP服务器
 	serverAddr := fmt.Sprintf("%s:%d", host, port)
 	log.Printf("Bill server starting on %s", serverAddr)
+	defer recoverPanic(logClient, "Bill HTTP")
 	if err := router.Run(serverAddr); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
@@ -222,6 +230,22 @@ func printWelcomeLog(serverType string, httpPort, grpcPort int, dbHost string, d
 	}
 	log.Println("===============================================================")
 	log.Println("")
+}
+
+// recoverPanic 恢复panic并打印错误信息和调用堆栈
+func recoverPanic(logClient *logger.Client, serverName string) {
+	if r := recover(); r != nil {
+		// 捕获panic信息
+		panicMsg := fmt.Sprintf("Panic recovered in %s server: %v\n%s", serverName, r, string(debug.Stack()))
+
+		// 打印到控制台
+		log.Printf("ERROR: %s", panicMsg)
+
+		// 发送到日志服务器
+		if logClient != nil {
+			logClient.Error(panicMsg)
+		}
+	}
 }
 
 // registerToGateway 向gateway注册协议编号段

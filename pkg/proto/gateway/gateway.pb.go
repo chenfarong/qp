@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.2
-// source: proto/gateway.proto
+// source: gateway.proto
 
 package gateway
 
@@ -35,7 +35,7 @@ type PushMessageRequest struct {
 
 func (x *PushMessageRequest) Reset() {
 	*x = PushMessageRequest{}
-	mi := &file_proto_gateway_proto_msgTypes[0]
+	mi := &file_gateway_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +47,7 @@ func (x *PushMessageRequest) String() string {
 func (*PushMessageRequest) ProtoMessage() {}
 
 func (x *PushMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gateway_proto_msgTypes[0]
+	mi := &file_gateway_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +60,7 @@ func (x *PushMessageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PushMessageRequest.ProtoReflect.Descriptor instead.
 func (*PushMessageRequest) Descriptor() ([]byte, []int) {
-	return file_proto_gateway_proto_rawDescGZIP(), []int{0}
+	return file_gateway_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *PushMessageRequest) GetUserId() uint32 {
@@ -110,7 +110,7 @@ type PushMessageResponse struct {
 
 func (x *PushMessageResponse) Reset() {
 	*x = PushMessageResponse{}
-	mi := &file_proto_gateway_proto_msgTypes[1]
+	mi := &file_gateway_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -122,7 +122,7 @@ func (x *PushMessageResponse) String() string {
 func (*PushMessageResponse) ProtoMessage() {}
 
 func (x *PushMessageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gateway_proto_msgTypes[1]
+	mi := &file_gateway_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -135,7 +135,7 @@ func (x *PushMessageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PushMessageResponse.ProtoReflect.Descriptor instead.
 func (*PushMessageResponse) Descriptor() ([]byte, []int) {
-	return file_proto_gateway_proto_rawDescGZIP(), []int{1}
+	return file_gateway_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *PushMessageResponse) GetSuccess() bool {
@@ -172,7 +172,7 @@ type BroadcastMessageRequest struct {
 
 func (x *BroadcastMessageRequest) Reset() {
 	*x = BroadcastMessageRequest{}
-	mi := &file_proto_gateway_proto_msgTypes[2]
+	mi := &file_gateway_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -184,7 +184,7 @@ func (x *BroadcastMessageRequest) String() string {
 func (*BroadcastMessageRequest) ProtoMessage() {}
 
 func (x *BroadcastMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gateway_proto_msgTypes[2]
+	mi := &file_gateway_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -197,7 +197,7 @@ func (x *BroadcastMessageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BroadcastMessageRequest.ProtoReflect.Descriptor instead.
 func (*BroadcastMessageRequest) Descriptor() ([]byte, []int) {
-	return file_proto_gateway_proto_rawDescGZIP(), []int{2}
+	return file_gateway_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *BroadcastMessageRequest) GetMessageType() string {
@@ -240,7 +240,7 @@ type BroadcastMessageResponse struct {
 
 func (x *BroadcastMessageResponse) Reset() {
 	*x = BroadcastMessageResponse{}
-	mi := &file_proto_gateway_proto_msgTypes[3]
+	mi := &file_gateway_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -252,7 +252,7 @@ func (x *BroadcastMessageResponse) String() string {
 func (*BroadcastMessageResponse) ProtoMessage() {}
 
 func (x *BroadcastMessageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gateway_proto_msgTypes[3]
+	mi := &file_gateway_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -265,7 +265,7 @@ func (x *BroadcastMessageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BroadcastMessageResponse.ProtoReflect.Descriptor instead.
 func (*BroadcastMessageResponse) Descriptor() ([]byte, []int) {
-	return file_proto_gateway_proto_rawDescGZIP(), []int{3}
+	return file_gateway_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *BroadcastMessageResponse) GetSuccess() bool {
@@ -298,7 +298,7 @@ type GetConnectedUsersRequest struct {
 
 func (x *GetConnectedUsersRequest) Reset() {
 	*x = GetConnectedUsersRequest{}
-	mi := &file_proto_gateway_proto_msgTypes[4]
+	mi := &file_gateway_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -310,7 +310,7 @@ func (x *GetConnectedUsersRequest) String() string {
 func (*GetConnectedUsersRequest) ProtoMessage() {}
 
 func (x *GetConnectedUsersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gateway_proto_msgTypes[4]
+	mi := &file_gateway_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -323,7 +323,7 @@ func (x *GetConnectedUsersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetConnectedUsersRequest.ProtoReflect.Descriptor instead.
 func (*GetConnectedUsersRequest) Descriptor() ([]byte, []int) {
-	return file_proto_gateway_proto_rawDescGZIP(), []int{4}
+	return file_gateway_proto_rawDescGZIP(), []int{4}
 }
 
 // GetConnectedUsersResponse 获取连接用户列表响应
@@ -336,29 +336,9 @@ type GetConnectedUsersResponse struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-// RegisterProtocolRangeRequest 注册协议编号段请求
-type RegisterProtocolRangeRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServiceName   string                 `protobuf:"bytes,1,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`
-	ServiceAddress string                `protobuf:"bytes,2,opt,name=service_address,json=serviceAddress,proto3" json:"service_address,omitempty"`
-	StartProtocol int32                  `protobuf:"varint,3,opt,name=start_protocol,json=startProtocol,proto3" json:"start_protocol,omitempty"`
-	EndProtocol   int32                  `protobuf:"varint,4,opt,name=end_protocol,json=endProtocol,proto3" json:"end_protocol,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-// RegisterProtocolRangeResponse 注册协议编号段响应
-type RegisterProtocolRangeResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Error         string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
 func (x *GetConnectedUsersResponse) Reset() {
 	*x = GetConnectedUsersResponse{}
-	mi := &file_proto_gateway_proto_msgTypes[5]
+	mi := &file_gateway_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -370,7 +350,7 @@ func (x *GetConnectedUsersResponse) String() string {
 func (*GetConnectedUsersResponse) ProtoMessage() {}
 
 func (x *GetConnectedUsersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_gateway_proto_msgTypes[5]
+	mi := &file_gateway_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -383,7 +363,7 @@ func (x *GetConnectedUsersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetConnectedUsersResponse.ProtoReflect.Descriptor instead.
 func (*GetConnectedUsersResponse) Descriptor() ([]byte, []int) {
-	return file_proto_gateway_proto_rawDescGZIP(), []int{5}
+	return file_gateway_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetConnectedUsersResponse) GetUserIds() []uint32 {
@@ -407,11 +387,133 @@ func (x *GetConnectedUsersResponse) GetError() string {
 	return ""
 }
 
-var File_proto_gateway_proto protoreflect.FileDescriptor
+// RegisterProtocolRangeRequest 注册协议编号段请求
+type RegisterProtocolRangeRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ServiceName    string                 `protobuf:"bytes,1,opt,name=service_name,json=serviceName,proto3" json:"service_name,omitempty"`          // 服务名称
+	ServiceAddress string                 `protobuf:"bytes,2,opt,name=service_address,json=serviceAddress,proto3" json:"service_address,omitempty"` // 服务地址
+	StartProtocol  int32                  `protobuf:"varint,3,opt,name=start_protocol,json=startProtocol,proto3" json:"start_protocol,omitempty"`   // 起始协议编号
+	EndProtocol    int32                  `protobuf:"varint,4,opt,name=end_protocol,json=endProtocol,proto3" json:"end_protocol,omitempty"`         // 结束协议编号
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
 
-const file_proto_gateway_proto_rawDesc = "" +
+func (x *RegisterProtocolRangeRequest) Reset() {
+	*x = RegisterProtocolRangeRequest{}
+	mi := &file_gateway_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterProtocolRangeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterProtocolRangeRequest) ProtoMessage() {}
+
+func (x *RegisterProtocolRangeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterProtocolRangeRequest.ProtoReflect.Descriptor instead.
+func (*RegisterProtocolRangeRequest) Descriptor() ([]byte, []int) {
+	return file_gateway_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *RegisterProtocolRangeRequest) GetServiceName() string {
+	if x != nil {
+		return x.ServiceName
+	}
+	return ""
+}
+
+func (x *RegisterProtocolRangeRequest) GetServiceAddress() string {
+	if x != nil {
+		return x.ServiceAddress
+	}
+	return ""
+}
+
+func (x *RegisterProtocolRangeRequest) GetStartProtocol() int32 {
+	if x != nil {
+		return x.StartProtocol
+	}
+	return 0
+}
+
+func (x *RegisterProtocolRangeRequest) GetEndProtocol() int32 {
+	if x != nil {
+		return x.EndProtocol
+	}
+	return 0
+}
+
+// RegisterProtocolRangeResponse 注册协议编号段响应
+type RegisterProtocolRangeResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Error         string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterProtocolRangeResponse) Reset() {
+	*x = RegisterProtocolRangeResponse{}
+	mi := &file_gateway_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterProtocolRangeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterProtocolRangeResponse) ProtoMessage() {}
+
+func (x *RegisterProtocolRangeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gateway_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterProtocolRangeResponse.ProtoReflect.Descriptor instead.
+func (*RegisterProtocolRangeResponse) Descriptor() ([]byte, []int) {
+	return file_gateway_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *RegisterProtocolRangeResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *RegisterProtocolRangeResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+var File_gateway_proto protoreflect.FileDescriptor
+
+const file_gateway_proto_rawDesc = "" +
 	"\n" +
-	"\x13proto/gateway.proto\x12\agateway\"\xa3\x01\n" +
+	"\rgateway.proto\x12\agateway\"\xa3\x01\n" +
 	"\x12PushMessageRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\rR\x06userId\x12!\n" +
 	"\fmessage_type\x18\x02 \x01(\tR\vmessageType\x12!\n" +
@@ -436,67 +538,80 @@ const file_proto_gateway_proto_rawDesc = "" +
 	"\buser_ids\x18\x01 \x03(\rR\auserIds\x12\x1f\n" +
 	"\vtotal_users\x18\x02 \x01(\x05R\n" +
 	"totalUsers\x12\x14\n" +
-	"\x05error\x18\x03 \x01(\tR\x05error2\x95\x02\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"\xb4\x01\n" +
+	"\x1cRegisterProtocolRangeRequest\x12!\n" +
+	"\fservice_name\x18\x01 \x01(\tR\vserviceName\x12'\n" +
+	"\x0fservice_address\x18\x02 \x01(\tR\x0eserviceAddress\x12%\n" +
+	"\x0estart_protocol\x18\x03 \x01(\x05R\rstartProtocol\x12!\n" +
+	"\fend_protocol\x18\x04 \x01(\x05R\vendProtocol\"O\n" +
+	"\x1dRegisterProtocolRangeResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x14\n" +
+	"\x05error\x18\x02 \x01(\tR\x05error2\xff\x02\n" +
 	"\x0eGatewayService\x12J\n" +
 	"\vPushMessage\x12\x1b.gateway.PushMessageRequest\x1a\x1c.gateway.PushMessageResponse\"\x00\x12Y\n" +
 	"\x10BroadcastMessage\x12 .gateway.BroadcastMessageRequest\x1a!.gateway.BroadcastMessageResponse\"\x00\x12\\\n" +
-	"\x11GetConnectedUsers\x12!.gateway.GetConnectedUsersRequest\x1a\".gateway.GetConnectedUsersResponse\"\x00B&Z$github.com/aoyo/qp/pkg/proto/gatewayb\x06proto3"
+	"\x11GetConnectedUsers\x12!.gateway.GetConnectedUsersRequest\x1a\".gateway.GetConnectedUsersResponse\"\x00\x12h\n" +
+	"\x15RegisterProtocolRange\x12%.gateway.RegisterProtocolRangeRequest\x1a&.gateway.RegisterProtocolRangeResponse\"\x00B&Z$github.com/aoyo/qp/pkg/proto/gatewayb\x06proto3"
 
 var (
-	file_proto_gateway_proto_rawDescOnce sync.Once
-	file_proto_gateway_proto_rawDescData []byte
+	file_gateway_proto_rawDescOnce sync.Once
+	file_gateway_proto_rawDescData []byte
 )
 
-func file_proto_gateway_proto_rawDescGZIP() []byte {
-	file_proto_gateway_proto_rawDescOnce.Do(func() {
-		file_proto_gateway_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_gateway_proto_rawDesc), len(file_proto_gateway_proto_rawDesc)))
+func file_gateway_proto_rawDescGZIP() []byte {
+	file_gateway_proto_rawDescOnce.Do(func() {
+		file_gateway_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_gateway_proto_rawDesc), len(file_gateway_proto_rawDesc)))
 	})
-	return file_proto_gateway_proto_rawDescData
+	return file_gateway_proto_rawDescData
 }
 
-var file_proto_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
-var file_proto_gateway_proto_goTypes = []any{
-	(*PushMessageRequest)(nil),        // 0: gateway.PushMessageRequest
-	(*PushMessageResponse)(nil),       // 1: gateway.PushMessageResponse
-	(*BroadcastMessageRequest)(nil),   // 2: gateway.BroadcastMessageRequest
-	(*BroadcastMessageResponse)(nil),  // 3: gateway.BroadcastMessageResponse
-	(*GetConnectedUsersRequest)(nil),  // 4: gateway.GetConnectedUsersRequest
-	(*GetConnectedUsersResponse)(nil), // 5: gateway.GetConnectedUsersResponse
+var file_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_gateway_proto_goTypes = []any{
+	(*PushMessageRequest)(nil),            // 0: gateway.PushMessageRequest
+	(*PushMessageResponse)(nil),           // 1: gateway.PushMessageResponse
+	(*BroadcastMessageRequest)(nil),       // 2: gateway.BroadcastMessageRequest
+	(*BroadcastMessageResponse)(nil),      // 3: gateway.BroadcastMessageResponse
+	(*GetConnectedUsersRequest)(nil),      // 4: gateway.GetConnectedUsersRequest
+	(*GetConnectedUsersResponse)(nil),     // 5: gateway.GetConnectedUsersResponse
+	(*RegisterProtocolRangeRequest)(nil),  // 6: gateway.RegisterProtocolRangeRequest
+	(*RegisterProtocolRangeResponse)(nil), // 7: gateway.RegisterProtocolRangeResponse
 }
-var file_proto_gateway_proto_depIdxs = []int32{
+var file_gateway_proto_depIdxs = []int32{
 	0, // 0: gateway.GatewayService.PushMessage:input_type -> gateway.PushMessageRequest
 	2, // 1: gateway.GatewayService.BroadcastMessage:input_type -> gateway.BroadcastMessageRequest
 	4, // 2: gateway.GatewayService.GetConnectedUsers:input_type -> gateway.GetConnectedUsersRequest
-	1, // 3: gateway.GatewayService.PushMessage:output_type -> gateway.PushMessageResponse
-	3, // 4: gateway.GatewayService.BroadcastMessage:output_type -> gateway.BroadcastMessageResponse
-	5, // 5: gateway.GatewayService.GetConnectedUsers:output_type -> gateway.GetConnectedUsersResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	6, // 3: gateway.GatewayService.RegisterProtocolRange:input_type -> gateway.RegisterProtocolRangeRequest
+	1, // 4: gateway.GatewayService.PushMessage:output_type -> gateway.PushMessageResponse
+	3, // 5: gateway.GatewayService.BroadcastMessage:output_type -> gateway.BroadcastMessageResponse
+	5, // 6: gateway.GatewayService.GetConnectedUsers:output_type -> gateway.GetConnectedUsersResponse
+	7, // 7: gateway.GatewayService.RegisterProtocolRange:output_type -> gateway.RegisterProtocolRangeResponse
+	4, // [4:8] is the sub-list for method output_type
+	0, // [0:4] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_proto_gateway_proto_init() }
-func file_proto_gateway_proto_init() {
-	if File_proto_gateway_proto != nil {
+func init() { file_gateway_proto_init() }
+func file_gateway_proto_init() {
+	if File_gateway_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_gateway_proto_rawDesc), len(file_proto_gateway_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gateway_proto_rawDesc), len(file_gateway_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_proto_gateway_proto_goTypes,
-		DependencyIndexes: file_proto_gateway_proto_depIdxs,
-		MessageInfos:      file_proto_gateway_proto_msgTypes,
+		GoTypes:           file_gateway_proto_goTypes,
+		DependencyIndexes: file_gateway_proto_depIdxs,
+		MessageInfos:      file_gateway_proto_msgTypes,
 	}.Build()
-	File_proto_gateway_proto = out.File
-	file_proto_gateway_proto_goTypes = nil
-	file_proto_gateway_proto_depIdxs = nil
+	File_gateway_proto = out.File
+	file_gateway_proto_goTypes = nil
+	file_gateway_proto_depIdxs = nil
 }

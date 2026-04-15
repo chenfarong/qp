@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -51,9 +52,13 @@ func main() {
 	logChan := make(chan string, 1000)
 
 	// 启动日志写入线程
-	go writeLogsToFile(logChan, logFile)
+	go func() {
+		defer recoverPanic("Logger Write Thread")
+		writeLogsToFile(logChan, logFile)
+	}()
 
 	// 启动UDP服务器
+	defer recoverPanic("Logger UDP Server")
 	startUDPServer(config.Server.Logger.UdpPort, logChan)
 }
 
@@ -136,9 +141,20 @@ func startUDPServer(port int, logChan chan string) {
 		// 处理收到的日志消息
 		logMsg := string(buffer[:n])
 		logChan <- logMsg
-		
+
 		// 打印到控制台
 		log.Printf("Received log: %s", logMsg)
+	}
+}
+
+// recoverPanic 恢复panic并打印错误信息和调用堆栈
+func recoverPanic(serverName string) {
+	if r := recover(); r != nil {
+		// 捕获panic信息
+		panicMsg := fmt.Sprintf("Panic recovered in %s server: %v\n%s", serverName, r, string(debug.Stack()))
+
+		// 打印到控制台
+		log.Printf("ERROR: %s", panicMsg)
 	}
 }
 

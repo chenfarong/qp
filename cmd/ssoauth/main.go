@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -139,7 +140,10 @@ func main() {
 	if grpcPort == 0 {
 		grpcPort = config.Server.Ssoauth.Port + 1000
 	}
-	go startGRPCServer(authService, grpcPort)
+	go func() {
+		defer recoverPanic(logClient, "SSO Auth gRPC")
+		startGRPCServer(authService, grpcPort)
+	}()
 
 	// 初始化路由
 	router := gin.Default()
@@ -149,11 +153,17 @@ func main() {
 	printWelcomeLog("SSO Auth", config.Server.Ssoauth.Port, grpcPort, config.Database.Host, config.Database.Port, config.Database.Dbname)
 
 	// 向gateway注册协议编号段
-	go registerToGateway("ssoauth", fmt.Sprintf("localhost:%d", config.Server.Ssoauth.Port), 1, 100)
+	go func() {
+		defer recoverPanic(logClient, "SSO Auth Gateway Registration")
+		registerToGateway("ssoauth", fmt.Sprintf("localhost:%d", config.Server.Ssoauth.Port), 1, 100)
+	}()
 
 	// 启动HTTP服务
 	port := config.Server.Ssoauth.Port
 	log.Printf("SSO Auth service starting on port %d...", port)
+	
+	// 主服务器启动，添加panic recovery
+	defer recoverPanic(logClient, "SSO Auth HTTP")
 	if err := router.Run(":" + strconv.Itoa(port)); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
@@ -183,6 +193,22 @@ func printWelcomeLog(serverType string, httpPort, grpcPort int, dbHost string, d
 	}
 	log.Println("===============================================================")
 	log.Println("")
+}
+
+// recoverPanic 恢复panic并打印错误信息和调用堆栈
+func recoverPanic(logClient *logger.Client, serverName string) {
+	if r := recover(); r != nil {
+		// 捕获panic信息
+		panicMsg := fmt.Sprintf("Panic recovered in %s server: %v\n%s", serverName, r, string(debug.Stack()))
+
+		// 打印到控制台
+		log.Printf("ERROR: %s", panicMsg)
+
+		// 发送到日志服务器
+		if logClient != nil {
+			logClient.Error(panicMsg)
+		}
+	}
 }
 
 // startGRPCServer 启动gRPC服务器

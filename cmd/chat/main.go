@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -134,7 +135,10 @@ func main() {
 	if grpcPort == 0 {
 		grpcPort = config.Server.Chat.Port + 1000
 	}
-	go startGRPCServer(chatService, grpcPort)
+	go func() {
+		defer recoverPanic(logClient, "Chat gRPC")
+		startGRPCServer(chatService, grpcPort)
+	}()
 
 	// 初始化路由
 	router := gin.Default()
@@ -153,11 +157,17 @@ func main() {
 	printWelcomeLog("Chat", config.Server.Chat.Port, grpcPort, config.Database.Host, config.Database.Port, config.Database.Dbname)
 
 	// 向gateway注册协议编号段
-	go registerToGateway("chat", fmt.Sprintf("localhost:%d", config.Server.Chat.Port), 201, 300)
+	go func() {
+		defer recoverPanic(logClient, "Chat Gateway Registration")
+		registerToGateway("chat", fmt.Sprintf("localhost:%d", config.Server.Chat.Port), 201, 300)
+	}()
 
 	// 启动HTTP服务
 	port := config.Server.Chat.Port
 	log.Printf("Chat service starting on port %d...", port)
+	
+	// 主服务器启动，添加panic recovery
+	defer recoverPanic(logClient, "Chat HTTP")
 	if err := router.Run(":" + strconv.Itoa(port)); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
@@ -187,6 +197,22 @@ func printWelcomeLog(serverType string, httpPort, grpcPort int, dbHost string, d
 	}
 	log.Println("===============================================================")
 	log.Println("")
+}
+
+// recoverPanic 恢复panic并打印错误信息和调用堆栈
+func recoverPanic(logClient *logger.Client, serverName string) {
+	if r := recover(); r != nil {
+		// 捕获panic信息
+		panicMsg := fmt.Sprintf("Panic recovered in %s server: %v\n%s", serverName, r, string(debug.Stack()))
+
+		// 打印到控制台
+		log.Printf("ERROR: %s", panicMsg)
+
+		// 发送到日志服务器
+		if logClient != nil {
+			logClient.Error(panicMsg)
+		}
+	}
 }
 
 // startGRPCServer 启动gRPC服务器

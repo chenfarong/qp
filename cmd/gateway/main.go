@@ -7,18 +7,19 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"runtime/debug"
 	"strconv"
 	"sync"
 
 	"os"
 
+	"github.com/aoyo/qp/github.com/aoyo/qp/proto"
 	"github.com/aoyo/qp/internal/gateway/grpc"
 	"github.com/aoyo/qp/pkg/envmode"
 	"github.com/aoyo/qp/pkg/etcd"
 	"github.com/aoyo/qp/pkg/logger"
 	"github.com/aoyo/qp/pkg/proto/gateway"
 	"github.com/aoyo/qp/pkg/utils"
-	"github.com/aoyo/qp/proto"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	grpc_lib "google.golang.org/grpc"
@@ -28,17 +29,11 @@ import (
 
 // protoutil 提供protobuf序列化和反序列化功能
 var protoutil = struct {
-	Serialize   func(*proto.Message) ([]byte, error)
-	Deserialize func([]byte) (*proto.Message, error)
+	Marshal   func(pb.Message) ([]byte, error)
+	Unmarshal func([]byte, pb.Message) error
 }{
-	Serialize: func(msg *proto.Message) ([]byte, error) {
-		return pb.Marshal(msg)
-	},
-	Deserialize: func(data []byte) (*proto.Message, error) {
-		msg := &proto.Message{}
-		err := pb.Unmarshal(data, msg)
-		return msg, err
-	},
+	Marshal:   pb.Marshal,
+	Unmarshal: pb.Unmarshal,
 }
 
 // Config 配置结构
@@ -261,7 +256,10 @@ func main() {
 	if grpcPort == 0 {
 		grpcPort = config.Server.Gateway.Port + 1000
 	}
-	go startGRPCServer(wsManager, grpcPort)
+	go func() {
+		defer recoverPanic(logClient, "Gateway gRPC")
+		startGRPCServer(wsManager, grpcPort)
+	}()
 
 	// 初始化路由
 	router := gin.Default()
@@ -275,6 +273,9 @@ func main() {
 	// 启动HTTP/WebSocket服务
 	port := config.Server.Gateway.Port
 	log.Printf("Gateway service starting on port %d...", port)
+
+	// 主服务器启动，添加panic recovery
+	defer recoverPanic(logClient, "Gateway HTTP")
 	if err := router.Run(":" + strconv.Itoa(port)); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
@@ -306,6 +307,22 @@ func printWelcomeLog(serverType string, httpPort, grpcPort int, dbHost string, d
 	}
 	log.Println("===============================================================")
 	log.Println("")
+}
+
+// recoverPanic 恢复panic并打印错误信息和调用堆栈
+func recoverPanic(logClient *logger.Client, serverName string) {
+	if r := recover(); r != nil {
+		// 捕获panic信息
+		panicMsg := fmt.Sprintf("Panic recovered in %s server: %v\n%s", serverName, r, string(debug.Stack()))
+
+		// 打印到控制台
+		log.Printf("ERROR: %s", panicMsg)
+
+		// 发送到日志服务器
+		if logClient != nil {
+			logClient.Error(panicMsg)
+		}
+	}
 }
 
 // startGRPCServer 启动gRPC服务器
@@ -769,6 +786,17 @@ func proxyToService(targetURL string) gin.HandlerFunc {
 // handleClientConnection 处理客户端连接
 // 每个客户端连接分配一个独立的goroutine，持续运行直到连接关闭
 func handleClientConnection(conn *websocket.Conn, wsManager *WebSocketManager, config *Config) {
+	// 添加panic recovery
+	defer func() {
+		if r := recover(); r != nil {
+			// 捕获panic信息
+			panicMsg := fmt.Sprintf("Panic recovered in WebSocket connection: %v\n%s", r, string(debug.Stack()))
+
+			// 打印到控制台
+			log.Printf("ERROR: %s", panicMsg)
+		}
+	}()
+
 	var userID uint32
 
 	// 连接建立时发送欢迎消息
