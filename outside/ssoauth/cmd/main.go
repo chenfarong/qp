@@ -19,6 +19,14 @@ func main() {
 
 	// 路由
 	r.POST("/login", handler.Login)
+	r.POST("/register", handler.Register)
+
+	// 需要JWT验证的路由
+	auth := r.Group("/auth")
+	auth.Use(middleware.JWT())
+	{
+		auth.GET("/profile", handler.Profile)
+	}
 
 	// 启动服务器
 	server := &http.Server{

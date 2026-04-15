@@ -16,9 +16,9 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// GenerateSession 生成32位小写字母的session
+// GenerateSession 生成32位小写字母和数字的session
 func GenerateSession() string {
-	const charset = "abcdefghijklmnopqrstuvwxyz"
+	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
 	sb := make([]byte, 32)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := range sb {
