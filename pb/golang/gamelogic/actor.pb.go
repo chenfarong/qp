@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.2
-// source: protocli/actor.proto
+// source: actor.proto
 
-package golang
+package gamelogic
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -21,15 +21,125 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// 角色基础数据
+type ActorData struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ActorId       string                 `protobuf:"bytes,1,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty"`        //角色编号
+	Pid           string                 `protobuf:"bytes,2,opt,name=pid,proto3" json:"pid,omitempty"`                               //账号
+	CreatedAt     int64                  `protobuf:"varint,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"` //创建时间
+	UpdatedAt     int64                  `protobuf:"varint,4,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"` //更新时间
+	OnlineAt      int64                  `protobuf:"varint,5,opt,name=online_at,json=onlineAt,proto3" json:"online_at,omitempty"`    //本次上线时间
+	OfflineAt     int64                  `protobuf:"varint,6,opt,name=offline_at,json=offlineAt,proto3" json:"offline_at,omitempty"` //上次下线时间
+	Name          string                 `protobuf:"bytes,7,opt,name=name,proto3" json:"name,omitempty"`                             //角色名称
+	Level         int32                  `protobuf:"varint,8,opt,name=level,proto3" json:"level,omitempty"`                          //等级
+	Realm         string                 `protobuf:"bytes,9,opt,name=realm,proto3" json:"realm,omitempty"`                           //服 区 名称
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ActorData) Reset() {
+	*x = ActorData{}
+	mi := &file_actor_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ActorData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ActorData) ProtoMessage() {}
+
+func (x *ActorData) ProtoReflect() protoreflect.Message {
+	mi := &file_actor_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ActorData.ProtoReflect.Descriptor instead.
+func (*ActorData) Descriptor() ([]byte, []int) {
+	return file_actor_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ActorData) GetActorId() string {
+	if x != nil {
+		return x.ActorId
+	}
+	return ""
+}
+
+func (x *ActorData) GetPid() string {
+	if x != nil {
+		return x.Pid
+	}
+	return ""
+}
+
+func (x *ActorData) GetCreatedAt() int64 {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return 0
+}
+
+func (x *ActorData) GetUpdatedAt() int64 {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return 0
+}
+
+func (x *ActorData) GetOnlineAt() int64 {
+	if x != nil {
+		return x.OnlineAt
+	}
+	return 0
+}
+
+func (x *ActorData) GetOfflineAt() int64 {
+	if x != nil {
+		return x.OfflineAt
+	}
+	return 0
+}
+
+func (x *ActorData) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ActorData) GetLevel() int32 {
+	if x != nil {
+		return x.Level
+	}
+	return 0
+}
+
+func (x *ActorData) GetRealm() string {
+	if x != nil {
+		return x.Realm
+	}
+	return ""
+}
+
 type ActorCreateRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"` //角色名称 如果没提供的时候服务器随机一个名字
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ActorCreateRequest) Reset() {
 	*x = ActorCreateRequest{}
-	mi := &file_protocli_actor_proto_msgTypes[0]
+	mi := &file_actor_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -41,7 +151,7 @@ func (x *ActorCreateRequest) String() string {
 func (*ActorCreateRequest) ProtoMessage() {}
 
 func (x *ActorCreateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protocli_actor_proto_msgTypes[0]
+	mi := &file_actor_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -54,49 +164,12 @@ func (x *ActorCreateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActorCreateRequest.ProtoReflect.Descriptor instead.
 func (*ActorCreateRequest) Descriptor() ([]byte, []int) {
-	return file_protocli_actor_proto_rawDescGZIP(), []int{0}
+	return file_actor_proto_rawDescGZIP(), []int{1}
 }
 
-type ActorCreateResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Aid           string                 `protobuf:"bytes,1,opt,name=aid,proto3" json:"aid,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ActorCreateResponse) Reset() {
-	*x = ActorCreateResponse{}
-	mi := &file_protocli_actor_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ActorCreateResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ActorCreateResponse) ProtoMessage() {}
-
-func (x *ActorCreateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protocli_actor_proto_msgTypes[1]
+func (x *ActorCreateRequest) GetName() string {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ActorCreateResponse.ProtoReflect.Descriptor instead.
-func (*ActorCreateResponse) Descriptor() ([]byte, []int) {
-	return file_protocli_actor_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *ActorCreateResponse) GetAid() string {
-	if x != nil {
-		return x.Aid
+		return x.Name
 	}
 	return ""
 }
@@ -110,7 +183,7 @@ type ActorUseRequest struct {
 
 func (x *ActorUseRequest) Reset() {
 	*x = ActorUseRequest{}
-	mi := &file_protocli_actor_proto_msgTypes[2]
+	mi := &file_actor_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -122,7 +195,7 @@ func (x *ActorUseRequest) String() string {
 func (*ActorUseRequest) ProtoMessage() {}
 
 func (x *ActorUseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_protocli_actor_proto_msgTypes[2]
+	mi := &file_actor_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -135,7 +208,7 @@ func (x *ActorUseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActorUseRequest.ProtoReflect.Descriptor instead.
 func (*ActorUseRequest) Descriptor() ([]byte, []int) {
-	return file_protocli_actor_proto_rawDescGZIP(), []int{2}
+	return file_actor_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ActorUseRequest) GetAid() string {
@@ -145,63 +218,193 @@ func (x *ActorUseRequest) GetAid() string {
 	return ""
 }
 
-var File_protocli_actor_proto protoreflect.FileDescriptor
+type ActorUseWithNameRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Realm         string                 `protobuf:"bytes,2,opt,name=realm,proto3" json:"realm,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
 
-const file_protocli_actor_proto_rawDesc = "" +
+func (x *ActorUseWithNameRequest) Reset() {
+	*x = ActorUseWithNameRequest{}
+	mi := &file_actor_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ActorUseWithNameRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ActorUseWithNameRequest) ProtoMessage() {}
+
+func (x *ActorUseWithNameRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_actor_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ActorUseWithNameRequest.ProtoReflect.Descriptor instead.
+func (*ActorUseWithNameRequest) Descriptor() ([]byte, []int) {
+	return file_actor_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ActorUseWithNameRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ActorUseWithNameRequest) GetRealm() string {
+	if x != nil {
+		return x.Realm
+	}
+	return ""
+}
+
+// 创建 使用 角色返回
+type ActorUseResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Err           *ResultErr             `protobuf:"bytes,1,opt,name=err,proto3" json:"err,omitempty"`
+	Data          *ActorData             `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ActorUseResponse) Reset() {
+	*x = ActorUseResponse{}
+	mi := &file_actor_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ActorUseResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ActorUseResponse) ProtoMessage() {}
+
+func (x *ActorUseResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_actor_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ActorUseResponse.ProtoReflect.Descriptor instead.
+func (*ActorUseResponse) Descriptor() ([]byte, []int) {
+	return file_actor_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ActorUseResponse) GetErr() *ResultErr {
+	if x != nil {
+		return x.Err
+	}
+	return nil
+}
+
+func (x *ActorUseResponse) GetData() *ActorData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+var File_actor_proto protoreflect.FileDescriptor
+
+const file_actor_proto_rawDesc = "" +
 	"\n" +
-	"\x14protocli/actor.proto\x12\bprotocli\"\x14\n" +
-	"\x12ActorCreateRequest\"'\n" +
-	"\x13ActorCreateResponse\x12\x10\n" +
-	"\x03aid\x18\x01 \x01(\tR\x03aid\"#\n" +
+	"\vactor.proto\x12\bprotocli\x1a\n" +
+	"base.proto\"\xf2\x01\n" +
+	"\tActorData\x12\x19\n" +
+	"\bactor_id\x18\x01 \x01(\tR\aactorId\x12\x10\n" +
+	"\x03pid\x18\x02 \x01(\tR\x03pid\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\x03 \x01(\x03R\tcreatedAt\x12\x1d\n" +
+	"\n" +
+	"updated_at\x18\x04 \x01(\x03R\tupdatedAt\x12\x1b\n" +
+	"\tonline_at\x18\x05 \x01(\x03R\bonlineAt\x12\x1d\n" +
+	"\n" +
+	"offline_at\x18\x06 \x01(\x03R\tofflineAt\x12\x12\n" +
+	"\x04name\x18\a \x01(\tR\x04name\x12\x14\n" +
+	"\x05level\x18\b \x01(\x05R\x05level\x12\x14\n" +
+	"\x05realm\x18\t \x01(\tR\x05realm\"(\n" +
+	"\x12ActorCreateRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\"#\n" +
 	"\x0fActorUseRequest\x12\x10\n" +
-	"\x03aid\x18\x01 \x01(\tR\x03aidB\x11Z\x0fzgame/pb/golangb\x06proto3"
+	"\x03aid\x18\x01 \x01(\tR\x03aid\"C\n" +
+	"\x17ActorUseWithNameRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
+	"\x05realm\x18\x02 \x01(\tR\x05realm\"b\n" +
+	"\x10ActorUseResponse\x12%\n" +
+	"\x03err\x18\x01 \x01(\v2\x13.protocli.ResultErrR\x03err\x12'\n" +
+	"\x04data\x18\x02 \x01(\v2\x13.protocli.ActorDataR\x04dataB\x1bZ\x19zgame/pb/golang/gamelogicb\x06proto3"
 
 var (
-	file_protocli_actor_proto_rawDescOnce sync.Once
-	file_protocli_actor_proto_rawDescData []byte
+	file_actor_proto_rawDescOnce sync.Once
+	file_actor_proto_rawDescData []byte
 )
 
-func file_protocli_actor_proto_rawDescGZIP() []byte {
-	file_protocli_actor_proto_rawDescOnce.Do(func() {
-		file_protocli_actor_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_protocli_actor_proto_rawDesc), len(file_protocli_actor_proto_rawDesc)))
+func file_actor_proto_rawDescGZIP() []byte {
+	file_actor_proto_rawDescOnce.Do(func() {
+		file_actor_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_actor_proto_rawDesc), len(file_actor_proto_rawDesc)))
 	})
-	return file_protocli_actor_proto_rawDescData
+	return file_actor_proto_rawDescData
 }
 
-var file_protocli_actor_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_protocli_actor_proto_goTypes = []any{
-	(*ActorCreateRequest)(nil),  // 0: protocli.ActorCreateRequest
-	(*ActorCreateResponse)(nil), // 1: protocli.ActorCreateResponse
-	(*ActorUseRequest)(nil),     // 2: protocli.ActorUseRequest
+var file_actor_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_actor_proto_goTypes = []any{
+	(*ActorData)(nil),               // 0: protocli.ActorData
+	(*ActorCreateRequest)(nil),      // 1: protocli.ActorCreateRequest
+	(*ActorUseRequest)(nil),         // 2: protocli.ActorUseRequest
+	(*ActorUseWithNameRequest)(nil), // 3: protocli.ActorUseWithNameRequest
+	(*ActorUseResponse)(nil),        // 4: protocli.ActorUseResponse
+	(*ResultErr)(nil),               // 5: protocli.ResultErr
 }
-var file_protocli_actor_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+var file_actor_proto_depIdxs = []int32{
+	5, // 0: protocli.ActorUseResponse.err:type_name -> protocli.ResultErr
+	0, // 1: protocli.ActorUseResponse.data:type_name -> protocli.ActorData
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
-func init() { file_protocli_actor_proto_init() }
-func file_protocli_actor_proto_init() {
-	if File_protocli_actor_proto != nil {
+func init() { file_actor_proto_init() }
+func file_actor_proto_init() {
+	if File_actor_proto != nil {
 		return
 	}
+	file_base_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_protocli_actor_proto_rawDesc), len(file_protocli_actor_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_actor_proto_rawDesc), len(file_actor_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_protocli_actor_proto_goTypes,
-		DependencyIndexes: file_protocli_actor_proto_depIdxs,
-		MessageInfos:      file_protocli_actor_proto_msgTypes,
+		GoTypes:           file_actor_proto_goTypes,
+		DependencyIndexes: file_actor_proto_depIdxs,
+		MessageInfos:      file_actor_proto_msgTypes,
 	}.Build()
-	File_protocli_actor_proto = out.File
-	file_protocli_actor_proto_goTypes = nil
-	file_protocli_actor_proto_depIdxs = nil
+	File_actor_proto = out.File
+	file_actor_proto_goTypes = nil
+	file_actor_proto_depIdxs = nil
 }

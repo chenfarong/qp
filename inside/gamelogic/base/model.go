@@ -1,7 +1,7 @@
 package base
 
 import (
-	pb "zgame/pb/golang/gamelogic"
+	pb "zagame/pb/golang/gamelogic"
 )
 
 type Model struct {

@@ -2,29 +2,19 @@ syntax = "proto3";
 
 package protocli;
 
-option go_package = "zgame/pb/golang";
+import "base.proto";
 
-// 添加英雄请求
-message AddHeroRequest {
-  string hero_id = 1;       // 英雄ID
+option go_package = "zgame/pb/golang/gamelogic";
+
+//英雄数据
+message HeroData {
+  int64 uid=1; //唯一编号
+  int32 cfg_id=2; //配表id
+  int32 level=3; //等级
+  int32 star=4; //星级
+  optional string ext_info=5; //附加信息
 }
 
-// 添加英雄响应
-message AddHeroResponse {
-  bool success = 1;         // 是否成功
-  string message = 2;       // 消息
-}
-
-// 移除英雄请求
-message RemoveHeroRequest {
-  string hero_id = 1;       // 英雄ID
-}
-
-// 移除英雄响应
-message RemoveHeroResponse {
-  bool success = 1;         // 是否成功
-  string message = 2;       // 消息
-}
 
 // 获取英雄列表请求
 message GetHeroesRequest {
@@ -32,7 +22,49 @@ message GetHeroesRequest {
 
 // 获取英雄列表响应
 message GetHeroesResponse {
-  bool success = 1;         // 是否成功
-  repeated string heroes = 2; // 英雄列表
-  string message = 3;       // 消息
+  ResultErr err=1;
+  repeated HeroData data=2;
 }
+
+// 招募英雄请求
+message RecruitHeroRequest {
+  int32 cfg_id=1; //配表id
+}
+
+// 招募英雄返回
+message RecruiHeroesResponse {
+  ResultErr err=1;
+  HeroData data=2;
+}
+
+// 英雄升星请求
+message UpStarHeroRequest {
+  int64 uid=1; //唯一id
+}
+
+// 英雄升星返回
+message UpStarHeroesResponse {
+  ResultErr err=1;
+  HeroData data=2;
+}
+
+//英雄技能开启
+message OpenSkillHeroRequest {
+  int64 uid=1; //唯一id
+  int32 slot_id=2; //槽位编号
+}
+
+//英雄技能升级
+message UpSkillHeroRequest {
+  int64 uid=1; //唯一id
+  int32 slot_id=2; //槽位编号
+}
+
+
+// 英雄技能开启返回
+message OpenSkillHeroesResponse {
+  ResultErr err=1;
+  HeroData data=2;
+}
+
+

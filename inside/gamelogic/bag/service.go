@@ -2,7 +2,7 @@ package bag
 
 import (
 	"context"
-	pb "zgame/pb/golang/gamelogic"
+	pb "zagame/pb/golang/gamelogic"
 )
 
 type Service struct {
@@ -15,34 +15,13 @@ func NewService() *Service {
 	}
 }
 
-// AddItem 添加物品服务
-func (s *Service) AddItem(ctx context.Context, req *pb.AddItemRequest) (*pb.AddItemResponse, error) {
-	// 实现添加物品逻辑
-	s.model.AddItem(req.ItemId, req.Count)
-	return &pb.AddItemResponse{
-		Success: true,
-		Message: "添加物品成功",
-	}, nil
-}
-
-// RemoveItem 移除物品服务
-func (s *Service) RemoveItem(ctx context.Context, req *pb.RemoveItemRequest) (*pb.RemoveItemResponse, error) {
-	// 实现移除物品逻辑
-	s.model.RemoveItem(req.ItemId, req.Count)
-	return &pb.RemoveItemResponse{
-		Success: true,
-		Message: "移除物品成功",
-	}, nil
-}
-
 // GetBag 获取背包服务
 func (s *Service) GetBag(ctx context.Context, req *pb.GetBagRequest) (*pb.GetBagResponse, error) {
 	// 实现获取背包逻辑
-	bag := s.model.GetBag()
+	items := s.model.GetItems()
 	return &pb.GetBagResponse{
-		Success: true,
-		Message: "获取背包成功",
-		Bag:     bag,
+		Err:  &pb.ResultErr{ErrCode: 0, ErrText: ""},
+		Data: items,
 	}, nil
 }
 

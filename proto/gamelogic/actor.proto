@@ -2,16 +2,30 @@ syntax = "proto3";
 
 package protocli;
 
-option go_package = "zgame/pb/golang";
+import "base.proto";
 
-message ActorCreateRequest
-{
+option go_package = "zgame/pb/golang/gamelogic";
+
+//角色基础数据
+message ActorData {
+    string actor_id=1; //角色编号
+    
+    string pid=2; //账号
+    int64 created_at=3; //创建时间
+    int64 updated_at=4; //更新时间
+    int64 online_at=5; //本次上线时间
+    int64 offline_at=6; //上次下线时间
+
+    string name=7; //角色名称
+    int32 level=8;//等级
+    string realm=9; //服 区 名称
 
 }
 
-message ActorCreateResponse
+
+message ActorCreateRequest
 {
-    string aid=1;
+    string name=1; //角色名称 如果没提供的时候服务器随机一个名字
 }
 
 
@@ -19,4 +33,19 @@ message ActorUseRequest
 {
     string aid=1;
 }
+
+
+message ActorUseWithNameRequest
+{
+    string name=1;
+    string realm=2;
+}
+
+//创建 使用 角色返回
+message ActorUseResponse
+{
+    ResultErr err=1;
+    ActorData data=2;
+}
+
 

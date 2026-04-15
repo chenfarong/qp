@@ -1,4 +1,4 @@
-module zgame
+module zagame
 
 go 1.20
 

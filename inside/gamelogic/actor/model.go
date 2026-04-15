@@ -9,6 +9,8 @@ import (
 type Model struct {
 	// 存储角色信息
 	actors map[string]bool
+	// 存储名称到ID的映射
+	nameToId map[string]string
 	// 自增ID
 	idCounter int
 	// 互斥锁
@@ -18,6 +20,7 @@ type Model struct {
 func NewModel() *Model {
 	return &Model{
 		actors:    make(map[string]bool),
+		nameToId:  make(map[string]string),
 		idCounter: 0,
 	}
 }
@@ -44,4 +47,19 @@ func (m *Model) UseActor(aid string) error {
 	
 	// 实现使用角色的逻辑
 	return nil
+}
+
+// GetActorIdByName 根据名称获取角色ID
+func (m *Model) GetActorIdByName(name string) string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	
+	if aid, exists := m.nameToId[name]; exists {
+		return aid
+	}
+	
+	// 如果没有找到，创建一个新的角色
+	aid := m.CreateActor()
+	m.nameToId[name] = aid
+	return aid
 }

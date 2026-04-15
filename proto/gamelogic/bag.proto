@@ -2,7 +2,9 @@ syntax = "proto3";
 
 package protocli;
 
-option go_package = "zgame/pb/golang";
+import "base.proto";
+
+option go_package = "zgame/pb/golang/gamelogic";
 
 //单物品信息
 message ItemData
@@ -10,31 +12,7 @@ message ItemData
   int64 item_id = 1; //唯一编号
   int32 item_cfg_id = 2; //配表id
   int64 num = 3; //数量
-}
-
-
-// 添加物品请求
-message AddItemRequest {
-  string item_id = 1;       // 物品ID
-  int32 count = 2;          // 数量
-}
-
-// 添加物品响应
-message AddItemResponse {
-  bool success = 1;         // 是否成功
-  string message = 2;       // 消息
-}
-
-// 移除物品请求
-message RemoveItemRequest {
-  string item_id = 1;       // 物品ID
-  int32 count = 2;          // 数量
-}
-
-// 移除物品响应
-message RemoveItemResponse {
-  bool success = 1;         // 是否成功
-  string message = 2;       // 消息
+  string ext_info=100;
 }
 
 // 获取背包请求
@@ -43,10 +21,10 @@ message GetBagRequest {
 
 // 获取背包响应
 message GetBagResponse {
-  bool success = 1;         // 是否成功
-  map<string, int32> bag = 2; // 背包物品
-  string message = 3;       // 消息
+    ResultErr err=1;
+    repeated ItemData data=2;
 }
+
 
 //使用道具
 message BagItemUseRequest {
@@ -59,5 +37,14 @@ message BagItemUseResponse {
   bool success = 1;         // 是否成功
   string message = 2;       // 消息
   ItemData item_data = 3; //请求物品的信息
+}
+
+//////////////////////////////////////////////////////////
+// 通知
+//////////////////////////////////////////////////////////
+
+//道具变化通知
+message SyncBagItemChange {
+    repeated ItemData data=2;
 }
 

@@ -1,10 +1,11 @@
 package gamelogic
 
 import (
-	"zgame/inside/gamelogic/actor"
-	"zgame/inside/gamelogic/bag"
-	"zgame/inside/gamelogic/base"
-	"zgame/inside/gamelogic/hero"
+	"zagame/inside/gamelogic/actor"
+	"zagame/inside/gamelogic/bag"
+	"zagame/inside/gamelogic/base"
+	"zagame/inside/gamelogic/equip"
+	"zagame/inside/gamelogic/hero"
 )
 
 // Handler 游戏逻辑处理器
@@ -13,6 +14,7 @@ type Handler struct {
 	Hero  *hero.Handler
 	Bag   *bag.Handler
 	Actor *actor.Handler
+	Equip *equip.Handler
 }
 
 // Service 游戏逻辑服务
@@ -21,6 +23,7 @@ type Service struct {
 	Hero  *hero.Service
 	Bag   *bag.Service
 	Actor *actor.Service
+	Equip *equip.Service
 }
 
 // NewHandler 创建游戏逻辑处理器
@@ -30,6 +33,7 @@ func NewHandler() *Handler {
 		Hero:  &hero.Handler{Service: hero.NewService()},
 		Bag:   &bag.Handler{Service: bag.NewService()},
 		Actor: &actor.Handler{Service: actor.NewService()},
+		Equip: &equip.Handler{Service: equip.NewService()},
 	}
 }
 
@@ -40,5 +44,6 @@ func NewService() *Service {
 		Hero:  hero.NewService(),
 		Bag:   bag.NewService(),
 		Actor: actor.NewService(),
+		Equip: equip.NewService(),
 	}
 }

@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package protocli;
+
+import "base.proto";
+
+option go_package = "zgame/pb/golang/gamelogic";
+
+//装备信息
+message EquipData
+{
+  int64 equip_id = 1; //唯一编号
+  int32 equip_cfg_id = 2; //配表id
+  string ext_info=100;
+}
+
+// 获取装备请求
+message GetEquipRequest {
+}
+
+
+// 获取装备响应
+message GetEquipResponse {
+    ResultErr err=1;
+    repeated EquipData data=2;
+}
+
+message UpgradeEquipRequest {
+  int64 equip_id = 1; //唯一编号
+}
+
+
+// 装备升级响应
+message UpgradeEquipResponse {
+    ResultErr err=1;
+    EquipData data=2;
+}
