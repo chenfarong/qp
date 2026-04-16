@@ -4,7 +4,6 @@ go 1.25.5
 
 require (
 	github.com/gorilla/websocket v1.5.3
-	github.com/lib/pq v1.10.9
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.33.0
 	zgame/config v0.0.0-00010101000000-000000000000
@@ -12,10 +11,12 @@ require (
 )
 
 replace zgame/config => ../../config
+
 replace zgame/database => ../../database
 
 require (
 	github.com/kr/pretty v0.3.1 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect

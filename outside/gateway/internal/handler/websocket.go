@@ -54,14 +54,23 @@ func handleGetActorList(w http.ResponseWriter, r *http.Request) {
 	// 这里应该验证token，实际项目中应该使用JWT验证
 	// 为了测试，我们假设token是有效的
 
+	// 检查数据库连接是否初始化
+	if database.DB == nil {
+		fmt.Println("Database connection is not initialized")
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, `{"success": false, "message": "Database connection not initialized"}`)
+		return
+	}
+
 	// 从数据库中获取角色列表
 	rows, err := database.DB.Query(`
 		SELECT actor_id, name, level, realm, created_at, updated_at, online_at, offline_at 
 		FROM actors
 	`)
 	if err != nil {
+		fmt.Printf("Database query error: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, `{"success": false, "message": "Database error"}`)
+		fmt.Fprintf(w, `{"success": false, "message": "Database error: %v"}`, err)
 		return
 	}
 	defer rows.Close()
@@ -71,13 +80,21 @@ func handleGetActorList(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var actorID, name, realm string
 		var level int
-		var createdAt, updatedAt, onlineAt, offlineAt time.Time
+		var createdAt, updatedAt, onlineAt time.Time
+		var offlineAt *time.Time // 使用指针类型来存储可能为nil的值
 
 		err := rows.Scan(&actorID, &name, &level, &realm, &createdAt, &updatedAt, &onlineAt, &offlineAt)
 		if err != nil {
+			fmt.Printf("Database scan error: %v\n", err)
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(w, `{"success": false, "message": "Database error"}`)
+			fmt.Fprintf(w, `{"success": false, "message": "Database error: %v"}`, err)
 			return
+		}
+
+		// 处理offline_at字段
+		offlineAtUnix := int64(0)
+		if offlineAt != nil {
+			offlineAtUnix = offlineAt.Unix()
 		}
 
 		actor := map[string]interface{}{
@@ -88,7 +105,7 @@ func handleGetActorList(w http.ResponseWriter, r *http.Request) {
 			"created_at": createdAt.Unix(),
 			"updated_at": updatedAt.Unix(),
 			"online_at":  onlineAt.Unix(),
-			"offline_at": offlineAt.Unix(),
+			"offline_at": offlineAtUnix,
 		}
 		actors = append(actors, actor)
 	}
@@ -103,6 +120,7 @@ func handleGetActorList(w http.ResponseWriter, r *http.Request) {
 	// 编码为JSON
 	responseJSON, err := json.Marshal(response)
 	if err != nil {
+		fmt.Printf("JSON encoding error: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, `{"success": false, "message": "JSON encoding error"}`)
 		return
