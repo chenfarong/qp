@@ -12,9 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/websocket"
-	"zagame/proto"
 	pb "zagame/pb/golang/gamelogic"
+	"zagame/proto"
+
+	"github.com/gorilla/websocket"
 )
 
 // 全局变量存储命令行参数
@@ -235,7 +236,7 @@ func login() (string, error) {
 // connectWebSocket 连接WebSocket
 func connectWebSocket(url, token string) error {
 	// 构造WebSocket连接URL
-	wsURL := url + "?token=" + token
+	wsURL := url + "/ws?token=" + token
 
 	// 连接WebSocket
 	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
@@ -253,14 +254,14 @@ func connectWebSocket(url, token string) error {
 				fmt.Printf("读取WebSocket消息失败: %v\n", err)
 				return
 			}
-			
+
 			// 解析消息
 			var wsMsg WebSocketMessage
 			if err := json.Unmarshal(message, &wsMsg); err != nil {
 				fmt.Printf("解析WebSocket消息失败: %v\n", err)
 				continue
 			}
-			
+
 			// 处理不同类型的消息
 			handleWebSocketMessage(wsMsg)
 		}
@@ -283,7 +284,10 @@ func handleWebSocketMessage(msg WebSocketMessage) {
 			return
 		}
 		fmt.Printf("登录响应: Success=%v, Message=%s\n", resp.Success, resp.Message)
-		
+		if resp.Success && resp.Role != nil {
+			fmt.Printf("角色ID: %s, 名称: %s, 等级: %d\n", resp.Role.Aid, resp.Role.Name, resp.Role.Level)
+		}
+
 	case proto.MessageIDGetRoleInfoResponse:
 		// 处理获取角色信息响应
 		var resp pb.GetRoleInfoResponse
@@ -292,10 +296,10 @@ func handleWebSocketMessage(msg WebSocketMessage) {
 			return
 		}
 		fmt.Printf("角色信息响应: Success=%v, Message=%s\n", resp.Success, resp.Message)
-		if resp.Success {
-			fmt.Printf("角色ID: %s, 名称: %s, 等级: %d\n", resp.Data.ActorId, resp.Data.Name, resp.Data.Level)
+		if resp.Success && resp.Role != nil {
+			fmt.Printf("角色ID: %s, 名称: %s, 等级: %d\n", resp.Role.Aid, resp.Role.Name, resp.Role.Level)
 		}
-		
+
 	case proto.MessageIDActorUseResponse:
 		// 处理使用角色响应
 		var resp pb.ActorUseResponse
@@ -303,11 +307,15 @@ func handleWebSocketMessage(msg WebSocketMessage) {
 			fmt.Printf("解析使用角色响应失败: %v\n", err)
 			return
 		}
-		fmt.Printf("使用角色响应: Success=%v, Message=%s\n", resp.Success, resp.Message)
-		if resp.Success {
+		if resp.Err != nil {
+			fmt.Printf("使用角色响应: ErrCode=%d, ErrText=%s\n", resp.Err.ErrCode, resp.Err.ErrText)
+		} else {
+			fmt.Printf("使用角色响应: 成功\n")
+		}
+		if resp.Data != nil {
 			fmt.Printf("角色ID: %s, 名称: %s, 等级: %d\n", resp.Data.ActorId, resp.Data.Name, resp.Data.Level)
 		}
-		
+
 	case proto.MessageIDGetBagResponse:
 		// 处理获取背包响应
 		var resp pb.GetBagResponse
@@ -315,14 +323,18 @@ func handleWebSocketMessage(msg WebSocketMessage) {
 			fmt.Printf("解析背包响应失败: %v\n", err)
 			return
 		}
-		fmt.Printf("背包响应: Success=%v, Message=%s\n", resp.Success, resp.Message)
-		if resp.Success {
-			fmt.Printf("背包物品数量: %d\n", len(resp.Data.Items))
-			for i, item := range resp.Data.Items {
-				fmt.Printf("  %d. ID: %s, 类型: %d, 数量: %d\n", i+1, item.ItemId, item.ItemType, item.Count)
+		if resp.Err != nil {
+			fmt.Printf("背包响应: ErrCode=%d, ErrText=%s\n", resp.Err.ErrCode, resp.Err.ErrText)
+		} else {
+			fmt.Printf("背包响应: 成功\n")
+		}
+		if resp.Data != nil {
+			fmt.Printf("背包物品数量: %d\n", len(resp.Data))
+			for i, item := range resp.Data {
+				fmt.Printf("  %d. ID: %d, 类型: %d, 数量: %d\n", i+1, item.ItemId, item.ItemCfgId, item.Num)
 			}
 		}
-		
+
 	case proto.MessageIDGetEquipResponse:
 		// 处理获取装备响应
 		var resp pb.GetEquipResponse
@@ -330,14 +342,18 @@ func handleWebSocketMessage(msg WebSocketMessage) {
 			fmt.Printf("解析装备响应失败: %v\n", err)
 			return
 		}
-		fmt.Printf("装备响应: Success=%v, Message=%s\n", resp.Success, resp.Message)
-		if resp.Success {
-			fmt.Printf("装备数量: %d\n", len(resp.Data.Items))
-			for i, item := range resp.Data.Items {
-				fmt.Printf("  %d. ID: %s, 类型: %d, 等级: %d\n", i+1, item.EquipId, item.EquipType, item.Level)
+		if resp.Err != nil {
+			fmt.Printf("装备响应: ErrCode=%d, ErrText=%s\n", resp.Err.ErrCode, resp.Err.ErrText)
+		} else {
+			fmt.Printf("装备响应: 成功\n")
+		}
+		if resp.Data != nil {
+			fmt.Printf("装备数量: %d\n", len(resp.Data))
+			for i, item := range resp.Data {
+				fmt.Printf("  %d. ID: %d, 类型: %d\n", i+1, item.EquipId, item.EquipCfgId)
 			}
 		}
-		
+
 	case proto.MessageIDGetHeroesResponse:
 		// 处理获取英雄响应
 		var resp pb.GetHeroesResponse
@@ -345,14 +361,18 @@ func handleWebSocketMessage(msg WebSocketMessage) {
 			fmt.Printf("解析英雄响应失败: %v\n", err)
 			return
 		}
-		fmt.Printf("英雄响应: Success=%v, Message=%s\n", resp.Success, resp.Message)
-		if resp.Success {
-			fmt.Printf("英雄数量: %d\n", len(resp.Data.Heroes))
-			for i, hero := range resp.Data.Heroes {
-				fmt.Printf("  %d. ID: %s, 名称: %s, 等级: %d, 星级: %d\n", i+1, hero.HeroId, hero.Name, hero.Level, hero.Star)
+		if resp.Err != nil {
+			fmt.Printf("英雄响应: ErrCode=%d, ErrText=%s\n", resp.Err.ErrCode, resp.Err.ErrText)
+		} else {
+			fmt.Printf("英雄响应: 成功\n")
+		}
+		if resp.Data != nil {
+			fmt.Printf("英雄数量: %d\n", len(resp.Data))
+			for i, hero := range resp.Data {
+				fmt.Printf("  %d. ID: %d, 配置ID: %d, 等级: %d, 星级: %d\n", i+1, hero.Uid, hero.CfgId, hero.Level, hero.Star)
 			}
 		}
-		
+
 	case proto.MessageIDGetGameMoneyResponse:
 		// 处理获取游戏货币响应
 		var resp pb.GetGameMoneyResponse
@@ -360,11 +380,17 @@ func handleWebSocketMessage(msg WebSocketMessage) {
 			fmt.Printf("解析游戏货币响应失败: %v\n", err)
 			return
 		}
-		fmt.Printf("游戏货币响应: Success=%v, Message=%s\n", resp.Success, resp.Message)
-		if resp.Success {
-			fmt.Printf("金币: %d, 钻石: %d\n", resp.Data.Gold, resp.Data.Diamond)
+		if resp.Err != nil {
+			fmt.Printf("游戏货币响应: ErrCode=%d, ErrText=%s\n", resp.Err.ErrCode, resp.Err.ErrText)
+		} else {
+			fmt.Printf("游戏货币响应: 成功\n")
 		}
-		
+		if resp.Data != nil {
+			for _, money := range resp.Data {
+				fmt.Printf("  货币类型: %d, 数量: %d\n", money.CfgId, money.Num)
+			}
+		}
+
 	default:
 		fmt.Printf("未知消息类型: %d\n", msg.MsgID)
 	}
@@ -498,7 +524,7 @@ func createNewActor() (*ActorInfo, error) {
 func useActor(actorId string) error {
 	// 发送使用角色请求
 	req := pb.ActorUseRequest{
-		ActorId: actorId,
+		Aid: actorId,
 	}
 	err := sendWebSocketMessage(proto.MessageIDActorUseRequest, req)
 	if err != nil {

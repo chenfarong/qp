@@ -1,15 +1,15 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 	"sync"
-	"time"
 
 	"zgame/config"
+	"zgame/internet/gateway/proto"
 
 	"github.com/gorilla/websocket"
 )
@@ -25,30 +25,8 @@ var upgrader = websocket.Upgrader{
 var clients = make(map[string]*websocket.Conn)
 var clientsMutex sync.RWMutex
 
-// 内存存储角色信息
-type Actor struct {
-	ActorID    string
-	UserID     int
-	Name       string
-	Level      int
-	Realm      string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	OnlineAt   time.Time
-	OfflineAt  *time.Time
-}
-
-var (
-	actors     = make(map[string]*Actor)
-	actorsMutex sync.RWMutex
-)
-
 // StartWebSocketServer 启动WebSocket服务器
 func StartWebSocketServer() error {
-	// 注册HTTP API路由
-	http.HandleFunc("/actor/list", handleGetActorList)
-	http.HandleFunc("/actor/create", handleCreateActor)
-
 	// 注册WebSocket路由
 	http.HandleFunc("/ws", handleWebSocket)
 
@@ -56,162 +34,39 @@ func StartWebSocketServer() error {
 	return http.ListenAndServe(addr, nil)
 }
 
-// handleGetActorList 处理获取角色列表请求
-func handleGetActorList(w http.ResponseWriter, r *http.Request) {
-	// 从Authorization header中获取token
-	token := r.Header.Get("Authorization")
-	if token == "" {
-		log.Println("获取角色列表失败: 缺少Authorization header")
-		w.WriteHeader(http.StatusUnauthorized)
-		log.Printf("{\"success\": false, \"message\": \"Authorization header is required\"}")
-		return
+// forwardToGameLogic 转发消息到游戏逻辑服务
+func forwardToGameLogic(msgID int32, session string, message []byte) ([]byte, error) {
+	// 查找处理该消息的服务器
+	serverManager.mu.RLock()
+	serverID, exists := serverManager.msgIDMap[msgID]
+	if !exists {
+		serverManager.mu.RUnlock()
+		return nil, fmt.Errorf("消息ID %d 未找到对应的服务器", msgID)
 	}
 
-	// 移除Bearer前缀
-	token = strings.TrimPrefix(token, "Bearer ")
-
-	// 这里应该验证token，实际项目中应该使用JWT验证
-	// 为了测试，我们假设token是有效的
-
-	log.Println("收到获取角色列表请求")
-
-	// 从内存中获取角色列表
-	actorsMutex.RLock()
-	var actorList []map[string]interface{}
-	for _, actor := range actors {
-		// 处理offline_at字段
-		offlineAtUnix := int64(0)
-		if actor.OfflineAt != nil {
-			offlineAtUnix = actor.OfflineAt.Unix()
-		}
-
-		actorMap := map[string]interface{}{
-			"actor_id":   actor.ActorID,
-			"name":       actor.Name,
-			"level":      actor.Level,
-			"realm":      actor.Realm,
-			"created_at": actor.CreatedAt.Unix(),
-			"updated_at": actor.UpdatedAt.Unix(),
-			"online_at":  actor.OnlineAt.Unix(),
-			"offline_at": offlineAtUnix,
-		}
-		actorList = append(actorList, actorMap)
+	server, exists := serverManager.servers[serverID]
+	if !exists {
+		serverManager.mu.RUnlock()
+		return nil, fmt.Errorf("服务器 %s 不存在", serverID)
 	}
-	actorsMutex.RUnlock()
+	serverManager.mu.RUnlock()
 
-	log.Printf("获取角色列表成功，共 %d 个角色\n", len(actorList))
+	// 转发消息到目标服务器
+	response, err := server.Client.ForwardMessage(context.Background(), &proto.ForwardMessageRequest{
+		MessageId:      msgID,
+		Session:        session,
+		MessageContent: message,
+	})
 
-	// 生成响应
-	response := map[string]interface{}{
-		"success": true,
-		"message": "获取角色列表成功",
-		"data":    actorList,
-	}
-
-	// 编码为JSON
-	responseJSON, err := json.Marshal(response)
 	if err != nil {
-		log.Printf("JSON encoding error: %v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("{\"success\": false, \"message\": \"JSON encoding error\"}")
-		return
+		return nil, fmt.Errorf("转发消息失败: %v", err)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(responseJSON)
-}
-
-// handleCreateActor 处理创建角色请求
-func handleCreateActor(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		log.Println("创建角色失败: 方法不允许")
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		log.Printf("{\"success\": false, \"message\": \"Method not allowed\"}")
-		return
+	if !response.Success {
+		return nil, fmt.Errorf("服务器处理消息失败: %s", response.Message)
 	}
 
-	// 从Authorization header中获取token
-	token := r.Header.Get("Authorization")
-	if token == "" {
-		log.Println("创建角色失败: 缺少Authorization header")
-		w.WriteHeader(http.StatusUnauthorized)
-		log.Printf("{\"success\": false, \"message\": \"Authorization header is required\"}")
-		return
-	}
-
-	// 移除Bearer前缀
-	token = strings.TrimPrefix(token, "Bearer ")
-
-	// 解析请求体
-	var req struct {
-		Name string `json:"name"`
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		log.Printf("创建角色失败: 请求体解析错误: %v\n", err)
-		w.WriteHeader(http.StatusBadRequest)
-		log.Printf("{\"success\": false, \"message\": \"Invalid request body\"}")
-		return
-	}
-
-	log.Printf("收到创建角色请求: name=%s\n", req.Name)
-
-	// 这里应该验证token，实际项目中应该使用JWT验证
-	// 为了测试，我们假设token是有效的
-
-	// 生成角色ID
-	actorID := fmt.Sprintf("actor_%d", time.Now().UnixNano())
-
-	// 保存角色到内存
-	now := time.Now()
-	actor := &Actor{
-		ActorID:    actorID,
-		UserID:     1,
-		Name:       req.Name,
-		Level:      1,
-		Realm:      "realm_1",
-		CreatedAt:  now,
-		UpdatedAt:  now,
-		OnlineAt:   now,
-		OfflineAt:  nil,
-	}
-
-	actorsMutex.Lock()
-	actors[actorID] = actor
-	actorsMutex.Unlock()
-
-	log.Printf("创建角色成功: name=%s, actor_id=%s\n", req.Name, actorID)
-
-	// 生成响应
-	response := map[string]interface{}{
-		"success": true,
-		"message": "创建角色成功",
-		"data": map[string]interface{}{
-			"actor_id":   actorID,
-			"name":       req.Name,
-			"level":      1,
-			"realm":      "realm_1",
-			"created_at": now.Unix(),
-			"updated_at": now.Unix(),
-			"online_at":  now.Unix(),
-			"offline_at": 0,
-		},
-	}
-
-	// 编码为JSON
-	responseJSON, err := json.Marshal(response)
-	if err != nil {
-		log.Printf("JSON encoding error: %v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("{\"success\": false, \"message\": \"JSON encoding error\"}")
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(responseJSON)
+	return response.ResponseContent, nil
 }
 
 // handleWebSocket 处理WebSocket连接
@@ -224,21 +79,15 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	// 读取session
-	var msg struct {
-		Session string `json:"session"`
-	}
-
-	if err := conn.ReadJSON(&msg); err != nil {
-		log.Printf("Read session error: %v\n", err)
+	// 从URL参数中获取token
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		log.Println("Empty token")
 		return
 	}
 
-	session := msg.Session
-	if session == "" {
-		log.Println("Empty session")
-		return
-	}
+	// 使用token作为session
+	session := token
 
 	// 存储客户端连接
 	clientsMutex.Lock()
@@ -255,11 +104,49 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		// 处理收到的消息（这里可以根据消息类型进行处理）
+		// 处理收到的消息
 		log.Printf("Received message from session %s: %s\n", session, message)
 
-		// 回复客户端
-		if err := conn.WriteMessage(messageType, message); err != nil {
+		// 解析消息
+		var wsMsg struct {
+			MsgID int32           `json:"msg_id"`
+			Data  json.RawMessage `json:"data"`
+		}
+
+		if err := json.Unmarshal(message, &wsMsg); err != nil {
+			log.Printf("解析消息失败: %v\n", err)
+			// 发送错误响应
+			errorResp := map[string]interface{}{
+				"msg_id": wsMsg.MsgID,
+				"data": map[string]interface{}{
+					"success": false,
+					"message": "Invalid message format",
+				},
+			}
+			errorJSON, _ := json.Marshal(errorResp)
+			conn.WriteMessage(messageType, errorJSON)
+			continue
+		}
+
+		// 转发消息到gamelogic
+		response, err := forwardToGameLogic(wsMsg.MsgID, session, message)
+		if err != nil {
+			log.Printf("转发消息失败: %v\n", err)
+			// 发送错误响应
+			errorResp := map[string]interface{}{
+				"msg_id": wsMsg.MsgID,
+				"data": map[string]interface{}{
+					"success": false,
+					"message": "Failed to forward message",
+				},
+			}
+			errorJSON, _ := json.Marshal(errorResp)
+			conn.WriteMessage(messageType, errorJSON)
+			continue
+		}
+
+		// 发送响应给客户端
+		if err := conn.WriteMessage(messageType, response); err != nil {
 			log.Printf("Write message error: %v\n", err)
 			break
 		}
