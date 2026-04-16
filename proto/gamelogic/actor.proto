@@ -6,6 +6,8 @@ import "base.proto";
 
 option go_package = "zgame/pb/golang/gamelogic";
 
+//编号开始 2100
+
 //角色基础数据
 message ActorData {
     string actor_id=1; //角色编号

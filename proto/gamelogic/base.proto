@@ -4,6 +4,8 @@ package protocli;
 
 option go_package = "zgame/pb/golang/gamelogic";
 
+//编号基础 2000
+
 // 标准返回信息顶部
 message ResultErr {
     int32 err_code=1; //错误编号

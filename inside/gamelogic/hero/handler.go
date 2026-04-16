@@ -34,3 +34,10 @@ func (h *Handler) OpenSkillHero(ctx context.Context, req *pb.OpenSkillHeroReques
 func (h *Handler) UpSkillHero(ctx context.Context, req *pb.UpSkillHeroRequest) (*pb.OpenSkillHeroesResponse, error) {
 	return h.Service.UpSkillHero(ctx, req)
 }
+
+// NewHandler 创建英雄处理器
+func NewHandler() *Handler {
+	return &Handler{
+		Service: NewService(),
+	}
+}

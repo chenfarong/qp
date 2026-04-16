@@ -24,3 +24,10 @@ func (h *Handler) ActorUse(ctx context.Context, req *pb.ActorUseRequest) (*pb.Ac
 func (h *Handler) ActorUseWithName(ctx context.Context, req *pb.ActorUseWithNameRequest) (*pb.ActorUseResponse, error) {
 	return h.Service.ActorUseWithName(ctx, req)
 }
+
+// NewHandler 创建角色处理器
+func NewHandler() *Handler {
+	return &Handler{
+		Service: NewService(),
+	}
+}

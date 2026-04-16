@@ -19,3 +19,10 @@ func (h *Handler) GetBag(ctx context.Context, req *pb.GetBagRequest) (*pb.GetBag
 func (h *Handler) BagItemUse(ctx context.Context, req *pb.BagItemUseRequest) (*pb.BagItemUseResponse, error) {
 	return h.Service.BagItemUse(ctx, req)
 }
+
+// NewHandler 创建背包处理器
+func NewHandler() *Handler {
+	return &Handler{
+		Service: NewService(),
+	}
+}

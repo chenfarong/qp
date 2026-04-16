@@ -19,3 +19,10 @@ func (h *Handler) GetEquip(ctx context.Context, req *pb.GetEquipRequest) (*pb.Ge
 func (h *Handler) UpgradeEquip(ctx context.Context, req *pb.UpgradeEquipRequest) (*pb.UpgradeEquipResponse, error) {
 	return h.Service.UpgradeEquip(ctx, req)
 }
+
+// NewHandler 创建装备处理器
+func NewHandler() *Handler {
+	return &Handler{
+		Service: NewService(),
+	}
+}

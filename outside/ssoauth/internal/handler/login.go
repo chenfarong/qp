@@ -2,7 +2,7 @@ package handler
 
 import (
 	"database/sql"
-	"fmt"
+	"log"
 	"net/http"
 
 	"zgame/database"
@@ -17,7 +17,7 @@ func CheckAndCreateDefaultAdmin() {
 	var count int
 	err := database.DB.QueryRow("SELECT COUNT(*) FROM users WHERE username = $1", "za_admin").Scan(&count)
 	if err != nil {
-		fmt.Printf("检查za_admin账号失败: %v\n", err)
+		log.Printf("检查za_admin账号失败: %v\n", err)
 		return
 	}
 
@@ -25,10 +25,10 @@ func CheckAndCreateDefaultAdmin() {
 		// 创建za_admin账号，密码和账号一样
 		_, err := database.DB.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", "za_admin", "za_admin")
 		if err != nil {
-			fmt.Printf("创建za_admin账号失败: %v\n", err)
+			log.Printf("创建za_admin账号失败: %v\n", err)
 			return
 		}
-		fmt.Println("Created default za_admin account")
+		log.Println("Created default za_admin account")
 	}
 }
 
@@ -62,6 +62,7 @@ type RegisterResponse struct {
 func Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("登录请求参数错误: %v\n", err)
 		c.JSON(http.StatusBadRequest, LoginResponse{
 			Success: false,
 			Message: "Invalid request",
@@ -69,17 +70,21 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	log.Printf("收到登录请求: username=%s\n", req.Username)
+
 	// 验证用户名和密码
 	var password string
 	err := database.DB.QueryRow("SELECT password FROM users WHERE username = $1", req.Username).Scan(&password)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			log.Printf("登录失败: 用户名不存在: %s\n", req.Username)
 			c.JSON(http.StatusUnauthorized, LoginResponse{
 				Success: false,
 				Message: "Invalid username or password",
 			})
 			return
 		}
+		log.Printf("登录失败: 数据库错误: %v\n", err)
 		c.JSON(http.StatusInternalServerError, LoginResponse{
 			Success: false,
 			Message: "Database error",
@@ -88,6 +93,7 @@ func Login(c *gin.Context) {
 	}
 
 	if password != req.Password {
+		log.Printf("登录失败: 密码错误: %s\n", req.Username)
 		c.JSON(http.StatusUnauthorized, LoginResponse{
 			Success: false,
 			Message: "Invalid username or password",
@@ -101,6 +107,8 @@ func Login(c *gin.Context) {
 	// 生成JWT token
 	token, _ := util.GenerateJWT(req.Username)
 
+	log.Printf("登录成功: username=%s\n", req.Username)
+
 	c.JSON(http.StatusOK, LoginResponse{
 		Success: true,
 		Session: session,
@@ -113,6 +121,7 @@ func Login(c *gin.Context) {
 func Register(c *gin.Context) {
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("注册请求参数错误: %v\n", err)
 		c.JSON(http.StatusBadRequest, RegisterResponse{
 			Success: false,
 			Message: "Invalid request",
@@ -120,10 +129,13 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	log.Printf("收到注册请求: username=%s\n", req.Username)
+
 	// 检查用户名是否已存在
 	var count int
 	err := database.DB.QueryRow("SELECT COUNT(*) FROM users WHERE username = $1", req.Username).Scan(&count)
 	if err != nil {
+		log.Printf("注册失败: 数据库错误: %v\n", err)
 		c.JSON(http.StatusInternalServerError, RegisterResponse{
 			Success: false,
 			Message: "Database error",
@@ -132,6 +144,7 @@ func Register(c *gin.Context) {
 	}
 
 	if count > 0 {
+		log.Printf("注册失败: 用户名已存在: %s\n", req.Username)
 		c.JSON(http.StatusConflict, RegisterResponse{
 			Success: false,
 			Message: "Username already exists",
@@ -142,12 +155,15 @@ func Register(c *gin.Context) {
 	// 存储用户信息到数据库
 	_, err = database.DB.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", req.Username, req.Password)
 	if err != nil {
+		log.Printf("注册失败: 数据库错误: %v\n", err)
 		c.JSON(http.StatusInternalServerError, RegisterResponse{
 			Success: false,
 			Message: "Database error",
 		})
 		return
 	}
+
+	log.Printf("注册成功: username=%s\n", req.Username)
 
 	c.JSON(http.StatusOK, RegisterResponse{
 		Success: true,
@@ -167,12 +183,15 @@ func Profile(c *gin.Context) {
 	// 从上下文中获取用户名
 	username, exists := c.Get("username")
 	if !exists {
+		log.Println("获取个人信息失败: 用户未认证")
 		c.JSON(http.StatusUnauthorized, ProfileResponse{
 			Success: false,
 			Message: "User not authenticated",
 		})
 		return
 	}
+
+	log.Printf("获取个人信息成功: username=%s\n", username.(string))
 
 	c.JSON(http.StatusOK, ProfileResponse{
 		Success:  true,

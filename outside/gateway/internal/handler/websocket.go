@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -43,8 +44,9 @@ func handleGetActorList(w http.ResponseWriter, r *http.Request) {
 	// 从Authorization header中获取token
 	token := r.Header.Get("Authorization")
 	if token == "" {
+		log.Println("获取角色列表失败: 缺少Authorization header")
 		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprintf(w, `{"success": false, "message": "Authorization header is required"}`)
+		log.Printf("{\"success\": false, \"message\": \"Authorization header is required\"}")
 		return
 	}
 
@@ -54,11 +56,13 @@ func handleGetActorList(w http.ResponseWriter, r *http.Request) {
 	// 这里应该验证token，实际项目中应该使用JWT验证
 	// 为了测试，我们假设token是有效的
 
+	log.Println("收到获取角色列表请求")
+
 	// 检查数据库连接是否初始化
 	if database.DB == nil {
-		fmt.Println("Database connection is not initialized")
+		log.Println("Database connection is not initialized")
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, `{"success": false, "message": "Database connection not initialized"}`)
+		log.Printf("{\"success\": false, \"message\": \"Database connection not initialized\"}")
 		return
 	}
 
@@ -68,9 +72,9 @@ func handleGetActorList(w http.ResponseWriter, r *http.Request) {
 		FROM actors
 	`)
 	if err != nil {
-		fmt.Printf("Database query error: %v\n", err)
+		log.Printf("Database query error: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, `{"success": false, "message": "Database error: %v"}`, err)
+		log.Printf("{\"success\": false, \"message\": \"Database error: %v\"}", err)
 		return
 	}
 	defer rows.Close()
@@ -85,9 +89,9 @@ func handleGetActorList(w http.ResponseWriter, r *http.Request) {
 
 		err := rows.Scan(&actorID, &name, &level, &realm, &createdAt, &updatedAt, &onlineAt, &offlineAt)
 		if err != nil {
-			fmt.Printf("Database scan error: %v\n", err)
+			log.Printf("Database scan error: %v\n", err)
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(w, `{"success": false, "message": "Database error: %v"}`, err)
+			log.Printf("{\"success\": false, \"message\": \"Database error: %v\"}", err)
 			return
 		}
 
@@ -110,6 +114,8 @@ func handleGetActorList(w http.ResponseWriter, r *http.Request) {
 		actors = append(actors, actor)
 	}
 
+	log.Printf("获取角色列表成功，共 %d 个角色\n", len(actors))
+
 	// 生成响应
 	response := map[string]interface{}{
 		"success": true,
@@ -120,9 +126,9 @@ func handleGetActorList(w http.ResponseWriter, r *http.Request) {
 	// 编码为JSON
 	responseJSON, err := json.Marshal(response)
 	if err != nil {
-		fmt.Printf("JSON encoding error: %v\n", err)
+		log.Printf("JSON encoding error: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, `{"success": false, "message": "JSON encoding error"}`)
+		log.Printf("{\"success\": false, \"message\": \"JSON encoding error\"}")
 		return
 	}
 
@@ -134,16 +140,18 @@ func handleGetActorList(w http.ResponseWriter, r *http.Request) {
 // handleCreateActor 处理创建角色请求
 func handleCreateActor(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
+		log.Println("创建角色失败: 方法不允许")
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		fmt.Fprintf(w, `{"success": false, "message": "Method not allowed"}`)
+		log.Printf("{\"success\": false, \"message\": \"Method not allowed\"}")
 		return
 	}
 
 	// 从Authorization header中获取token
 	token := r.Header.Get("Authorization")
 	if token == "" {
+		log.Println("创建角色失败: 缺少Authorization header")
 		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprintf(w, `{"success": false, "message": "Authorization header is required"}`)
+		log.Printf("{\"success\": false, \"message\": \"Authorization header is required\"}")
 		return
 	}
 
@@ -157,10 +165,13 @@ func handleCreateActor(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
+		log.Printf("创建角色失败: 请求体解析错误: %v\n", err)
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, `{"success": false, "message": "Invalid request body"}`)
+		log.Printf("{\"success\": false, \"message\": \"Invalid request body\"}")
 		return
 	}
+
+	log.Printf("收到创建角色请求: name=%s\n", req.Name)
 
 	// 这里应该验证token，实际项目中应该使用JWT验证
 	// 为了测试，我们假设token是有效的
@@ -174,10 +185,13 @@ func handleCreateActor(w http.ResponseWriter, r *http.Request) {
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`, actorID, 1, req.Name, 1, "realm_1", time.Now(), time.Now(), time.Now())
 	if err != nil {
+		log.Printf("创建角色失败: 数据库错误: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, `{"success": false, "message": "Database error"}`)
+		log.Printf("{\"success\": false, \"message\": \"Database error\"}")
 		return
 	}
+
+	log.Printf("创建角色成功: name=%s, actor_id=%s\n", req.Name, actorID)
 
 	// 生成响应
 	response := map[string]interface{}{
@@ -198,8 +212,9 @@ func handleCreateActor(w http.ResponseWriter, r *http.Request) {
 	// 编码为JSON
 	responseJSON, err := json.Marshal(response)
 	if err != nil {
+		log.Printf("JSON encoding error: %v\n", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, `{"success": false, "message": "JSON encoding error"}`)
+		log.Printf("{\"success\": false, \"message\": \"JSON encoding error\"}")
 		return
 	}
 
@@ -213,7 +228,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	// 升级HTTP连接为WebSocket连接
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Printf("WebSocket upgrade error: %v\n", err)
+		log.Printf("WebSocket upgrade error: %v\n", err)
 		return
 	}
 	defer conn.Close()
@@ -224,13 +239,13 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := conn.ReadJSON(&msg); err != nil {
-		fmt.Printf("Read session error: %v\n", err)
+		log.Printf("Read session error: %v\n", err)
 		return
 	}
 
 	session := msg.Session
 	if session == "" {
-		fmt.Println("Empty session")
+		log.Println("Empty session")
 		return
 	}
 
@@ -239,22 +254,22 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	clients[session] = conn
 	clientsMutex.Unlock()
 
-	fmt.Printf("Client connected with session: %s\n", session)
+	log.Printf("Client connected with session: %s\n", session)
 
 	// 处理消息
 	for {
 		messageType, message, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Printf("Read message error: %v\n", err)
+			log.Printf("Read message error: %v\n", err)
 			break
 		}
 
 		// 处理收到的消息（这里可以根据消息类型进行处理）
-		fmt.Printf("Received message from session %s: %s\n", session, message)
+		log.Printf("Received message from session %s: %s\n", session, message)
 
 		// 回复客户端
 		if err := conn.WriteMessage(messageType, message); err != nil {
-			fmt.Printf("Write message error: %v\n", err)
+			log.Printf("Write message error: %v\n", err)
 			break
 		}
 	}
@@ -264,7 +279,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	delete(clients, session)
 	clientsMutex.Unlock()
 
-	fmt.Printf("Client disconnected with session: %s\n", session)
+	log.Printf("Client disconnected with session: %s\n", session)
 }
 
 // SendToClient 发送消息到客户端

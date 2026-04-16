@@ -24,3 +24,10 @@ func (h *Handler) GetRoleInfo(ctx context.Context, req *pb.GetRoleInfoRequest) (
 func (h *Handler) GetGameMoney(ctx context.Context, req *pb.GetGameMoneyRequest) (*pb.GetGameMoneyResponse, error) {
 	return h.Service.GetGameMoney(ctx, req)
 }
+
+// NewHandler 创建基础处理器
+func NewHandler() *Handler {
+	return &Handler{
+		Service: NewService(),
+	}
+}

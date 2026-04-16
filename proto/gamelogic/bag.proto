@@ -6,6 +6,8 @@ import "base.proto";
 
 option go_package = "zgame/pb/golang/gamelogic";
 
+//编号基础2200
+
 //单物品信息
 message ItemData
 {
