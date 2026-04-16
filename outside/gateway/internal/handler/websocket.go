@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"zgame/config"
-	"zgame/database"
 
 	"github.com/gorilla/websocket"
 )
@@ -25,6 +24,24 @@ var upgrader = websocket.Upgrader{
 // 客户端连接映射
 var clients = make(map[string]*websocket.Conn)
 var clientsMutex sync.RWMutex
+
+// 内存存储角色信息
+type Actor struct {
+	ActorID    string
+	UserID     int
+	Name       string
+	Level      int
+	Realm      string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	OnlineAt   time.Time
+	OfflineAt  *time.Time
+}
+
+var (
+	actors     = make(map[string]*Actor)
+	actorsMutex sync.RWMutex
+)
 
 // StartWebSocketServer 启动WebSocket服务器
 func StartWebSocketServer() error {
@@ -58,69 +75,37 @@ func handleGetActorList(w http.ResponseWriter, r *http.Request) {
 
 	log.Println("收到获取角色列表请求")
 
-	// 检查数据库连接是否初始化
-	if database.DB == nil {
-		log.Println("Database connection is not initialized")
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("{\"success\": false, \"message\": \"Database connection not initialized\"}")
-		return
-	}
-
-	// 从数据库中获取角色列表
-	rows, err := database.DB.Query(`
-		SELECT actor_id, name, level, realm, created_at, updated_at, online_at, offline_at 
-		FROM actors
-	`)
-	if err != nil {
-		log.Printf("Database query error: %v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("{\"success\": false, \"message\": \"Database error: %v\"}", err)
-		return
-	}
-	defer rows.Close()
-
-	// 解析角色列表
-	var actors []map[string]interface{}
-	for rows.Next() {
-		var actorID, name, realm string
-		var level int
-		var createdAt, updatedAt, onlineAt time.Time
-		var offlineAt *time.Time // 使用指针类型来存储可能为nil的值
-
-		err := rows.Scan(&actorID, &name, &level, &realm, &createdAt, &updatedAt, &onlineAt, &offlineAt)
-		if err != nil {
-			log.Printf("Database scan error: %v\n", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Printf("{\"success\": false, \"message\": \"Database error: %v\"}", err)
-			return
-		}
-
+	// 从内存中获取角色列表
+	actorsMutex.RLock()
+	var actorList []map[string]interface{}
+	for _, actor := range actors {
 		// 处理offline_at字段
 		offlineAtUnix := int64(0)
-		if offlineAt != nil {
-			offlineAtUnix = offlineAt.Unix()
+		if actor.OfflineAt != nil {
+			offlineAtUnix = actor.OfflineAt.Unix()
 		}
 
-		actor := map[string]interface{}{
-			"actor_id":   actorID,
-			"name":       name,
-			"level":      level,
-			"realm":      realm,
-			"created_at": createdAt.Unix(),
-			"updated_at": updatedAt.Unix(),
-			"online_at":  onlineAt.Unix(),
+		actorMap := map[string]interface{}{
+			"actor_id":   actor.ActorID,
+			"name":       actor.Name,
+			"level":      actor.Level,
+			"realm":      actor.Realm,
+			"created_at": actor.CreatedAt.Unix(),
+			"updated_at": actor.UpdatedAt.Unix(),
+			"online_at":  actor.OnlineAt.Unix(),
 			"offline_at": offlineAtUnix,
 		}
-		actors = append(actors, actor)
+		actorList = append(actorList, actorMap)
 	}
+	actorsMutex.RUnlock()
 
-	log.Printf("获取角色列表成功，共 %d 个角色\n", len(actors))
+	log.Printf("获取角色列表成功，共 %d 个角色\n", len(actorList))
 
 	// 生成响应
 	response := map[string]interface{}{
 		"success": true,
 		"message": "获取角色列表成功",
-		"data":    actors,
+		"data":    actorList,
 	}
 
 	// 编码为JSON
@@ -179,17 +164,23 @@ func handleCreateActor(w http.ResponseWriter, r *http.Request) {
 	// 生成角色ID
 	actorID := fmt.Sprintf("actor_%d", time.Now().UnixNano())
 
-	// 保存角色到数据库
-	_, err = database.DB.Exec(`
-		INSERT INTO actors (actor_id, user_id, name, level, realm, created_at, updated_at, online_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-	`, actorID, 1, req.Name, 1, "realm_1", time.Now(), time.Now(), time.Now())
-	if err != nil {
-		log.Printf("创建角色失败: 数据库错误: %v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("{\"success\": false, \"message\": \"Database error\"}")
-		return
+	// 保存角色到内存
+	now := time.Now()
+	actor := &Actor{
+		ActorID:    actorID,
+		UserID:     1,
+		Name:       req.Name,
+		Level:      1,
+		Realm:      "realm_1",
+		CreatedAt:  now,
+		UpdatedAt:  now,
+		OnlineAt:   now,
+		OfflineAt:  nil,
 	}
+
+	actorsMutex.Lock()
+	actors[actorID] = actor
+	actorsMutex.Unlock()
 
 	log.Printf("创建角色成功: name=%s, actor_id=%s\n", req.Name, actorID)
 
@@ -202,9 +193,9 @@ func handleCreateActor(w http.ResponseWriter, r *http.Request) {
 			"name":       req.Name,
 			"level":      1,
 			"realm":      "realm_1",
-			"created_at": time.Now().Unix(),
-			"updated_at": time.Now().Unix(),
-			"online_at":  time.Now().Unix(),
+			"created_at": now.Unix(),
+			"updated_at": now.Unix(),
+			"online_at":  now.Unix(),
 			"offline_at": 0,
 		},
 	}

@@ -6,22 +6,8 @@ golang语言实现的
 配置管理采用 etcd
 所有服务器集中配置 config.yml 一个文件中
 
-代码目录结构
-bin 放所有编译好的执行文件
-vendor 所有第三方的依赖都下载到这个目录下
-kits 项目中用到的工具程序
-test 功能测试代码
-res 项目中用到的资源配置文件
-proto 和客户端之间的protobuf3定义文件
-protosvr 服务器之间用的protobuf3定义文件
-outside 对外的服务器代码，gateway，ssoauth
-inside 内部的服务器代码，gamelogic，loger
-xlsx 项目中用到的配置文件，在转换后就放到res目录下
-pb 根据消息定义文件生成的不同程序语言用的序列化/反序列化目录，例如：pb\golang\gamelogic\bag.pb.go 这样存放
 
-
-proto 目录下根据不同的服务器文件夹，放置那个服务器的消息定义文件
-
+## 基础服务器职责清单
 
 ssoauth
 负责账号登录，账号注册等管理
@@ -112,3 +98,21 @@ loger
 启动一个udp的监听
 启动一个tcp的监听，tcp连接成功后，一个客户端连接一个线程，将收到的所有日志都发送给tcp连接客户端
 单独一个线程将收到的日志写到文件中去
+
+
+
+代码目录结构
+bin 放所有编译好的执行文件
+vendor 所有第三方的依赖都下载到这个目录下
+kits 项目中用到的工具程序
+test 功能测试代码
+res 项目中用到的资源配置文件
+proto 和客户端之间的protobuf3定义文件
+protosvr 服务器之间用的protobuf3定义文件
+outside 对外的服务器代码，gateway，ssoauth
+inside 内部的服务器代码，gamelogic，loger
+xlsx 项目中用到的配置文件，在转换后就放到res目录下
+pb 根据消息定义文件生成的不同程序语言用的序列化/反序列化目录，例如：pb\golang\gamelogic\bag.pb.go 这样存放
+
+
+proto 目录下根据不同的服务器文件夹，放置那个服务器的消息定义文件

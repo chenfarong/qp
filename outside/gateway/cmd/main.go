@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"zgame/config"
-	"zgame/database"
 	"zgame/internet/gateway/internal/handler"
 )
 
@@ -13,11 +12,11 @@ func main() {
 	// 加载配置
 	config.LoadConfig()
 
-	// 初始化数据库连接
-	if err := database.InitDatabase(); err != nil {
-		log.Fatalf("初始化数据库失败: %v", err)
-	}
-	defer database.CloseDatabase()
+	// 初始化数据库连接（注释掉，使用内存存储）
+	// if err := database.InitDatabase(); err != nil {
+	// 	log.Fatalf("初始化数据库失败: %v", err)
+	// }
+	// defer database.CloseDatabase()
 
 	// 启动gRPC服务器
 	go func() {

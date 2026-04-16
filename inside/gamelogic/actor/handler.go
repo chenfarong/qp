@@ -2,7 +2,9 @@ package actor
 
 import (
 	"context"
+	"zagame/inside/gamelogic/grpc"
 	pb "zagame/pb/golang/gamelogic"
+	"zagame/proto"
 )
 
 // Handler 角色处理器
@@ -30,4 +32,57 @@ func NewHandler() *Handler {
 	return &Handler{
 		Service: NewService(),
 	}
+}
+
+// RegisterHandlers 注册消息处理器
+func (h *Handler) RegisterHandlers(router *grpc.Router) {
+	// 角色消息
+	router.RegisterHandler(proto.MessageIDActorCreateRequest, h.handleActorCreateRequest)
+	router.RegisterHandler(proto.MessageIDActorUseRequest, h.handleActorUseRequest)
+	router.RegisterHandler(proto.MessageIDActorUseWithNameRequest, h.handleActorUseWithNameRequest)
+}
+
+// handleActorCreateRequest 处理创建角色请求
+func (h *Handler) handleActorCreateRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
+	req := &pb.ActorCreateRequest{}
+	if err := grpc.Unmarshal(messageContent, req); err != nil {
+		return nil, err
+	}
+
+	resp, err := h.ActorCreate(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return grpc.Marshal(resp)
+}
+
+// handleActorUseRequest 处理使用角色请求
+func (h *Handler) handleActorUseRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
+	req := &pb.ActorUseRequest{}
+	if err := grpc.Unmarshal(messageContent, req); err != nil {
+		return nil, err
+	}
+
+	resp, err := h.ActorUse(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return grpc.Marshal(resp)
+}
+
+// handleActorUseWithNameRequest 处理使用角色请求（通过名称）
+func (h *Handler) handleActorUseWithNameRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
+	req := &pb.ActorUseWithNameRequest{}
+	if err := grpc.Unmarshal(messageContent, req); err != nil {
+		return nil, err
+	}
+
+	resp, err := h.ActorUseWithName(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return grpc.Marshal(resp)
 }

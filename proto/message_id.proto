@@ -1,0 +1,43 @@
+// 消息号定义
+package proto;
+
+// 基础消息
+const int32 MessageIDLoginRequest = 1001;
+const int32 MessageIDLoginResponse = 1002;
+const int32 MessageIDGetRoleInfoRequest = 1003;
+const int32 MessageIDGetRoleInfoResponse = 1004;
+
+// 角色消息
+const int32 MessageIDActorCreateRequest = 2001;
+const int32 MessageIDActorUseRequest = 2002;
+const int32 MessageIDActorUseWithNameRequest = 2003;
+const int32 MessageIDActorUseResponse = 2004;
+
+// 背包消息
+const int32 MessageIDGetBagRequest = 3001;
+const int32 MessageIDGetBagResponse = 3002;
+const int32 MessageIDBagItemUseRequest = 3003;
+const int32 MessageIDBagItemUseResponse = 3004;
+const int32 MessageIDSyncBagItemChange = 3005;
+
+// 装备消息
+const int32 MessageIDGetEquipRequest = 4001;
+const int32 MessageIDGetEquipResponse = 4002;
+const int32 MessageIDUpgradeEquipRequest = 4003;
+const int32 MessageIDUpgradeEquipResponse = 4004;
+
+// 英雄消息
+const int32 MessageIDGetHeroesRequest = 5001;
+const int32 MessageIDGetHeroesResponse = 5002;
+const int32 MessageIDRecruitHeroRequest = 5003;
+const int32 MessageIDRecruiHeroesResponse = 5004;
+const int32 MessageIDUpStarHeroRequest = 5005;
+const int32 MessageIDUpStarHeroesResponse = 5006;
+const int32 MessageIDOpenSkillHeroRequest = 5007;
+const int32 MessageIDUpSkillHeroRequest = 5008;
+const int32 MessageIDOpenSkillHeroesResponse = 5009;
+
+// 货币消息
+const int32 MessageIDGetGameMoneyRequest = 6001;
+const int32 MessageIDGetGameMoneyResponse = 6002;
+const int32 MessageIDSyncGameMoneyChange = 6003;

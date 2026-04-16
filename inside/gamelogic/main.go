@@ -8,11 +8,13 @@ import (
 	"zagame/inside/gamelogic/actor"
 	"zagame/inside/gamelogic/bag"
 	"zagame/inside/gamelogic/base"
+	"zagame/inside/gamelogic/common"
 	"zagame/inside/gamelogic/equip"
 	"zagame/inside/gamelogic/grpc"
 	"zagame/inside/gamelogic/grpc/client"
-	"zagame/inside/gamelogic/grpc/gateway"
 	"zagame/inside/gamelogic/hero"
+
+	gateway "zagame/inside/gamelogic/grpc/gateway"
 
 	grpcserver "google.golang.org/grpc"
 )
@@ -69,8 +71,18 @@ func StartGRPCServer(port int32, gatewayAddress string) error {
 	// 创建消息路由器
 	router := grpc.NewRouter()
 
-	// 初始化消息处理器
-	grpc.InitHandlers(router, baseHandler, heroHandler, bagHandler, actorHandler, equipHandler)
+	// 统一注册所有处理器
+	handlers := []common.Handler{
+		baseHandler,
+		heroHandler,
+		bagHandler,
+		actorHandler,
+		equipHandler,
+	}
+
+	for _, h := range handlers {
+		h.RegisterHandlers(router)
+	}
 
 	// 监听端口
 	addr := fmt.Sprintf(":%d", port)

@@ -1,32 +1,37 @@
 package handler
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
+	"sync"
 
-	"zgame/database"
 	"zgame/internet/ssoauth/internal/util"
 
 	"github.com/gin-gonic/gin"
 )
 
+// 内存存储用户信息
+type User struct {
+	Username string
+	Password string
+}
+
+var (
+	users      = make(map[string]*User)
+	usersMutex sync.RWMutex
+)
+
 // CheckAndCreateDefaultAdmin 检查并创建默认的za_admin账号
 func CheckAndCreateDefaultAdmin() {
-	// 检查za_admin账号是否存在
-	var count int
-	err := database.DB.QueryRow("SELECT COUNT(*) FROM users WHERE username = $1", "za_admin").Scan(&count)
-	if err != nil {
-		log.Printf("检查za_admin账号失败: %v\n", err)
-		return
-	}
+	usersMutex.Lock()
+	defer usersMutex.Unlock()
 
-	if count == 0 {
+	// 检查za_admin账号是否存在
+	if _, exists := users["za_admin"]; !exists {
 		// 创建za_admin账号，密码和账号一样
-		_, err := database.DB.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", "za_admin", "za_admin")
-		if err != nil {
-			log.Printf("创建za_admin账号失败: %v\n", err)
-			return
+		users["za_admin"] = &User{
+			Username: "za_admin",
+			Password: "za_admin",
 		}
 		log.Println("Created default za_admin account")
 	}
@@ -73,27 +78,12 @@ func Login(c *gin.Context) {
 	log.Printf("收到登录请求: username=%s\n", req.Username)
 
 	// 验证用户名和密码
-	var password string
-	err := database.DB.QueryRow("SELECT password FROM users WHERE username = $1", req.Username).Scan(&password)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			log.Printf("登录失败: 用户名不存在: %s\n", req.Username)
-			c.JSON(http.StatusUnauthorized, LoginResponse{
-				Success: false,
-				Message: "Invalid username or password",
-			})
-			return
-		}
-		log.Printf("登录失败: 数据库错误: %v\n", err)
-		c.JSON(http.StatusInternalServerError, LoginResponse{
-			Success: false,
-			Message: "Database error",
-		})
-		return
-	}
+	usersMutex.RLock()
+	user, exists := users[req.Username]
+	usersMutex.RUnlock()
 
-	if password != req.Password {
-		log.Printf("登录失败: 密码错误: %s\n", req.Username)
+	if !exists || user.Password != req.Password {
+		log.Printf("登录失败: 用户名或密码错误: %s\n", req.Username)
 		c.JSON(http.StatusUnauthorized, LoginResponse{
 			Success: false,
 			Message: "Invalid username or password",
@@ -132,18 +122,9 @@ func Register(c *gin.Context) {
 	log.Printf("收到注册请求: username=%s\n", req.Username)
 
 	// 检查用户名是否已存在
-	var count int
-	err := database.DB.QueryRow("SELECT COUNT(*) FROM users WHERE username = $1", req.Username).Scan(&count)
-	if err != nil {
-		log.Printf("注册失败: 数据库错误: %v\n", err)
-		c.JSON(http.StatusInternalServerError, RegisterResponse{
-			Success: false,
-			Message: "Database error",
-		})
-		return
-	}
-
-	if count > 0 {
+	usersMutex.Lock()
+	if _, exists := users[req.Username]; exists {
+		usersMutex.Unlock()
 		log.Printf("注册失败: 用户名已存在: %s\n", req.Username)
 		c.JSON(http.StatusConflict, RegisterResponse{
 			Success: false,
@@ -152,16 +133,12 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// 存储用户信息到数据库
-	_, err = database.DB.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", req.Username, req.Password)
-	if err != nil {
-		log.Printf("注册失败: 数据库错误: %v\n", err)
-		c.JSON(http.StatusInternalServerError, RegisterResponse{
-			Success: false,
-			Message: "Database error",
-		})
-		return
+	// 存储用户信息到内存
+	users[req.Username] = &User{
+		Username: req.Username,
+		Password: req.Password,
 	}
+	usersMutex.Unlock()
 
 	log.Printf("注册成功: username=%s\n", req.Username)
 

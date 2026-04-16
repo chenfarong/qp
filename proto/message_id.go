@@ -1,4 +1,4 @@
-package grpc
+package proto
 
 // 消息号定义
 const (

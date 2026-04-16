@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	"zagame/inside/gamelogic/grpc"
 	gateway "zagame/inside/gamelogic/grpc/gateway"
+	"zagame/proto"
 
 	grpcclient "google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -44,7 +44,7 @@ func (c *Client) Close() error {
 // RegisterServer 注册服务器
 func (c *Client) RegisterServer(serverID, serverName, address string, port int32) error {
 	// 获取消息ID范围
-	startMsgID, endMsgID := grpc.GetMessageIDRange()
+	startMsgID, endMsgID := proto.GetMessageIDRange()
 
 	// 创建注册请求
 	req := &gateway.RegisterServerRequest{

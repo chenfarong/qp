@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"zgame/config"
-	"zgame/database"
 	"zgame/internet/ssoauth/internal/handler"
 	"zgame/internet/ssoauth/internal/middleware"
 
@@ -16,12 +15,6 @@ import (
 func main() {
 	// 加载配置
 	config.LoadConfig()
-
-	// 初始化数据库连接
-	if err := database.InitDatabase(); err != nil {
-		log.Fatalf("初始化数据库失败: %v", err)
-	}
-	defer database.CloseDatabase()
 
 	// 检查并创建默认的za_admin账号
 	handler.CheckAndCreateDefaultAdmin()
