@@ -61,6 +61,13 @@ func NewService() *Service {
 
 // StartGRPCServer 启动gRPC服务器
 func StartGRPCServer(port int32, gatewayAddress string) error {
+	// 添加panic恢复机制
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("发生panic，已恢复: %v\n", r)
+		}
+	}()
+
 	// 创建各个处理器
 	baseHandler := base.NewHandler()
 	heroHandler := hero.NewHandler()
@@ -105,15 +112,16 @@ func StartGRPCServer(port int32, gatewayAddress string) error {
 	client, err := client.NewClient(gatewayAddress)
 	if err != nil {
 		log.Printf("连接到gateway服务失败: %v\n", err)
-		return err
-	}
-	defer client.Close()
+		// 继续启动服务器，因为客户端会自动重连
+	} else {
+		defer client.Close()
 
-	// 注册服务器
-	err = client.RegisterServer("gamelogic", "GameLogic Server", "localhost", port)
-	if err != nil {
-		log.Printf("注册服务器失败: %v\n", err)
-		return err
+		// 注册服务器
+		err = client.RegisterServer("gamelogic", "GameLogic Server", "localhost", port)
+		if err != nil {
+			log.Printf("注册服务器失败: %v\n", err)
+			// 继续启动服务器，因为客户端会自动重连
+		}
 	}
 
 	// 启动服务器

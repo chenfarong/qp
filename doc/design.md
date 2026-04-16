@@ -7,7 +7,7 @@ golang语言实现的
 所有服务器集中配置 config.yml 一个文件中
 
 
-## 基础服务器职责清单
+## 服务器职责清单
 
 ssoauth
 负责账号登录，账号注册等管理
@@ -43,6 +43,9 @@ gateway
 在线角色数据在内存中，直到收到gateway对此角色下线通知后，才从内存中删除
 一个角色绑定一个微线程，一个channel
 handler中的每个消息处理方法定义是 上下文，protobuf3的请求，返回protobuf3的返回请求和错误
+
+
+
 
 
 ### gamelogic目录结构
