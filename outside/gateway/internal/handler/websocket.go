@@ -1,9 +1,15 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
+	"time"
+
+	"zgame/config"
+	"zgame/database"
 
 	"github.com/gorilla/websocket"
 )
@@ -21,8 +27,167 @@ var clientsMutex sync.RWMutex
 
 // StartWebSocketServer 启动WebSocket服务器
 func StartWebSocketServer() error {
+	// 注册HTTP API路由
+	http.HandleFunc("/actor/list", handleGetActorList)
+	http.HandleFunc("/actor/create", handleCreateActor)
+
+	// 注册WebSocket路由
 	http.HandleFunc("/ws", handleWebSocket)
-	return http.ListenAndServe(":8081", nil)
+
+	addr := fmt.Sprintf("%s:%d", config.AppConfig.Game.Host, config.AppConfig.Game.Port)
+	return http.ListenAndServe(addr, nil)
+}
+
+// handleGetActorList 处理获取角色列表请求
+func handleGetActorList(w http.ResponseWriter, r *http.Request) {
+	// 从Authorization header中获取token
+	token := r.Header.Get("Authorization")
+	if token == "" {
+		w.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprintf(w, `{"success": false, "message": "Authorization header is required"}`)
+		return
+	}
+
+	// 移除Bearer前缀
+	token = strings.TrimPrefix(token, "Bearer ")
+
+	// 这里应该验证token，实际项目中应该使用JWT验证
+	// 为了测试，我们假设token是有效的
+
+	// 从数据库中获取角色列表
+	rows, err := database.DB.Query(`
+		SELECT actor_id, name, level, realm, created_at, updated_at, online_at, offline_at 
+		FROM actors
+	`)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, `{"success": false, "message": "Database error"}`)
+		return
+	}
+	defer rows.Close()
+
+	// 解析角色列表
+	var actors []map[string]interface{}
+	for rows.Next() {
+		var actorID, name, realm string
+		var level int
+		var createdAt, updatedAt, onlineAt, offlineAt time.Time
+
+		err := rows.Scan(&actorID, &name, &level, &realm, &createdAt, &updatedAt, &onlineAt, &offlineAt)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, `{"success": false, "message": "Database error"}`)
+			return
+		}
+
+		actor := map[string]interface{}{
+			"actor_id":   actorID,
+			"name":       name,
+			"level":      level,
+			"realm":      realm,
+			"created_at": createdAt.Unix(),
+			"updated_at": updatedAt.Unix(),
+			"online_at":  onlineAt.Unix(),
+			"offline_at": offlineAt.Unix(),
+		}
+		actors = append(actors, actor)
+	}
+
+	// 生成响应
+	response := map[string]interface{}{
+		"success": true,
+		"message": "获取角色列表成功",
+		"data":    actors,
+	}
+
+	// 编码为JSON
+	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, `{"success": false, "message": "JSON encoding error"}`)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(responseJSON)
+}
+
+// handleCreateActor 处理创建角色请求
+func handleCreateActor(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		fmt.Fprintf(w, `{"success": false, "message": "Method not allowed"}`)
+		return
+	}
+
+	// 从Authorization header中获取token
+	token := r.Header.Get("Authorization")
+	if token == "" {
+		w.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprintf(w, `{"success": false, "message": "Authorization header is required"}`)
+		return
+	}
+
+	// 移除Bearer前缀
+	token = strings.TrimPrefix(token, "Bearer ")
+
+	// 解析请求体
+	var req struct {
+		Name string `json:"name"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"success": false, "message": "Invalid request body"}`)
+		return
+	}
+
+	// 这里应该验证token，实际项目中应该使用JWT验证
+	// 为了测试，我们假设token是有效的
+
+	// 生成角色ID
+	actorID := fmt.Sprintf("actor_%d", time.Now().UnixNano())
+
+	// 保存角色到数据库
+	_, err = database.DB.Exec(`
+		INSERT INTO actors (actor_id, user_id, name, level, realm, created_at, updated_at, online_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	`, actorID, 1, req.Name, 1, "realm_1", time.Now(), time.Now(), time.Now())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, `{"success": false, "message": "Database error"}`)
+		return
+	}
+
+	// 生成响应
+	response := map[string]interface{}{
+		"success": true,
+		"message": "创建角色成功",
+		"data": map[string]interface{}{
+			"actor_id":   actorID,
+			"name":       req.Name,
+			"level":      1,
+			"realm":      "realm_1",
+			"created_at": time.Now().Unix(),
+			"updated_at": time.Now().Unix(),
+			"online_at":  time.Now().Unix(),
+			"offline_at": 0,
+		},
+	}
+
+	// 编码为JSON
+	responseJSON, err := json.Marshal(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, `{"success": false, "message": "JSON encoding error"}`)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(responseJSON)
 }
 
 // handleWebSocket 处理WebSocket连接

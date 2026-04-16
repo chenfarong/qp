@@ -1,0 +1,40 @@
+# 服务器配置文件
+
+# 验证服务器配置
+auth:
+  host: "localhost"
+  port: 8080
+  secret_key: "your_secret_key_here"
+  token_expiry: 86400  # 令牌过期时间（秒）
+
+# 游戏服务器配置
+game:
+  host: "localhost"
+  port: 8081
+  max_connections: 1000
+  session_timeout: 3600  # 会话超时时间（秒）
+
+# 数据库配置
+database:
+  type: "postgres"
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "postgres"
+  dbname: "zgame"
+  sslmode: "disable"
+
+# 日志配置
+log:
+  level: "info"
+  file: "logs/server.log"
+  max_size: 100  # 日志文件最大大小（MB）
+  max_backups: 10  # 最大备份文件数
+  max_age: 30  # 日志文件最大保存天数（天）
+
+# 游戏配置
+game_config:
+  starting_gold: 1000  # 初始金币
+  starting_level: 1  # 初始等级
+  max_bag_size: 50  # 背包最大容量
+  max_heroes: 10  # 最大英雄数量

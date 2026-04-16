@@ -1,25 +1,33 @@
 package handler
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 
+	"zgame/database"
 	"zgame/internet/ssoauth/internal/util"
 
 	"github.com/gin-gonic/gin"
 )
 
-// 存储用户信息（实际项目中应该使用数据库）
-var users = map[string]string{
-	"admin": "password", // 初始用户
-}
-
-// 初始化函数，检查并创建默认的za_admin账号
-func init() {
+// CheckAndCreateDefaultAdmin 检查并创建默认的za_admin账号
+func CheckAndCreateDefaultAdmin() {
 	// 检查za_admin账号是否存在
-	if _, exists := users["za_admin"]; !exists {
+	var count int
+	err := database.DB.QueryRow("SELECT COUNT(*) FROM users WHERE username = $1", "za_admin").Scan(&count)
+	if err != nil {
+		fmt.Printf("检查za_admin账号失败: %v\n", err)
+		return
+	}
+
+	if count == 0 {
 		// 创建za_admin账号，密码和账号一样
-		users["za_admin"] = "za_admin"
+		_, err := database.DB.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", "za_admin", "za_admin")
+		if err != nil {
+			fmt.Printf("创建za_admin账号失败: %v\n", err)
+			return
+		}
 		fmt.Println("Created default za_admin account")
 	}
 }
@@ -62,25 +70,43 @@ func Login(c *gin.Context) {
 	}
 
 	// 验证用户名和密码
-	if password, exists := users[req.Username]; exists && password == req.Password {
-		// 生成32位小写字母和数字的session
-		session := util.GenerateSession()
-
-		// 生成JWT token
-		token, _ := util.GenerateJWT(req.Username)
-
-		c.JSON(http.StatusOK, LoginResponse{
-			Success: true,
-			Session: session,
-			Token:   token,
-			Message: "Login successful",
+	var password string
+	err := database.DB.QueryRow("SELECT password FROM users WHERE username = $1", req.Username).Scan(&password)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusUnauthorized, LoginResponse{
+				Success: false,
+				Message: "Invalid username or password",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, LoginResponse{
+			Success: false,
+			Message: "Database error",
 		})
-	} else {
+		return
+	}
+
+	if password != req.Password {
 		c.JSON(http.StatusUnauthorized, LoginResponse{
 			Success: false,
 			Message: "Invalid username or password",
 		})
+		return
 	}
+
+	// 生成32位小写字母和数字的session
+	session := util.GenerateSession()
+
+	// 生成JWT token
+	token, _ := util.GenerateJWT(req.Username)
+
+	c.JSON(http.StatusOK, LoginResponse{
+		Success: true,
+		Session: session,
+		Token:   token,
+		Message: "Login successful",
+	})
 }
 
 // Register 处理注册请求
@@ -95,7 +121,17 @@ func Register(c *gin.Context) {
 	}
 
 	// 检查用户名是否已存在
-	if _, exists := users[req.Username]; exists {
+	var count int
+	err := database.DB.QueryRow("SELECT COUNT(*) FROM users WHERE username = $1", req.Username).Scan(&count)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, RegisterResponse{
+			Success: false,
+			Message: "Database error",
+		})
+		return
+	}
+
+	if count > 0 {
 		c.JSON(http.StatusConflict, RegisterResponse{
 			Success: false,
 			Message: "Username already exists",
@@ -103,8 +139,15 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// 存储用户信息
-	users[req.Username] = req.Password
+	// 存储用户信息到数据库
+	_, err = database.DB.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", req.Username, req.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, RegisterResponse{
+			Success: false,
+			Message: "Database error",
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, RegisterResponse{
 		Success: true,

@@ -4,11 +4,10 @@ import (
 	"math/rand"
 	"time"
 
+	"zgame/config"
+
 	"github.com/golang-jwt/jwt/v5"
 )
-
-// 定义JWT密钥
-var jwtSecret = []byte("your-secret-key")
 
 // Claims JWT声明结构
 type Claims struct {
@@ -32,14 +31,14 @@ func GenerateJWT(username string) (string, error) {
 	claims := Claims{
 		Username: username,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(config.AppConfig.Auth.TokenExpiry) * time.Second)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtSecret)
+	tokenString, err := token.SignedString([]byte(config.AppConfig.Auth.SecretKey))
 	return tokenString, err
 }
 
@@ -47,7 +46,7 @@ func GenerateJWT(username string) (string, error) {
 func ParseJWT(tokenString string) (*Claims, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtSecret, nil
+		return []byte(config.AppConfig.Auth.SecretKey), nil
 	})
 
 	if err != nil {

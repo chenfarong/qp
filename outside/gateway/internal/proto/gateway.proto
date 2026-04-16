@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package gateway;
+
+option go_package = "./proto";
+
+// 服务器信息
+message ServerInfo {
+  string server_id = 1;      // 服务器ID
+  string server_name = 2;    // 服务器名称
+  int32 start_msg_id = 3;    // 起始消息ID
+  int32 end_msg_id = 4;      // 结束消息ID
+  string address = 5;        // 服务器地址
+  int32 port = 6;            // 服务器端口
+}
+
+// 注册服务器请求
+message RegisterServerRequest {
+  ServerInfo server_info = 1; // 服务器信息
+}
+
+// 注册服务器响应
+message RegisterServerResponse {
+  bool success = 1;           // 是否成功
+  string message = 2;         // 消息
+}
+
+// 消息转发请求
+message ForwardMessageRequest {
+  int32 message_id = 1;       // 消息ID
+  string session = 2;         // 会话ID
+  bytes message_content = 3;   // 消息内容
+}
+
+// 消息转发响应
+message ForwardMessageResponse {
+  bool success = 1;           // 是否成功
+  string message = 2;         // 消息
+  bytes response_content = 3;  // 响应内容
+}
+
+// Gateway服务
+service GatewayService {
+  // 注册服务器
+  rpc RegisterServer(RegisterServerRequest) returns (RegisterServerResponse);
+  // 转发消息
+  rpc ForwardMessage(ForwardMessageRequest) returns (ForwardMessageResponse);
+}

@@ -5,7 +5,14 @@ go 1.25.5
 require (
 	github.com/gin-gonic/gin v1.12.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
+	github.com/lib/pq v1.10.9
+	gopkg.in/yaml.v2 v2.4.0
+	zgame/config v0.0.0-00010101000000-000000000000
+	zgame/database v0.0.0-00010101000000-000000000000
 )
+
+replace zgame/config => ../../config
+replace zgame/database => ../../database
 
 require (
 	github.com/bytedance/gopkg v0.1.3 // indirect

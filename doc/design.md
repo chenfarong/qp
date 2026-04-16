@@ -2,7 +2,7 @@
 支持百万级同时在线玩家
 golang语言实现的
 版本更新，支持灰度，资源配表热更，功能单独更
-数据库采用 mongodb
+数据库采用 postgresql
 配置管理采用 etcd
 所有服务器集中配置 config.yml 一个文件中
 
@@ -33,6 +33,8 @@ session有效期管理
 
 gateway
 对外提供websocket长连接请求
+对内提供一个grpc服务器，供其他服务器转发消息用
+其他服务器向gateway注册消息处理整数段，gateway收到消息后，根据消息号，找到对应的服务器，将消息通过grpc连接转发给对应的服务器
 客户端websocket连接成功后，向此服务器报告自己的session值
 后面其他服务器发送给这个session的消息都将由这个gateway服发送给客户端
 一组游戏服，配置一个gateway服，其他逻辑处理服之间的通信都通过此服

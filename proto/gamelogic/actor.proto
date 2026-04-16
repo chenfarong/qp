@@ -25,20 +25,23 @@ message ActorData {
 
 message ActorCreateRequest
 {
-    string name=1; //角色名称 如果没提供的时候服务器随机一个名字
+    string session=1; //会话ID
+    optional string name=2; //角色名称 如果没提供的时候服务器随机一个名字
 }
 
 
 message ActorUseRequest
 {
-    string aid=1;
+    string session=1; //会话ID
+    string aid=2;   //角色编号
 }
 
 
 message ActorUseWithNameRequest
 {
-    string name=1;
-    string realm=2;
+    string gm_pass=1; //游戏管理员通信证
+    string name=2;  //角色名称
+    string realm=3; //游戏服编号
 }
 
 //创建 使用 角色返回
