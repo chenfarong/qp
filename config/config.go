@@ -77,21 +77,35 @@ var AppConfig Config
 
 // LoadConfig 加载配置文件
 func LoadConfig() {
-	// 解析命令行参数
-	configFile := flag.String("config", "../../config.yml", "配置文件路径")
-	flag.Parse()
+	// 尝试从多个位置加载配置文件
+	configPaths := []string{
+		"config.yml",          // 当前目录
+		"../../config.yml",    // 相对于 cmd 目录
+		"../../../config.yml", // 相对于 outside/cmd 目录
+	}
 
-	// 读取配置文件
-	data, err := os.ReadFile(*configFile)
-	if err != nil {
-		// 如果指定的路径不存在，尝试在当前目录查找
-		if _, err := os.Stat("config.yml"); err == nil {
-			configFile = flag.String("config", "config.yml", "配置文件路径")
-			data, err = os.ReadFile(*configFile)
+	var data []byte
+	var err error
+	var configFile string
+
+	// 尝试读取配置文件
+	for _, path := range configPaths {
+		data, err = os.ReadFile(path)
+		if err == nil {
+			configFile = path
+			break
 		}
+	}
+
+	// 如果所有路径都失败，尝试解析命令行参数
+	if err != nil {
+		configFileFlag := flag.String("config", "config.yml", "配置文件路径")
+		flag.Parse()
+		data, err = os.ReadFile(*configFileFlag)
 		if err != nil {
 			log.Fatalf("无法读取配置文件: %v", err)
 		}
+		configFile = *configFileFlag
 	}
 
 	// 解析YAML配置
@@ -100,5 +114,5 @@ func LoadConfig() {
 		log.Fatalf("无法解析配置文件: %v", err)
 	}
 
-	fmt.Printf("配置文件加载成功: %s\n", *configFile)
+	fmt.Printf("配置文件加载成功: %s\n", configFile)
 }
