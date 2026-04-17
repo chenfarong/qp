@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.2
-// source: equip.proto
+// source: gamelogic/equip.proto
 
 package gamelogic
 
@@ -33,7 +33,7 @@ type EquipData struct {
 
 func (x *EquipData) Reset() {
 	*x = EquipData{}
-	mi := &file_equip_proto_msgTypes[0]
+	mi := &file_gamelogic_equip_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +45,7 @@ func (x *EquipData) String() string {
 func (*EquipData) ProtoMessage() {}
 
 func (x *EquipData) ProtoReflect() protoreflect.Message {
-	mi := &file_equip_proto_msgTypes[0]
+	mi := &file_gamelogic_equip_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +58,7 @@ func (x *EquipData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EquipData.ProtoReflect.Descriptor instead.
 func (*EquipData) Descriptor() ([]byte, []int) {
-	return file_equip_proto_rawDescGZIP(), []int{0}
+	return file_gamelogic_equip_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *EquipData) GetEquipId() int64 {
@@ -91,7 +91,7 @@ type GetEquipRequest struct {
 
 func (x *GetEquipRequest) Reset() {
 	*x = GetEquipRequest{}
-	mi := &file_equip_proto_msgTypes[1]
+	mi := &file_gamelogic_equip_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -103,7 +103,7 @@ func (x *GetEquipRequest) String() string {
 func (*GetEquipRequest) ProtoMessage() {}
 
 func (x *GetEquipRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_equip_proto_msgTypes[1]
+	mi := &file_gamelogic_equip_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -116,7 +116,7 @@ func (x *GetEquipRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEquipRequest.ProtoReflect.Descriptor instead.
 func (*GetEquipRequest) Descriptor() ([]byte, []int) {
-	return file_equip_proto_rawDescGZIP(), []int{1}
+	return file_gamelogic_equip_proto_rawDescGZIP(), []int{1}
 }
 
 // 获取装备响应
@@ -130,7 +130,7 @@ type GetEquipResponse struct {
 
 func (x *GetEquipResponse) Reset() {
 	*x = GetEquipResponse{}
-	mi := &file_equip_proto_msgTypes[2]
+	mi := &file_gamelogic_equip_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -142,7 +142,7 @@ func (x *GetEquipResponse) String() string {
 func (*GetEquipResponse) ProtoMessage() {}
 
 func (x *GetEquipResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_equip_proto_msgTypes[2]
+	mi := &file_gamelogic_equip_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -155,7 +155,7 @@ func (x *GetEquipResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEquipResponse.ProtoReflect.Descriptor instead.
 func (*GetEquipResponse) Descriptor() ([]byte, []int) {
-	return file_equip_proto_rawDescGZIP(), []int{2}
+	return file_gamelogic_equip_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetEquipResponse) GetErr() *ResultErr {
@@ -181,7 +181,7 @@ type UpgradeEquipRequest struct {
 
 func (x *UpgradeEquipRequest) Reset() {
 	*x = UpgradeEquipRequest{}
-	mi := &file_equip_proto_msgTypes[3]
+	mi := &file_gamelogic_equip_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -193,7 +193,7 @@ func (x *UpgradeEquipRequest) String() string {
 func (*UpgradeEquipRequest) ProtoMessage() {}
 
 func (x *UpgradeEquipRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_equip_proto_msgTypes[3]
+	mi := &file_gamelogic_equip_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -206,7 +206,7 @@ func (x *UpgradeEquipRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpgradeEquipRequest.ProtoReflect.Descriptor instead.
 func (*UpgradeEquipRequest) Descriptor() ([]byte, []int) {
-	return file_equip_proto_rawDescGZIP(), []int{3}
+	return file_gamelogic_equip_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *UpgradeEquipRequest) GetEquipId() int64 {
@@ -227,7 +227,7 @@ type UpgradeEquipResponse struct {
 
 func (x *UpgradeEquipResponse) Reset() {
 	*x = UpgradeEquipResponse{}
-	mi := &file_equip_proto_msgTypes[4]
+	mi := &file_gamelogic_equip_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -239,7 +239,7 @@ func (x *UpgradeEquipResponse) String() string {
 func (*UpgradeEquipResponse) ProtoMessage() {}
 
 func (x *UpgradeEquipResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_equip_proto_msgTypes[4]
+	mi := &file_gamelogic_equip_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -252,7 +252,7 @@ func (x *UpgradeEquipResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpgradeEquipResponse.ProtoReflect.Descriptor instead.
 func (*UpgradeEquipResponse) Descriptor() ([]byte, []int) {
-	return file_equip_proto_rawDescGZIP(), []int{4}
+	return file_gamelogic_equip_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *UpgradeEquipResponse) GetErr() *ResultErr {
@@ -269,12 +269,11 @@ func (x *UpgradeEquipResponse) GetData() *EquipData {
 	return nil
 }
 
-var File_equip_proto protoreflect.FileDescriptor
+var File_gamelogic_equip_proto protoreflect.FileDescriptor
 
-const file_equip_proto_rawDesc = "" +
+const file_gamelogic_equip_proto_rawDesc = "" +
 	"\n" +
-	"\vequip.proto\x12\bprotocli\x1a\n" +
-	"base.proto\"c\n" +
+	"\x15gamelogic/equip.proto\x12\bprotocli\x1a\x14gamelogic/base.proto\"c\n" +
 	"\tEquipData\x12\x19\n" +
 	"\bequip_id\x18\x01 \x01(\x03R\aequipId\x12 \n" +
 	"\fequip_cfg_id\x18\x02 \x01(\x05R\n" +
@@ -291,19 +290,19 @@ const file_equip_proto_rawDesc = "" +
 	"\x04data\x18\x02 \x01(\v2\x13.protocli.EquipDataR\x04dataB\x1bZ\x19zgame/pb/golang/gamelogicb\x06proto3"
 
 var (
-	file_equip_proto_rawDescOnce sync.Once
-	file_equip_proto_rawDescData []byte
+	file_gamelogic_equip_proto_rawDescOnce sync.Once
+	file_gamelogic_equip_proto_rawDescData []byte
 )
 
-func file_equip_proto_rawDescGZIP() []byte {
-	file_equip_proto_rawDescOnce.Do(func() {
-		file_equip_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_equip_proto_rawDesc), len(file_equip_proto_rawDesc)))
+func file_gamelogic_equip_proto_rawDescGZIP() []byte {
+	file_gamelogic_equip_proto_rawDescOnce.Do(func() {
+		file_gamelogic_equip_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_gamelogic_equip_proto_rawDesc), len(file_gamelogic_equip_proto_rawDesc)))
 	})
-	return file_equip_proto_rawDescData
+	return file_gamelogic_equip_proto_rawDescData
 }
 
-var file_equip_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
-var file_equip_proto_goTypes = []any{
+var file_gamelogic_equip_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_gamelogic_equip_proto_goTypes = []any{
 	(*EquipData)(nil),            // 0: protocli.EquipData
 	(*GetEquipRequest)(nil),      // 1: protocli.GetEquipRequest
 	(*GetEquipResponse)(nil),     // 2: protocli.GetEquipResponse
@@ -311,7 +310,7 @@ var file_equip_proto_goTypes = []any{
 	(*UpgradeEquipResponse)(nil), // 4: protocli.UpgradeEquipResponse
 	(*ResultErr)(nil),            // 5: protocli.ResultErr
 }
-var file_equip_proto_depIdxs = []int32{
+var file_gamelogic_equip_proto_depIdxs = []int32{
 	5, // 0: protocli.GetEquipResponse.err:type_name -> protocli.ResultErr
 	0, // 1: protocli.GetEquipResponse.data:type_name -> protocli.EquipData
 	5, // 2: protocli.UpgradeEquipResponse.err:type_name -> protocli.ResultErr
@@ -323,27 +322,27 @@ var file_equip_proto_depIdxs = []int32{
 	0, // [0:4] is the sub-list for field type_name
 }
 
-func init() { file_equip_proto_init() }
-func file_equip_proto_init() {
-	if File_equip_proto != nil {
+func init() { file_gamelogic_equip_proto_init() }
+func file_gamelogic_equip_proto_init() {
+	if File_gamelogic_equip_proto != nil {
 		return
 	}
-	file_base_proto_init()
+	file_gamelogic_base_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_equip_proto_rawDesc), len(file_equip_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gamelogic_equip_proto_rawDesc), len(file_gamelogic_equip_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_equip_proto_goTypes,
-		DependencyIndexes: file_equip_proto_depIdxs,
-		MessageInfos:      file_equip_proto_msgTypes,
+		GoTypes:           file_gamelogic_equip_proto_goTypes,
+		DependencyIndexes: file_gamelogic_equip_proto_depIdxs,
+		MessageInfos:      file_gamelogic_equip_proto_msgTypes,
 	}.Build()
-	File_equip_proto = out.File
-	file_equip_proto_goTypes = nil
-	file_equip_proto_depIdxs = nil
+	File_gamelogic_equip_proto = out.File
+	file_gamelogic_equip_proto_goTypes = nil
+	file_gamelogic_equip_proto_depIdxs = nil
 }

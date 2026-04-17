@@ -24,8 +24,10 @@ func (s *Service) ActorCreate(ctx context.Context, req *pb.ActorCreateRequest) (
 		Name:    req.GetActorName(),
 		Level:   1,
 	}
+	errCode := int32(0)
+	errText := ""
 	return &pb.ActorUseResponse{
-		Err:  &pb.ResultErr{ErrCode: 0, ErrText: ""},
+		Err:  &pb.ResultErr{ErrCode: &errCode, ErrText: &errText},
 		Data: actorData,
 	}, nil
 }
@@ -35,8 +37,10 @@ func (s *Service) ActorUse(ctx context.Context, req *pb.ActorUseRequest) (*pb.Ac
 	// 实现使用角色逻辑
 	err := s.model.UseActor(req.GetAid())
 	if err != nil {
+		errCode := int32(1)
+		errText := err.Error()
 		return &pb.ActorUseResponse{
-			Err: &pb.ResultErr{ErrCode: 1, ErrText: err.Error()},
+			Err: &pb.ResultErr{ErrCode: &errCode, ErrText: &errText},
 		}, err
 	}
 	actorData := &pb.ActorData{
@@ -44,8 +48,10 @@ func (s *Service) ActorUse(ctx context.Context, req *pb.ActorUseRequest) (*pb.Ac
 		Name:    "TestActor",
 		Level:   1,
 	}
+	errCode := int32(0)
+	errText := ""
 	return &pb.ActorUseResponse{
-		Err:  &pb.ResultErr{ErrCode: 0, ErrText: ""},
+		Err:  &pb.ResultErr{ErrCode: &errCode, ErrText: &errText},
 		Data: actorData,
 	}, nil
 }
@@ -55,8 +61,10 @@ func (s *Service) ActorUseWithName(ctx context.Context, req *pb.ActorUseWithName
 	// 实现使用角色逻辑（通过名称）
 	aid := s.model.GetActorIdByName(req.Name)
 	if aid == "" {
+		errCode := int32(1)
+		errText := "Actor not found"
 		return &pb.ActorUseResponse{
-			Err: &pb.ResultErr{ErrCode: 1, ErrText: "Actor not found"},
+			Err: &pb.ResultErr{ErrCode: &errCode, ErrText: &errText},
 		}, nil
 	}
 	actorData := &pb.ActorData{
@@ -65,8 +73,10 @@ func (s *Service) ActorUseWithName(ctx context.Context, req *pb.ActorUseWithName
 		Realm:   req.Realm,
 		Level:   1,
 	}
+	errCode := int32(0)
+	errText := ""
 	return &pb.ActorUseResponse{
-		Err:  &pb.ResultErr{ErrCode: 0, ErrText: ""},
+		Err:  &pb.ResultErr{ErrCode: &errCode, ErrText: &errText},
 		Data: actorData,
 	}, nil
 }

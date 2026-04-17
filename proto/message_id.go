@@ -3,10 +3,12 @@ package proto
 // 消息号定义
 const (
 	// 基础消息
-	MSG_LoginRequest        = 1001
-	MSG_LoginResponse       = 1002
-	MSG_GetRoleInfoRequest  = 1003
-	MSG_GetRoleInfoResponse = 1004
+	MSG_LoginRequest         = 1001
+	MSG_LoginResponse        = 1002
+	MSG_GetRoleInfoRequest   = 1003
+	MSG_GetRoleInfoResponse  = 1004
+	MSG_GetActorListRequest  = 1005
+	MSG_GetActorListResponse = 1006
 
 	// 角色消息
 	MSG_ActorCreateRequest      = 2001
@@ -50,6 +52,8 @@ var MessageIDToName = map[int32]string{
 	1002: "MSG_LoginResponse",
 	1003: "MSG_GetRoleInfoRequest",
 	1004: "MSG_GetRoleInfoResponse",
+	1005: "MSG_GetActorListRequest",
+	1006: "MSG_GetActorListResponse",
 	2001: "MSG_ActorCreateRequest",
 	2002: "MSG_ActorUseRequest",
 	2003: "MSG_ActorUseWithNameRequest",

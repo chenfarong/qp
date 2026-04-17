@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.2
-// source: actor.proto
+// source: gamelogic/actor.proto
 
 package gamelogic
 
@@ -39,7 +39,7 @@ type ActorData struct {
 
 func (x *ActorData) Reset() {
 	*x = ActorData{}
-	mi := &file_actor_proto_msgTypes[0]
+	mi := &file_gamelogic_actor_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -51,7 +51,7 @@ func (x *ActorData) String() string {
 func (*ActorData) ProtoMessage() {}
 
 func (x *ActorData) ProtoReflect() protoreflect.Message {
-	mi := &file_actor_proto_msgTypes[0]
+	mi := &file_gamelogic_actor_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -64,7 +64,7 @@ func (x *ActorData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActorData.ProtoReflect.Descriptor instead.
 func (*ActorData) Descriptor() ([]byte, []int) {
-	return file_actor_proto_rawDescGZIP(), []int{0}
+	return file_gamelogic_actor_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ActorData) GetActorId() string {
@@ -140,7 +140,7 @@ type ActorCreateRequest struct {
 
 func (x *ActorCreateRequest) Reset() {
 	*x = ActorCreateRequest{}
-	mi := &file_actor_proto_msgTypes[1]
+	mi := &file_gamelogic_actor_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -152,7 +152,7 @@ func (x *ActorCreateRequest) String() string {
 func (*ActorCreateRequest) ProtoMessage() {}
 
 func (x *ActorCreateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_actor_proto_msgTypes[1]
+	mi := &file_gamelogic_actor_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -165,7 +165,7 @@ func (x *ActorCreateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActorCreateRequest.ProtoReflect.Descriptor instead.
 func (*ActorCreateRequest) Descriptor() ([]byte, []int) {
-	return file_actor_proto_rawDescGZIP(), []int{1}
+	return file_gamelogic_actor_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ActorCreateRequest) GetSession() string {
@@ -192,7 +192,7 @@ type ActorUseRequest struct {
 
 func (x *ActorUseRequest) Reset() {
 	*x = ActorUseRequest{}
-	mi := &file_actor_proto_msgTypes[2]
+	mi := &file_gamelogic_actor_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -204,7 +204,7 @@ func (x *ActorUseRequest) String() string {
 func (*ActorUseRequest) ProtoMessage() {}
 
 func (x *ActorUseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_actor_proto_msgTypes[2]
+	mi := &file_gamelogic_actor_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -217,7 +217,7 @@ func (x *ActorUseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActorUseRequest.ProtoReflect.Descriptor instead.
 func (*ActorUseRequest) Descriptor() ([]byte, []int) {
-	return file_actor_proto_rawDescGZIP(), []int{2}
+	return file_gamelogic_actor_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ActorUseRequest) GetSession() string {
@@ -245,7 +245,7 @@ type ActorUseWithNameRequest struct {
 
 func (x *ActorUseWithNameRequest) Reset() {
 	*x = ActorUseWithNameRequest{}
-	mi := &file_actor_proto_msgTypes[3]
+	mi := &file_gamelogic_actor_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -257,7 +257,7 @@ func (x *ActorUseWithNameRequest) String() string {
 func (*ActorUseWithNameRequest) ProtoMessage() {}
 
 func (x *ActorUseWithNameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_actor_proto_msgTypes[3]
+	mi := &file_gamelogic_actor_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -270,7 +270,7 @@ func (x *ActorUseWithNameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActorUseWithNameRequest.ProtoReflect.Descriptor instead.
 func (*ActorUseWithNameRequest) Descriptor() ([]byte, []int) {
-	return file_actor_proto_rawDescGZIP(), []int{3}
+	return file_gamelogic_actor_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ActorUseWithNameRequest) GetGmPass() string {
@@ -305,7 +305,7 @@ type ActorUseResponse struct {
 
 func (x *ActorUseResponse) Reset() {
 	*x = ActorUseResponse{}
-	mi := &file_actor_proto_msgTypes[4]
+	mi := &file_gamelogic_actor_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -317,7 +317,7 @@ func (x *ActorUseResponse) String() string {
 func (*ActorUseResponse) ProtoMessage() {}
 
 func (x *ActorUseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_actor_proto_msgTypes[4]
+	mi := &file_gamelogic_actor_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -330,7 +330,7 @@ func (x *ActorUseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ActorUseResponse.ProtoReflect.Descriptor instead.
 func (*ActorUseResponse) Descriptor() ([]byte, []int) {
-	return file_actor_proto_rawDescGZIP(), []int{4}
+	return file_gamelogic_actor_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ActorUseResponse) GetErr() *ResultErr {
@@ -347,12 +347,11 @@ func (x *ActorUseResponse) GetData() *ActorData {
 	return nil
 }
 
-var File_actor_proto protoreflect.FileDescriptor
+var File_gamelogic_actor_proto protoreflect.FileDescriptor
 
-const file_actor_proto_rawDesc = "" +
+const file_gamelogic_actor_proto_rawDesc = "" +
 	"\n" +
-	"\vactor.proto\x12\bprotocli\x1a\n" +
-	"base.proto\"\xf2\x01\n" +
+	"\x15gamelogic/actor.proto\x12\bprotocli\x1a\x14gamelogic/base.proto\"\xf2\x01\n" +
 	"\tActorData\x12\x19\n" +
 	"\bactor_id\x18\x01 \x01(\tR\aactorId\x12\x10\n" +
 	"\x03pid\x18\x02 \x01(\tR\x03pid\x12\x1d\n" +
@@ -383,19 +382,19 @@ const file_actor_proto_rawDesc = "" +
 	"\x04data\x18\x02 \x01(\v2\x13.protocli.ActorDataR\x04dataB\x1bZ\x19zgame/pb/golang/gamelogicb\x06proto3"
 
 var (
-	file_actor_proto_rawDescOnce sync.Once
-	file_actor_proto_rawDescData []byte
+	file_gamelogic_actor_proto_rawDescOnce sync.Once
+	file_gamelogic_actor_proto_rawDescData []byte
 )
 
-func file_actor_proto_rawDescGZIP() []byte {
-	file_actor_proto_rawDescOnce.Do(func() {
-		file_actor_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_actor_proto_rawDesc), len(file_actor_proto_rawDesc)))
+func file_gamelogic_actor_proto_rawDescGZIP() []byte {
+	file_gamelogic_actor_proto_rawDescOnce.Do(func() {
+		file_gamelogic_actor_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_gamelogic_actor_proto_rawDesc), len(file_gamelogic_actor_proto_rawDesc)))
 	})
-	return file_actor_proto_rawDescData
+	return file_gamelogic_actor_proto_rawDescData
 }
 
-var file_actor_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
-var file_actor_proto_goTypes = []any{
+var file_gamelogic_actor_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_gamelogic_actor_proto_goTypes = []any{
 	(*ActorData)(nil),               // 0: protocli.ActorData
 	(*ActorCreateRequest)(nil),      // 1: protocli.ActorCreateRequest
 	(*ActorUseRequest)(nil),         // 2: protocli.ActorUseRequest
@@ -403,7 +402,7 @@ var file_actor_proto_goTypes = []any{
 	(*ActorUseResponse)(nil),        // 4: protocli.ActorUseResponse
 	(*ResultErr)(nil),               // 5: protocli.ResultErr
 }
-var file_actor_proto_depIdxs = []int32{
+var file_gamelogic_actor_proto_depIdxs = []int32{
 	5, // 0: protocli.ActorUseResponse.err:type_name -> protocli.ResultErr
 	0, // 1: protocli.ActorUseResponse.data:type_name -> protocli.ActorData
 	2, // [2:2] is the sub-list for method output_type
@@ -413,28 +412,28 @@ var file_actor_proto_depIdxs = []int32{
 	0, // [0:2] is the sub-list for field type_name
 }
 
-func init() { file_actor_proto_init() }
-func file_actor_proto_init() {
-	if File_actor_proto != nil {
+func init() { file_gamelogic_actor_proto_init() }
+func file_gamelogic_actor_proto_init() {
+	if File_gamelogic_actor_proto != nil {
 		return
 	}
-	file_base_proto_init()
-	file_actor_proto_msgTypes[1].OneofWrappers = []any{}
+	file_gamelogic_base_proto_init()
+	file_gamelogic_actor_proto_msgTypes[1].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_actor_proto_rawDesc), len(file_actor_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gamelogic_actor_proto_rawDesc), len(file_gamelogic_actor_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_actor_proto_goTypes,
-		DependencyIndexes: file_actor_proto_depIdxs,
-		MessageInfos:      file_actor_proto_msgTypes,
+		GoTypes:           file_gamelogic_actor_proto_goTypes,
+		DependencyIndexes: file_gamelogic_actor_proto_depIdxs,
+		MessageInfos:      file_gamelogic_actor_proto_msgTypes,
 	}.Build()
-	File_actor_proto = out.File
-	file_actor_proto_goTypes = nil
-	file_actor_proto_depIdxs = nil
+	File_gamelogic_actor_proto = out.File
+	file_gamelogic_actor_proto_goTypes = nil
+	file_gamelogic_actor_proto_depIdxs = nil
 }

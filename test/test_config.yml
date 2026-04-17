@@ -1,0 +1,9 @@
+# 测试配置文件
+auth:
+  host: "localhost"
+  port: 8080
+
+gateway:
+  host: "localhost"
+  ws_port: 8061
+  grpc_port: 8082

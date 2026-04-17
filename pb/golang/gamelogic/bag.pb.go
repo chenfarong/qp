@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.2
-// source: bag.proto
+// source: gamelogic/bag.proto
 
 package gamelogic
 
@@ -34,7 +34,7 @@ type ItemData struct {
 
 func (x *ItemData) Reset() {
 	*x = ItemData{}
-	mi := &file_bag_proto_msgTypes[0]
+	mi := &file_gamelogic_bag_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -46,7 +46,7 @@ func (x *ItemData) String() string {
 func (*ItemData) ProtoMessage() {}
 
 func (x *ItemData) ProtoReflect() protoreflect.Message {
-	mi := &file_bag_proto_msgTypes[0]
+	mi := &file_gamelogic_bag_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,7 +59,7 @@ func (x *ItemData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ItemData.ProtoReflect.Descriptor instead.
 func (*ItemData) Descriptor() ([]byte, []int) {
-	return file_bag_proto_rawDescGZIP(), []int{0}
+	return file_gamelogic_bag_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ItemData) GetItemId() int64 {
@@ -99,7 +99,7 @@ type GetBagRequest struct {
 
 func (x *GetBagRequest) Reset() {
 	*x = GetBagRequest{}
-	mi := &file_bag_proto_msgTypes[1]
+	mi := &file_gamelogic_bag_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -111,7 +111,7 @@ func (x *GetBagRequest) String() string {
 func (*GetBagRequest) ProtoMessage() {}
 
 func (x *GetBagRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bag_proto_msgTypes[1]
+	mi := &file_gamelogic_bag_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -124,7 +124,7 @@ func (x *GetBagRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetBagRequest.ProtoReflect.Descriptor instead.
 func (*GetBagRequest) Descriptor() ([]byte, []int) {
-	return file_bag_proto_rawDescGZIP(), []int{1}
+	return file_gamelogic_bag_proto_rawDescGZIP(), []int{1}
 }
 
 // 获取背包响应
@@ -138,7 +138,7 @@ type GetBagResponse struct {
 
 func (x *GetBagResponse) Reset() {
 	*x = GetBagResponse{}
-	mi := &file_bag_proto_msgTypes[2]
+	mi := &file_gamelogic_bag_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -150,7 +150,7 @@ func (x *GetBagResponse) String() string {
 func (*GetBagResponse) ProtoMessage() {}
 
 func (x *GetBagResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_bag_proto_msgTypes[2]
+	mi := &file_gamelogic_bag_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -163,7 +163,7 @@ func (x *GetBagResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetBagResponse.ProtoReflect.Descriptor instead.
 func (*GetBagResponse) Descriptor() ([]byte, []int) {
-	return file_bag_proto_rawDescGZIP(), []int{2}
+	return file_gamelogic_bag_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetBagResponse) GetErr() *ResultErr {
@@ -191,7 +191,7 @@ type BagItemUseRequest struct {
 
 func (x *BagItemUseRequest) Reset() {
 	*x = BagItemUseRequest{}
-	mi := &file_bag_proto_msgTypes[3]
+	mi := &file_gamelogic_bag_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -203,7 +203,7 @@ func (x *BagItemUseRequest) String() string {
 func (*BagItemUseRequest) ProtoMessage() {}
 
 func (x *BagItemUseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_bag_proto_msgTypes[3]
+	mi := &file_gamelogic_bag_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -216,7 +216,7 @@ func (x *BagItemUseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BagItemUseRequest.ProtoReflect.Descriptor instead.
 func (*BagItemUseRequest) Descriptor() ([]byte, []int) {
-	return file_bag_proto_rawDescGZIP(), []int{3}
+	return file_gamelogic_bag_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *BagItemUseRequest) GetItemId() int64 {
@@ -245,7 +245,7 @@ type BagItemUseResponse struct {
 
 func (x *BagItemUseResponse) Reset() {
 	*x = BagItemUseResponse{}
-	mi := &file_bag_proto_msgTypes[4]
+	mi := &file_gamelogic_bag_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -257,7 +257,7 @@ func (x *BagItemUseResponse) String() string {
 func (*BagItemUseResponse) ProtoMessage() {}
 
 func (x *BagItemUseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_bag_proto_msgTypes[4]
+	mi := &file_gamelogic_bag_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -270,7 +270,7 @@ func (x *BagItemUseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BagItemUseResponse.ProtoReflect.Descriptor instead.
 func (*BagItemUseResponse) Descriptor() ([]byte, []int) {
-	return file_bag_proto_rawDescGZIP(), []int{4}
+	return file_gamelogic_bag_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *BagItemUseResponse) GetSuccess() bool {
@@ -304,7 +304,7 @@ type SyncBagItemChange struct {
 
 func (x *SyncBagItemChange) Reset() {
 	*x = SyncBagItemChange{}
-	mi := &file_bag_proto_msgTypes[5]
+	mi := &file_gamelogic_bag_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -316,7 +316,7 @@ func (x *SyncBagItemChange) String() string {
 func (*SyncBagItemChange) ProtoMessage() {}
 
 func (x *SyncBagItemChange) ProtoReflect() protoreflect.Message {
-	mi := &file_bag_proto_msgTypes[5]
+	mi := &file_gamelogic_bag_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -329,7 +329,7 @@ func (x *SyncBagItemChange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncBagItemChange.ProtoReflect.Descriptor instead.
 func (*SyncBagItemChange) Descriptor() ([]byte, []int) {
-	return file_bag_proto_rawDescGZIP(), []int{5}
+	return file_gamelogic_bag_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SyncBagItemChange) GetData() []*ItemData {
@@ -339,12 +339,11 @@ func (x *SyncBagItemChange) GetData() []*ItemData {
 	return nil
 }
 
-var File_bag_proto protoreflect.FileDescriptor
+var File_gamelogic_bag_proto protoreflect.FileDescriptor
 
-const file_bag_proto_rawDesc = "" +
+const file_gamelogic_bag_proto_rawDesc = "" +
 	"\n" +
-	"\tbag.proto\x12\bprotocli\x1a\n" +
-	"base.proto\"p\n" +
+	"\x13gamelogic/bag.proto\x12\bprotocli\x1a\x14gamelogic/base.proto\"p\n" +
 	"\bItemData\x12\x17\n" +
 	"\aitem_id\x18\x01 \x01(\x03R\x06itemId\x12\x1e\n" +
 	"\vitem_cfg_id\x18\x02 \x01(\x05R\titemCfgId\x12\x10\n" +
@@ -365,19 +364,19 @@ const file_bag_proto_rawDesc = "" +
 	"\x04data\x18\x02 \x03(\v2\x12.protocli.ItemDataR\x04dataB\x1bZ\x19zgame/pb/golang/gamelogicb\x06proto3"
 
 var (
-	file_bag_proto_rawDescOnce sync.Once
-	file_bag_proto_rawDescData []byte
+	file_gamelogic_bag_proto_rawDescOnce sync.Once
+	file_gamelogic_bag_proto_rawDescData []byte
 )
 
-func file_bag_proto_rawDescGZIP() []byte {
-	file_bag_proto_rawDescOnce.Do(func() {
-		file_bag_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_bag_proto_rawDesc), len(file_bag_proto_rawDesc)))
+func file_gamelogic_bag_proto_rawDescGZIP() []byte {
+	file_gamelogic_bag_proto_rawDescOnce.Do(func() {
+		file_gamelogic_bag_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_gamelogic_bag_proto_rawDesc), len(file_gamelogic_bag_proto_rawDesc)))
 	})
-	return file_bag_proto_rawDescData
+	return file_gamelogic_bag_proto_rawDescData
 }
 
-var file_bag_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
-var file_bag_proto_goTypes = []any{
+var file_gamelogic_bag_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_gamelogic_bag_proto_goTypes = []any{
 	(*ItemData)(nil),           // 0: protocli.ItemData
 	(*GetBagRequest)(nil),      // 1: protocli.GetBagRequest
 	(*GetBagResponse)(nil),     // 2: protocli.GetBagResponse
@@ -386,7 +385,7 @@ var file_bag_proto_goTypes = []any{
 	(*SyncBagItemChange)(nil),  // 5: protocli.SyncBagItemChange
 	(*ResultErr)(nil),          // 6: protocli.ResultErr
 }
-var file_bag_proto_depIdxs = []int32{
+var file_gamelogic_bag_proto_depIdxs = []int32{
 	6, // 0: protocli.GetBagResponse.err:type_name -> protocli.ResultErr
 	0, // 1: protocli.GetBagResponse.data:type_name -> protocli.ItemData
 	0, // 2: protocli.BagItemUseResponse.item_data:type_name -> protocli.ItemData
@@ -398,27 +397,27 @@ var file_bag_proto_depIdxs = []int32{
 	0, // [0:4] is the sub-list for field type_name
 }
 
-func init() { file_bag_proto_init() }
-func file_bag_proto_init() {
-	if File_bag_proto != nil {
+func init() { file_gamelogic_bag_proto_init() }
+func file_gamelogic_bag_proto_init() {
+	if File_gamelogic_bag_proto != nil {
 		return
 	}
-	file_base_proto_init()
+	file_gamelogic_base_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_bag_proto_rawDesc), len(file_bag_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gamelogic_bag_proto_rawDesc), len(file_gamelogic_bag_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_bag_proto_goTypes,
-		DependencyIndexes: file_bag_proto_depIdxs,
-		MessageInfos:      file_bag_proto_msgTypes,
+		GoTypes:           file_gamelogic_bag_proto_goTypes,
+		DependencyIndexes: file_gamelogic_bag_proto_depIdxs,
+		MessageInfos:      file_gamelogic_bag_proto_msgTypes,
 	}.Build()
-	File_bag_proto = out.File
-	file_bag_proto_goTypes = nil
-	file_bag_proto_depIdxs = nil
+	File_gamelogic_bag_proto = out.File
+	file_gamelogic_bag_proto_goTypes = nil
+	file_gamelogic_bag_proto_depIdxs = nil
 }

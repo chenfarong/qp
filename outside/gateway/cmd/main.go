@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"zagame/common/logger"
 	"zagame/config"
 	"zagame/outside/gateway/internal/handler"
@@ -31,18 +29,30 @@ func main() {
 	// }
 	// defer database.CloseDatabase()
 
+	// 打印欢迎信息
+	logger.Info("========================================================")
+	logger.Info("                      Gateway Server                    ")
+	logger.Info("========================================================")
+	logger.Info("服务名称: Gateway Server")
+	logger.Info("服务类型: WebSocket + gRPC Server")
+	logger.Info("监听地址: %s", config.AppConfig.Gateway.Host)
+	logger.Info("WebSocket端口: %d", config.AppConfig.Gateway.WsPort)
+	logger.Info("gRPC端口: %d", config.AppConfig.Gateway.GrpcPort)
+	logger.Info("最大连接数: %d", config.AppConfig.Gateway.MaxConnections)
+	logger.Info("会话超时时间: %d秒", config.AppConfig.Gateway.SessionTimeout)
+	logger.Info("========================================================")
+	logger.Info("服务器已成功启动，等待客户端连接...")
+	logger.Info("========================================================")
+
 	// 启动gRPC服务器
 	go func() {
 		grpcPort := config.AppConfig.Gateway.GrpcPort // gRPC服务器端口
-		logger.InfoKV("启动gRPC服务器", "port", grpcPort)
 		if err := handler.StartGRPCServer(grpcPort); err != nil {
 			logger.Fatalf("gRPC服务器启动失败: %v", err)
 		}
 	}()
 
 	// 启动WebSocket服务器
-	addr := fmt.Sprintf("%s:%d", config.AppConfig.Gateway.Host, config.AppConfig.Gateway.WsPort)
-	logger.InfoKV("启动WebSocket服务器", "address", addr)
 	if err := handler.StartWebSocketServer(); err != nil {
 		logger.Fatalf("WebSocket server error: %v", err)
 	}

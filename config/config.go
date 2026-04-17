@@ -79,9 +79,11 @@ var AppConfig Config
 func LoadConfig() {
 	// 尝试从多个位置加载配置文件
 	configPaths := []string{
-		"config.yml",          // 当前目录
-		"../../config.yml",    // 相对于 cmd 目录
-		"../../../config.yml", // 相对于 outside/cmd 目录
+		"config.yml",           // 当前目录
+		"test_config.yml",      // 测试配置文件
+		"../../config.yml",     // 相对于 cmd 目录
+		"../../../config.yml",  // 相对于 outside/cmd 目录
+		"../test_config.yml",   // 相对于 test/gamelogic 目录
 	}
 
 	var data []byte

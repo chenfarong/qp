@@ -188,20 +188,45 @@ func main() {
 	}
 	defer wsConn.Close()
 
-	// 3. 直接创建角色
-	fmt.Println("\n=== 步骤3: 创建角色 ===")
-	selectedActor, err := createNewActor(session)
+	// 3. 获取角色列表
+	fmt.Println("\n=== 步骤3: 获取角色列表 ===")
+	actors, err := getActorList(session)
 	if err != nil {
-		fmt.Printf("创建角色失败: %v\n", err)
+		fmt.Printf("获取角色列表失败: %v\n", err)
 		return
 	}
 
-	fmt.Printf("\n已选择角色: %s (ID: %s, 等级: %d)\n",
-		selectedActor.Name, selectedActor.ActorId, selectedActor.Level)
+	var selectedActor *pb.Role
+	if len(actors) == 0 {
+		// 如果没有角色，直接创建角色
+		fmt.Println("没有找到角色，将创建新角色")
+	} else {
+		// 如果有角色，让用户选择
+		selectedActor = selectActor(actors)
+		fmt.Printf("\n已选择角色: %s (ID: %s, 等级: %d)\n",
+			selectedActor.Name, selectedActor.Aid, selectedActor.Level)
+	}
+
+	// 4. 如果没有角色或用户选择创建新角色，则创建角色
+	if selectedActor == nil {
+		fmt.Println("\n=== 步骤4: 创建角色 ===")
+		actorInfo, err := createNewActor(session)
+		if err != nil {
+			fmt.Printf("创建角色失败: %v\n", err)
+			return
+		}
+		selectedActor = &pb.Role{
+			Aid:   actorInfo.ActorId,
+			Name:  actorInfo.Name,
+			Level: actorInfo.Level,
+		}
+		fmt.Printf("\n已选择角色: %s (ID: %s, 等级: %d)\n",
+			selectedActor.Name, selectedActor.Aid, selectedActor.Level)
+	}
 
 	// 5. 进入游戏
 	fmt.Println("\n=== 步骤5: 进入游戏 ===")
-	err = useActor(selectedActor.ActorId, session)
+	err = useActor(selectedActor, session)
 	if err != nil {
 		fmt.Printf("进入游戏失败: %v\n", err)
 		return
@@ -215,10 +240,9 @@ func main() {
 	fmt.Println("\n=== 步骤7: 等待更多游戏功能测试 ===")
 	fmt.Println("测试客户端已准备就绪，等待更多游戏功能测试...")
 	fmt.Println("当前角色信息:")
-	fmt.Printf("  角色ID: %s\n", selectedActor.ActorId)
+	fmt.Printf("  角色ID: %s\n", selectedActor.Aid)
 	fmt.Printf("  角色名称: %s\n", selectedActor.Name)
 	fmt.Printf("  角色等级: %d\n", selectedActor.Level)
-	fmt.Printf("  所在服区: %s\n", selectedActor.Realm)
 
 	// 保持连接
 	select {}
@@ -379,9 +403,32 @@ func handleWebSocketMessage(msg WebSocketMessage) {
 			fmt.Printf("解析角色信息响应失败: %v\n", err)
 			return
 		}
-		fmt.Printf("角色信息响应: Success=%v, Message=%s\n", resp.Success, resp.Message)
-		if resp.Success && resp.Role != nil {
-			fmt.Printf("角色ID: %s, 名称: %s, 等级: %d\n", resp.Role.Aid, resp.Role.Name, resp.Role.Level)
+		if resp.Err != nil {
+			fmt.Printf("角色信息响应: ErrCode=%d, ErrText=%s\n", resp.Err.ErrCode, resp.Err.ErrText)
+		} else {
+			fmt.Printf("角色信息响应: 成功\n")
+		}
+		if resp.Data != nil {
+			fmt.Printf("角色ID: %s, 名称: %s, 等级: %d\n", resp.Data.Aid, resp.Data.Name, resp.Data.Level)
+		}
+
+	case proto.MSG_GetActorListResponse:
+		// 处理获取角色列表响应
+		var resp pb.GetActorListResponse
+		if err := json.Unmarshal(msg.Data, &resp); err != nil {
+			fmt.Printf("解析角色列表响应失败: %v\n", err)
+			return
+		}
+		if resp.Err != nil {
+			fmt.Printf("角色列表响应: ErrCode=%d, ErrText=%s\n", resp.Err.ErrCode, resp.Err.ErrText)
+		} else {
+			fmt.Printf("角色列表响应: 成功\n")
+		}
+		if resp.Data != nil {
+			fmt.Printf("角色数量: %d\n", len(resp.Data))
+			for i, actor := range resp.Data {
+				fmt.Printf("  %d. ID: %s, 名称: %s, 等级: %d\n", i+1, actor.Aid, actor.Name, actor.Level)
+			}
 		}
 
 	case proto.MSG_ActorUseResponse:
@@ -510,38 +557,28 @@ func sendWebSocketMessage(msgID int32, data interface{}) error {
 }
 
 // getActorList 获取角色列表
-func getActorList() ([]ActorInfo, error) {
-	// 发送获取角色信息请求
-	req := pb.GetRoleInfoRequest{}
-	err := sendWebSocketMessage(proto.MSG_GetRoleInfoRequest, req)
+func getActorList(session string) ([]pb.Role, error) {
+	// 发送获取角色列表请求
+	req := pb.GetActorListRequest{
+		Session: session,
+	}
+	err := sendWebSocketMessage(proto.MSG_GetActorListRequest, req)
 	if err != nil {
-		return nil, fmt.Errorf("发送获取角色信息请求失败: %v", err)
+		return nil, fmt.Errorf("发送获取角色列表请求失败: %v", err)
 	}
 
-	// 等待响应（这里简化处理，实际应该使用通道或回调）
+	// 等待响应
 	time.Sleep(1 * time.Second)
 
-	// 模拟返回数据
-	// 实际项目中，应该通过WebSocket接收响应并解析
-	return []ActorInfo{
-		{
-			ActorId:   "actor_1",
-			Name:      "TestActor",
-			Level:     1,
-			Realm:     "realm_1",
-			CreatedAt: time.Now().Unix(),
-			UpdatedAt: time.Now().Unix(),
-			OnlineAt:  time.Now().Unix(),
-			OfflineAt: 0,
-		},
-	}, nil
+	// 返回空列表，实际数据通过WebSocket接收
+	return []pb.Role{}, nil
 }
 
 // selectActor 选择角色
-func selectActor(actors []ActorInfo) *ActorInfo {
+func selectActor(actors []pb.Role) *pb.Role {
 	fmt.Println("\n请选择一个角色:")
 	for i, actor := range actors {
-		fmt.Printf("  %d. %s (ID: %s, 等级: %d)\n", i+1, actor.Name, actor.ActorId, actor.Level)
+		fmt.Printf("  %d. %s (ID: %s, 等级: %d)\n", i+1, actor.Name, actor.Aid, actor.Level)
 	}
 
 	reader := bufio.NewReader(os.Stdin)
@@ -606,11 +643,11 @@ func createNewActor(session string) (*ActorInfo, error) {
 }
 
 // useActor 使用角色
-func useActor(actorId string, session string) error {
+func useActor(actor *pb.Role, session string) error {
 	// 发送使用角色请求
 	req := pb.ActorUseRequest{
 		Session: session,
-		Aid:     actorId,
+		Aid:     actor.Aid,
 	}
 	err := sendWebSocketMessage(proto.MSG_ActorUseRequest, req)
 	if err != nil {

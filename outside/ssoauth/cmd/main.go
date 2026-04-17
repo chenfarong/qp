@@ -42,7 +42,19 @@ func main() {
 		Handler: r,
 	}
 
-	fmt.Printf("SSO Auth Server started on %s\n", addr)
+	// 打印欢迎信息
+	fmt.Println("========================================================")
+	fmt.Println("                      SSO Auth Server                    ")
+	fmt.Println("========================================================")
+	fmt.Printf("服务名称: SSO Auth Server\n")
+	fmt.Printf("服务类型: HTTP Server\n")
+	fmt.Printf("监听地址: %s\n", config.AppConfig.Auth.Host)
+	fmt.Printf("监听端口: %d\n", config.AppConfig.Auth.Port)
+	fmt.Printf("Token过期时间: %d秒\n", config.AppConfig.Auth.TokenExpiry)
+	fmt.Println("========================================================")
+	fmt.Println("服务器已成功启动，等待客户端连接...")
+	fmt.Println("========================================================")
+
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %s\n", err)
 	}

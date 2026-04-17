@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.2
-// source: base.proto
+// source: gamelogic/base.proto
 
 package gamelogic
 
@@ -24,15 +24,15 @@ const (
 // 标准返回信息顶部
 type ResultErr struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ErrCode       int32                  `protobuf:"varint,1,opt,name=err_code,json=errCode,proto3" json:"err_code,omitempty"` //错误编号
-	ErrText       string                 `protobuf:"bytes,2,opt,name=err_text,json=errText,proto3" json:"err_text,omitempty"`  //错误信息
+	ErrCode       *int32                 `protobuf:"varint,1,opt,name=err_code,json=errCode,proto3,oneof" json:"err_code,omitempty"` //错误编号
+	ErrText       *string                `protobuf:"bytes,2,opt,name=err_text,json=errText,proto3,oneof" json:"err_text,omitempty"`  //错误信息
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ResultErr) Reset() {
 	*x = ResultErr{}
-	mi := &file_base_proto_msgTypes[0]
+	mi := &file_gamelogic_base_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -44,7 +44,7 @@ func (x *ResultErr) String() string {
 func (*ResultErr) ProtoMessage() {}
 
 func (x *ResultErr) ProtoReflect() protoreflect.Message {
-	mi := &file_base_proto_msgTypes[0]
+	mi := &file_gamelogic_base_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,19 +57,19 @@ func (x *ResultErr) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResultErr.ProtoReflect.Descriptor instead.
 func (*ResultErr) Descriptor() ([]byte, []int) {
-	return file_base_proto_rawDescGZIP(), []int{0}
+	return file_gamelogic_base_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ResultErr) GetErrCode() int32 {
-	if x != nil {
-		return x.ErrCode
+	if x != nil && x.ErrCode != nil {
+		return *x.ErrCode
 	}
 	return 0
 }
 
 func (x *ResultErr) GetErrText() string {
-	if x != nil {
-		return x.ErrText
+	if x != nil && x.ErrText != nil {
+		return *x.ErrText
 	}
 	return ""
 }
@@ -84,7 +84,7 @@ type GameMoneyItem struct {
 
 func (x *GameMoneyItem) Reset() {
 	*x = GameMoneyItem{}
-	mi := &file_base_proto_msgTypes[1]
+	mi := &file_gamelogic_base_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -96,7 +96,7 @@ func (x *GameMoneyItem) String() string {
 func (*GameMoneyItem) ProtoMessage() {}
 
 func (x *GameMoneyItem) ProtoReflect() protoreflect.Message {
-	mi := &file_base_proto_msgTypes[1]
+	mi := &file_gamelogic_base_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -109,7 +109,7 @@ func (x *GameMoneyItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameMoneyItem.ProtoReflect.Descriptor instead.
 func (*GameMoneyItem) Descriptor() ([]byte, []int) {
-	return file_base_proto_rawDescGZIP(), []int{1}
+	return file_gamelogic_base_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GameMoneyItem) GetCfgId() int32 {
@@ -135,7 +135,7 @@ type GetGameMoneyRequest struct {
 
 func (x *GetGameMoneyRequest) Reset() {
 	*x = GetGameMoneyRequest{}
-	mi := &file_base_proto_msgTypes[2]
+	mi := &file_gamelogic_base_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -147,7 +147,7 @@ func (x *GetGameMoneyRequest) String() string {
 func (*GetGameMoneyRequest) ProtoMessage() {}
 
 func (x *GetGameMoneyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_base_proto_msgTypes[2]
+	mi := &file_gamelogic_base_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -160,7 +160,7 @@ func (x *GetGameMoneyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetGameMoneyRequest.ProtoReflect.Descriptor instead.
 func (*GetGameMoneyRequest) Descriptor() ([]byte, []int) {
-	return file_base_proto_rawDescGZIP(), []int{2}
+	return file_gamelogic_base_proto_rawDescGZIP(), []int{2}
 }
 
 // 响应 获取游戏中的货币列表
@@ -168,13 +168,14 @@ type GetGameMoneyResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Err           *ResultErr             `protobuf:"bytes,1,opt,name=err,proto3" json:"err,omitempty"`
 	Data          []*GameMoneyItem       `protobuf:"bytes,2,rep,name=data,proto3" json:"data,omitempty"`
+	ServerTime    int64                  `protobuf:"varint,3,opt,name=server_time,json=serverTime,proto3" json:"server_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetGameMoneyResponse) Reset() {
 	*x = GetGameMoneyResponse{}
-	mi := &file_base_proto_msgTypes[3]
+	mi := &file_gamelogic_base_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -186,7 +187,7 @@ func (x *GetGameMoneyResponse) String() string {
 func (*GetGameMoneyResponse) ProtoMessage() {}
 
 func (x *GetGameMoneyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_base_proto_msgTypes[3]
+	mi := &file_gamelogic_base_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -199,7 +200,7 @@ func (x *GetGameMoneyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetGameMoneyResponse.ProtoReflect.Descriptor instead.
 func (*GetGameMoneyResponse) Descriptor() ([]byte, []int) {
-	return file_base_proto_rawDescGZIP(), []int{3}
+	return file_gamelogic_base_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetGameMoneyResponse) GetErr() *ResultErr {
@@ -216,6 +217,13 @@ func (x *GetGameMoneyResponse) GetData() []*GameMoneyItem {
 	return nil
 }
 
+func (x *GetGameMoneyResponse) GetServerTime() int64 {
+	if x != nil {
+		return x.ServerTime
+	}
+	return 0
+}
+
 // 同步 游戏中的货币改变
 type SyncGameMoneyChange struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -226,7 +234,7 @@ type SyncGameMoneyChange struct {
 
 func (x *SyncGameMoneyChange) Reset() {
 	*x = SyncGameMoneyChange{}
-	mi := &file_base_proto_msgTypes[4]
+	mi := &file_gamelogic_base_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -238,7 +246,7 @@ func (x *SyncGameMoneyChange) String() string {
 func (*SyncGameMoneyChange) ProtoMessage() {}
 
 func (x *SyncGameMoneyChange) ProtoReflect() protoreflect.Message {
-	mi := &file_base_proto_msgTypes[4]
+	mi := &file_gamelogic_base_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -251,7 +259,7 @@ func (x *SyncGameMoneyChange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncGameMoneyChange.ProtoReflect.Descriptor instead.
 func (*SyncGameMoneyChange) Descriptor() ([]byte, []int) {
-	return file_base_proto_rawDescGZIP(), []int{4}
+	return file_gamelogic_base_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SyncGameMoneyChange) GetData() []*GameMoneyItem {
@@ -273,7 +281,7 @@ type Message struct {
 
 func (x *Message) Reset() {
 	*x = Message{}
-	mi := &file_base_proto_msgTypes[5]
+	mi := &file_gamelogic_base_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -285,7 +293,7 @@ func (x *Message) String() string {
 func (*Message) ProtoMessage() {}
 
 func (x *Message) ProtoReflect() protoreflect.Message {
-	mi := &file_base_proto_msgTypes[5]
+	mi := &file_gamelogic_base_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -298,7 +306,7 @@ func (x *Message) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Message.ProtoReflect.Descriptor instead.
 func (*Message) Descriptor() ([]byte, []int) {
-	return file_base_proto_rawDescGZIP(), []int{5}
+	return file_gamelogic_base_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Message) GetSession() string {
@@ -325,14 +333,15 @@ func (x *Message) GetMessageContent() []byte {
 // 登录请求
 type LoginRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"` // 角色名称
+	Session       string                 `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"` // 会话ID
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`       // 角色名称
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *LoginRequest) Reset() {
 	*x = LoginRequest{}
-	mi := &file_base_proto_msgTypes[6]
+	mi := &file_gamelogic_base_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -344,7 +353,7 @@ func (x *LoginRequest) String() string {
 func (*LoginRequest) ProtoMessage() {}
 
 func (x *LoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_base_proto_msgTypes[6]
+	mi := &file_gamelogic_base_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -357,7 +366,14 @@ func (x *LoginRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginRequest.ProtoReflect.Descriptor instead.
 func (*LoginRequest) Descriptor() ([]byte, []int) {
-	return file_base_proto_rawDescGZIP(), []int{6}
+	return file_gamelogic_base_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *LoginRequest) GetSession() string {
+	if x != nil {
+		return x.Session
+	}
+	return ""
 }
 
 func (x *LoginRequest) GetName() string {
@@ -379,7 +395,7 @@ type LoginResponse struct {
 
 func (x *LoginResponse) Reset() {
 	*x = LoginResponse{}
-	mi := &file_base_proto_msgTypes[7]
+	mi := &file_gamelogic_base_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -391,7 +407,7 @@ func (x *LoginResponse) String() string {
 func (*LoginResponse) ProtoMessage() {}
 
 func (x *LoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_base_proto_msgTypes[7]
+	mi := &file_gamelogic_base_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -404,7 +420,7 @@ func (x *LoginResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoginResponse.ProtoReflect.Descriptor instead.
 func (*LoginResponse) Descriptor() ([]byte, []int) {
-	return file_base_proto_rawDescGZIP(), []int{7}
+	return file_gamelogic_base_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *LoginResponse) GetSuccess() bool {
@@ -431,20 +447,16 @@ func (x *LoginResponse) GetMessage() string {
 // 角色信息
 type Role struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Aid           string                 `protobuf:"bytes,1,opt,name=aid,proto3" json:"aid,omitempty"`                                                                            // 角色唯一编号
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`                                                                          // 角色名称
-	Level         int32                  `protobuf:"varint,3,opt,name=level,proto3" json:"level,omitempty"`                                                                       // 角色等级
-	Gold          int32                  `protobuf:"varint,4,opt,name=gold,proto3" json:"gold,omitempty"`                                                                         // 金币
-	Bag           map[string]int32       `protobuf:"bytes,5,rep,name=bag,proto3" json:"bag,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // 背包物品
-	Heroes        []string               `protobuf:"bytes,6,rep,name=heroes,proto3" json:"heroes,omitempty"`                                                                      // 英雄列表
-	Session       string                 `protobuf:"bytes,7,opt,name=session,proto3" json:"session,omitempty"`                                                                    // 会话ID
+	Aid           string                 `protobuf:"bytes,1,opt,name=aid,proto3" json:"aid,omitempty"`      // 角色唯一编号
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`    // 角色名称
+	Level         int32                  `protobuf:"varint,3,opt,name=level,proto3" json:"level,omitempty"` // 角色等级
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Role) Reset() {
 	*x = Role{}
-	mi := &file_base_proto_msgTypes[8]
+	mi := &file_gamelogic_base_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -456,7 +468,7 @@ func (x *Role) String() string {
 func (*Role) ProtoMessage() {}
 
 func (x *Role) ProtoReflect() protoreflect.Message {
-	mi := &file_base_proto_msgTypes[8]
+	mi := &file_gamelogic_base_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -469,7 +481,7 @@ func (x *Role) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Role.ProtoReflect.Descriptor instead.
 func (*Role) Descriptor() ([]byte, []int) {
-	return file_base_proto_rawDescGZIP(), []int{8}
+	return file_gamelogic_base_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Role) GetAid() string {
@@ -493,34 +505,6 @@ func (x *Role) GetLevel() int32 {
 	return 0
 }
 
-func (x *Role) GetGold() int32 {
-	if x != nil {
-		return x.Gold
-	}
-	return 0
-}
-
-func (x *Role) GetBag() map[string]int32 {
-	if x != nil {
-		return x.Bag
-	}
-	return nil
-}
-
-func (x *Role) GetHeroes() []string {
-	if x != nil {
-		return x.Heroes
-	}
-	return nil
-}
-
-func (x *Role) GetSession() string {
-	if x != nil {
-		return x.Session
-	}
-	return ""
-}
-
 // 获取角色信息请求
 type GetRoleInfoRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -530,7 +514,7 @@ type GetRoleInfoRequest struct {
 
 func (x *GetRoleInfoRequest) Reset() {
 	*x = GetRoleInfoRequest{}
-	mi := &file_base_proto_msgTypes[9]
+	mi := &file_gamelogic_base_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -542,7 +526,7 @@ func (x *GetRoleInfoRequest) String() string {
 func (*GetRoleInfoRequest) ProtoMessage() {}
 
 func (x *GetRoleInfoRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_base_proto_msgTypes[9]
+	mi := &file_gamelogic_base_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -555,22 +539,21 @@ func (x *GetRoleInfoRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoleInfoRequest.ProtoReflect.Descriptor instead.
 func (*GetRoleInfoRequest) Descriptor() ([]byte, []int) {
-	return file_base_proto_rawDescGZIP(), []int{9}
+	return file_gamelogic_base_proto_rawDescGZIP(), []int{9}
 }
 
 // 获取角色信息响应
 type GetRoleInfoResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"` // 是否成功
-	Role          *Role                  `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`        // 角色信息
-	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`  // 消息
+	Err           *ResultErr             `protobuf:"bytes,1,opt,name=err,proto3" json:"err,omitempty"`
+	Data          *Role                  `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetRoleInfoResponse) Reset() {
 	*x = GetRoleInfoResponse{}
-	mi := &file_base_proto_msgTypes[10]
+	mi := &file_gamelogic_base_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -582,7 +565,7 @@ func (x *GetRoleInfoResponse) String() string {
 func (*GetRoleInfoResponse) ProtoMessage() {}
 
 func (x *GetRoleInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_base_proto_msgTypes[10]
+	mi := &file_gamelogic_base_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -595,90 +578,182 @@ func (x *GetRoleInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRoleInfoResponse.ProtoReflect.Descriptor instead.
 func (*GetRoleInfoResponse) Descriptor() ([]byte, []int) {
-	return file_base_proto_rawDescGZIP(), []int{10}
+	return file_gamelogic_base_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *GetRoleInfoResponse) GetSuccess() bool {
+func (x *GetRoleInfoResponse) GetErr() *ResultErr {
 	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *GetRoleInfoResponse) GetRole() *Role {
-	if x != nil {
-		return x.Role
+		return x.Err
 	}
 	return nil
 }
 
-func (x *GetRoleInfoResponse) GetMessage() string {
+func (x *GetRoleInfoResponse) GetData() *Role {
 	if x != nil {
-		return x.Message
+		return x.Data
+	}
+	return nil
+}
+
+// 获取角色列表
+type GetActorListRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Session       string                 `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetActorListRequest) Reset() {
+	*x = GetActorListRequest{}
+	mi := &file_gamelogic_base_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetActorListRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetActorListRequest) ProtoMessage() {}
+
+func (x *GetActorListRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_gamelogic_base_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetActorListRequest.ProtoReflect.Descriptor instead.
+func (*GetActorListRequest) Descriptor() ([]byte, []int) {
+	return file_gamelogic_base_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GetActorListRequest) GetSession() string {
+	if x != nil {
+		return x.Session
 	}
 	return ""
 }
 
-var File_base_proto protoreflect.FileDescriptor
+// 获取角色信息响应
+type GetActorListResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Err           *ResultErr             `protobuf:"bytes,1,opt,name=err,proto3" json:"err,omitempty"`
+	Data          []*Role                `protobuf:"bytes,2,rep,name=data,proto3" json:"data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
 
-const file_base_proto_rawDesc = "" +
+func (x *GetActorListResponse) Reset() {
+	*x = GetActorListResponse{}
+	mi := &file_gamelogic_base_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetActorListResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetActorListResponse) ProtoMessage() {}
+
+func (x *GetActorListResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_gamelogic_base_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetActorListResponse.ProtoReflect.Descriptor instead.
+func (*GetActorListResponse) Descriptor() ([]byte, []int) {
+	return file_gamelogic_base_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *GetActorListResponse) GetErr() *ResultErr {
+	if x != nil {
+		return x.Err
+	}
+	return nil
+}
+
+func (x *GetActorListResponse) GetData() []*Role {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+var File_gamelogic_base_proto protoreflect.FileDescriptor
+
+const file_gamelogic_base_proto_rawDesc = "" +
 	"\n" +
-	"\n" +
-	"base.proto\x12\bprotocli\"A\n" +
-	"\tResultErr\x12\x19\n" +
-	"\berr_code\x18\x01 \x01(\x05R\aerrCode\x12\x19\n" +
-	"\berr_text\x18\x02 \x01(\tR\aerrText\"8\n" +
+	"\x14gamelogic/base.proto\x12\bprotocli\"e\n" +
+	"\tResultErr\x12\x1e\n" +
+	"\berr_code\x18\x01 \x01(\x05H\x00R\aerrCode\x88\x01\x01\x12\x1e\n" +
+	"\berr_text\x18\x02 \x01(\tH\x01R\aerrText\x88\x01\x01B\v\n" +
+	"\t_err_codeB\v\n" +
+	"\t_err_text\"8\n" +
 	"\rGameMoneyItem\x12\x15\n" +
 	"\x06cfg_id\x18\x01 \x01(\x05R\x05cfgId\x12\x10\n" +
 	"\x03num\x18\x02 \x01(\x03R\x03num\"\x15\n" +
-	"\x13GetGameMoneyRequest\"j\n" +
+	"\x13GetGameMoneyRequest\"\x8b\x01\n" +
 	"\x14GetGameMoneyResponse\x12%\n" +
 	"\x03err\x18\x01 \x01(\v2\x13.protocli.ResultErrR\x03err\x12+\n" +
-	"\x04data\x18\x02 \x03(\v2\x17.protocli.GameMoneyItemR\x04data\"B\n" +
+	"\x04data\x18\x02 \x03(\v2\x17.protocli.GameMoneyItemR\x04data\x12\x1f\n" +
+	"\vserver_time\x18\x03 \x01(\x03R\n" +
+	"serverTime\"B\n" +
 	"\x13SyncGameMoneyChange\x12+\n" +
 	"\x04data\x18\x01 \x03(\v2\x17.protocli.GameMoneyItemR\x04data\"k\n" +
 	"\aMessage\x12\x18\n" +
 	"\asession\x18\x01 \x01(\tR\asession\x12\x1d\n" +
 	"\n" +
 	"message_id\x18\x02 \x01(\x05R\tmessageId\x12'\n" +
-	"\x0fmessage_content\x18\x03 \x01(\fR\x0emessageContent\"\"\n" +
-	"\fLoginRequest\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\"g\n" +
+	"\x0fmessage_content\x18\x03 \x01(\fR\x0emessageContent\"<\n" +
+	"\fLoginRequest\x12\x18\n" +
+	"\asession\x18\x01 \x01(\tR\asession\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"g\n" +
 	"\rLoginResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\"\n" +
 	"\x04role\x18\x02 \x01(\v2\x0e.protocli.RoleR\x04role\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"\xeb\x01\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"B\n" +
 	"\x04Role\x12\x10\n" +
 	"\x03aid\x18\x01 \x01(\tR\x03aid\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
-	"\x05level\x18\x03 \x01(\x05R\x05level\x12\x12\n" +
-	"\x04gold\x18\x04 \x01(\x05R\x04gold\x12)\n" +
-	"\x03bag\x18\x05 \x03(\v2\x17.protocli.Role.BagEntryR\x03bag\x12\x16\n" +
-	"\x06heroes\x18\x06 \x03(\tR\x06heroes\x12\x18\n" +
-	"\asession\x18\a \x01(\tR\asession\x1a6\n" +
-	"\bBagEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\x05R\x05value:\x028\x01\"\x14\n" +
-	"\x12GetRoleInfoRequest\"m\n" +
-	"\x13GetRoleInfoResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\"\n" +
-	"\x04role\x18\x02 \x01(\v2\x0e.protocli.RoleR\x04role\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessageB\x1bZ\x19zgame/pb/golang/gamelogicb\x06proto3"
+	"\x05level\x18\x03 \x01(\x05R\x05level\"\x14\n" +
+	"\x12GetRoleInfoRequest\"`\n" +
+	"\x13GetRoleInfoResponse\x12%\n" +
+	"\x03err\x18\x01 \x01(\v2\x13.protocli.ResultErrR\x03err\x12\"\n" +
+	"\x04data\x18\x02 \x01(\v2\x0e.protocli.RoleR\x04data\"/\n" +
+	"\x13GetActorListRequest\x12\x18\n" +
+	"\asession\x18\x01 \x01(\tR\asession\"a\n" +
+	"\x14GetActorListResponse\x12%\n" +
+	"\x03err\x18\x01 \x01(\v2\x13.protocli.ResultErrR\x03err\x12\"\n" +
+	"\x04data\x18\x02 \x03(\v2\x0e.protocli.RoleR\x04dataB\x1bZ\x19zgame/pb/golang/gamelogicb\x06proto3"
 
 var (
-	file_base_proto_rawDescOnce sync.Once
-	file_base_proto_rawDescData []byte
+	file_gamelogic_base_proto_rawDescOnce sync.Once
+	file_gamelogic_base_proto_rawDescData []byte
 )
 
-func file_base_proto_rawDescGZIP() []byte {
-	file_base_proto_rawDescOnce.Do(func() {
-		file_base_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_base_proto_rawDesc), len(file_base_proto_rawDesc)))
+func file_gamelogic_base_proto_rawDescGZIP() []byte {
+	file_gamelogic_base_proto_rawDescOnce.Do(func() {
+		file_gamelogic_base_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_gamelogic_base_proto_rawDesc), len(file_gamelogic_base_proto_rawDesc)))
 	})
-	return file_base_proto_rawDescData
+	return file_gamelogic_base_proto_rawDescData
 }
 
-var file_base_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
-var file_base_proto_goTypes = []any{
+var file_gamelogic_base_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_gamelogic_base_proto_goTypes = []any{
 	(*ResultErr)(nil),            // 0: protocli.ResultErr
 	(*GameMoneyItem)(nil),        // 1: protocli.GameMoneyItem
 	(*GetGameMoneyRequest)(nil),  // 2: protocli.GetGameMoneyRequest
@@ -690,42 +765,46 @@ var file_base_proto_goTypes = []any{
 	(*Role)(nil),                 // 8: protocli.Role
 	(*GetRoleInfoRequest)(nil),   // 9: protocli.GetRoleInfoRequest
 	(*GetRoleInfoResponse)(nil),  // 10: protocli.GetRoleInfoResponse
-	nil,                          // 11: protocli.Role.BagEntry
+	(*GetActorListRequest)(nil),  // 11: protocli.GetActorListRequest
+	(*GetActorListResponse)(nil), // 12: protocli.GetActorListResponse
 }
-var file_base_proto_depIdxs = []int32{
-	0,  // 0: protocli.GetGameMoneyResponse.err:type_name -> protocli.ResultErr
-	1,  // 1: protocli.GetGameMoneyResponse.data:type_name -> protocli.GameMoneyItem
-	1,  // 2: protocli.SyncGameMoneyChange.data:type_name -> protocli.GameMoneyItem
-	8,  // 3: protocli.LoginResponse.role:type_name -> protocli.Role
-	11, // 4: protocli.Role.bag:type_name -> protocli.Role.BagEntry
-	8,  // 5: protocli.GetRoleInfoResponse.role:type_name -> protocli.Role
-	6,  // [6:6] is the sub-list for method output_type
-	6,  // [6:6] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+var file_gamelogic_base_proto_depIdxs = []int32{
+	0, // 0: protocli.GetGameMoneyResponse.err:type_name -> protocli.ResultErr
+	1, // 1: protocli.GetGameMoneyResponse.data:type_name -> protocli.GameMoneyItem
+	1, // 2: protocli.SyncGameMoneyChange.data:type_name -> protocli.GameMoneyItem
+	8, // 3: protocli.LoginResponse.role:type_name -> protocli.Role
+	0, // 4: protocli.GetRoleInfoResponse.err:type_name -> protocli.ResultErr
+	8, // 5: protocli.GetRoleInfoResponse.data:type_name -> protocli.Role
+	0, // 6: protocli.GetActorListResponse.err:type_name -> protocli.ResultErr
+	8, // 7: protocli.GetActorListResponse.data:type_name -> protocli.Role
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
-func init() { file_base_proto_init() }
-func file_base_proto_init() {
-	if File_base_proto != nil {
+func init() { file_gamelogic_base_proto_init() }
+func file_gamelogic_base_proto_init() {
+	if File_gamelogic_base_proto != nil {
 		return
 	}
+	file_gamelogic_base_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_base_proto_rawDesc), len(file_base_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gamelogic_base_proto_rawDesc), len(file_gamelogic_base_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_base_proto_goTypes,
-		DependencyIndexes: file_base_proto_depIdxs,
-		MessageInfos:      file_base_proto_msgTypes,
+		GoTypes:           file_gamelogic_base_proto_goTypes,
+		DependencyIndexes: file_gamelogic_base_proto_depIdxs,
+		MessageInfos:      file_gamelogic_base_proto_msgTypes,
 	}.Build()
-	File_base_proto = out.File
-	file_base_proto_goTypes = nil
-	file_base_proto_depIdxs = nil
+	File_gamelogic_base_proto = out.File
+	file_gamelogic_base_proto_goTypes = nil
+	file_gamelogic_base_proto_depIdxs = nil
 }

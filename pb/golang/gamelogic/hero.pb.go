@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.2
-// source: hero.proto
+// source: gamelogic/hero.proto
 
 package gamelogic
 
@@ -35,7 +35,7 @@ type HeroData struct {
 
 func (x *HeroData) Reset() {
 	*x = HeroData{}
-	mi := &file_hero_proto_msgTypes[0]
+	mi := &file_gamelogic_hero_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +47,7 @@ func (x *HeroData) String() string {
 func (*HeroData) ProtoMessage() {}
 
 func (x *HeroData) ProtoReflect() protoreflect.Message {
-	mi := &file_hero_proto_msgTypes[0]
+	mi := &file_gamelogic_hero_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +60,7 @@ func (x *HeroData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HeroData.ProtoReflect.Descriptor instead.
 func (*HeroData) Descriptor() ([]byte, []int) {
-	return file_hero_proto_rawDescGZIP(), []int{0}
+	return file_gamelogic_hero_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *HeroData) GetUid() int64 {
@@ -107,7 +107,7 @@ type GetHeroesRequest struct {
 
 func (x *GetHeroesRequest) Reset() {
 	*x = GetHeroesRequest{}
-	mi := &file_hero_proto_msgTypes[1]
+	mi := &file_gamelogic_hero_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -119,7 +119,7 @@ func (x *GetHeroesRequest) String() string {
 func (*GetHeroesRequest) ProtoMessage() {}
 
 func (x *GetHeroesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hero_proto_msgTypes[1]
+	mi := &file_gamelogic_hero_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -132,7 +132,7 @@ func (x *GetHeroesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetHeroesRequest.ProtoReflect.Descriptor instead.
 func (*GetHeroesRequest) Descriptor() ([]byte, []int) {
-	return file_hero_proto_rawDescGZIP(), []int{1}
+	return file_gamelogic_hero_proto_rawDescGZIP(), []int{1}
 }
 
 // 获取英雄列表响应
@@ -146,7 +146,7 @@ type GetHeroesResponse struct {
 
 func (x *GetHeroesResponse) Reset() {
 	*x = GetHeroesResponse{}
-	mi := &file_hero_proto_msgTypes[2]
+	mi := &file_gamelogic_hero_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -158,7 +158,7 @@ func (x *GetHeroesResponse) String() string {
 func (*GetHeroesResponse) ProtoMessage() {}
 
 func (x *GetHeroesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_hero_proto_msgTypes[2]
+	mi := &file_gamelogic_hero_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -171,7 +171,7 @@ func (x *GetHeroesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetHeroesResponse.ProtoReflect.Descriptor instead.
 func (*GetHeroesResponse) Descriptor() ([]byte, []int) {
-	return file_hero_proto_rawDescGZIP(), []int{2}
+	return file_gamelogic_hero_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetHeroesResponse) GetErr() *ResultErr {
@@ -198,7 +198,7 @@ type RecruitHeroRequest struct {
 
 func (x *RecruitHeroRequest) Reset() {
 	*x = RecruitHeroRequest{}
-	mi := &file_hero_proto_msgTypes[3]
+	mi := &file_gamelogic_hero_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -210,7 +210,7 @@ func (x *RecruitHeroRequest) String() string {
 func (*RecruitHeroRequest) ProtoMessage() {}
 
 func (x *RecruitHeroRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hero_proto_msgTypes[3]
+	mi := &file_gamelogic_hero_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -223,7 +223,7 @@ func (x *RecruitHeroRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecruitHeroRequest.ProtoReflect.Descriptor instead.
 func (*RecruitHeroRequest) Descriptor() ([]byte, []int) {
-	return file_hero_proto_rawDescGZIP(), []int{3}
+	return file_gamelogic_hero_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *RecruitHeroRequest) GetCfgId() int32 {
@@ -244,7 +244,7 @@ type RecruiHeroesResponse struct {
 
 func (x *RecruiHeroesResponse) Reset() {
 	*x = RecruiHeroesResponse{}
-	mi := &file_hero_proto_msgTypes[4]
+	mi := &file_gamelogic_hero_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -256,7 +256,7 @@ func (x *RecruiHeroesResponse) String() string {
 func (*RecruiHeroesResponse) ProtoMessage() {}
 
 func (x *RecruiHeroesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_hero_proto_msgTypes[4]
+	mi := &file_gamelogic_hero_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -269,7 +269,7 @@ func (x *RecruiHeroesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RecruiHeroesResponse.ProtoReflect.Descriptor instead.
 func (*RecruiHeroesResponse) Descriptor() ([]byte, []int) {
-	return file_hero_proto_rawDescGZIP(), []int{4}
+	return file_gamelogic_hero_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *RecruiHeroesResponse) GetErr() *ResultErr {
@@ -296,7 +296,7 @@ type UpStarHeroRequest struct {
 
 func (x *UpStarHeroRequest) Reset() {
 	*x = UpStarHeroRequest{}
-	mi := &file_hero_proto_msgTypes[5]
+	mi := &file_gamelogic_hero_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -308,7 +308,7 @@ func (x *UpStarHeroRequest) String() string {
 func (*UpStarHeroRequest) ProtoMessage() {}
 
 func (x *UpStarHeroRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hero_proto_msgTypes[5]
+	mi := &file_gamelogic_hero_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -321,7 +321,7 @@ func (x *UpStarHeroRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpStarHeroRequest.ProtoReflect.Descriptor instead.
 func (*UpStarHeroRequest) Descriptor() ([]byte, []int) {
-	return file_hero_proto_rawDescGZIP(), []int{5}
+	return file_gamelogic_hero_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *UpStarHeroRequest) GetUid() int64 {
@@ -342,7 +342,7 @@ type UpStarHeroesResponse struct {
 
 func (x *UpStarHeroesResponse) Reset() {
 	*x = UpStarHeroesResponse{}
-	mi := &file_hero_proto_msgTypes[6]
+	mi := &file_gamelogic_hero_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -354,7 +354,7 @@ func (x *UpStarHeroesResponse) String() string {
 func (*UpStarHeroesResponse) ProtoMessage() {}
 
 func (x *UpStarHeroesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_hero_proto_msgTypes[6]
+	mi := &file_gamelogic_hero_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -367,7 +367,7 @@ func (x *UpStarHeroesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpStarHeroesResponse.ProtoReflect.Descriptor instead.
 func (*UpStarHeroesResponse) Descriptor() ([]byte, []int) {
-	return file_hero_proto_rawDescGZIP(), []int{6}
+	return file_gamelogic_hero_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *UpStarHeroesResponse) GetErr() *ResultErr {
@@ -395,7 +395,7 @@ type OpenSkillHeroRequest struct {
 
 func (x *OpenSkillHeroRequest) Reset() {
 	*x = OpenSkillHeroRequest{}
-	mi := &file_hero_proto_msgTypes[7]
+	mi := &file_gamelogic_hero_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -407,7 +407,7 @@ func (x *OpenSkillHeroRequest) String() string {
 func (*OpenSkillHeroRequest) ProtoMessage() {}
 
 func (x *OpenSkillHeroRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hero_proto_msgTypes[7]
+	mi := &file_gamelogic_hero_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -420,7 +420,7 @@ func (x *OpenSkillHeroRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OpenSkillHeroRequest.ProtoReflect.Descriptor instead.
 func (*OpenSkillHeroRequest) Descriptor() ([]byte, []int) {
-	return file_hero_proto_rawDescGZIP(), []int{7}
+	return file_gamelogic_hero_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *OpenSkillHeroRequest) GetUid() int64 {
@@ -448,7 +448,7 @@ type UpSkillHeroRequest struct {
 
 func (x *UpSkillHeroRequest) Reset() {
 	*x = UpSkillHeroRequest{}
-	mi := &file_hero_proto_msgTypes[8]
+	mi := &file_gamelogic_hero_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -460,7 +460,7 @@ func (x *UpSkillHeroRequest) String() string {
 func (*UpSkillHeroRequest) ProtoMessage() {}
 
 func (x *UpSkillHeroRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hero_proto_msgTypes[8]
+	mi := &file_gamelogic_hero_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -473,7 +473,7 @@ func (x *UpSkillHeroRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpSkillHeroRequest.ProtoReflect.Descriptor instead.
 func (*UpSkillHeroRequest) Descriptor() ([]byte, []int) {
-	return file_hero_proto_rawDescGZIP(), []int{8}
+	return file_gamelogic_hero_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpSkillHeroRequest) GetUid() int64 {
@@ -501,7 +501,7 @@ type OpenSkillHeroesResponse struct {
 
 func (x *OpenSkillHeroesResponse) Reset() {
 	*x = OpenSkillHeroesResponse{}
-	mi := &file_hero_proto_msgTypes[9]
+	mi := &file_gamelogic_hero_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -513,7 +513,7 @@ func (x *OpenSkillHeroesResponse) String() string {
 func (*OpenSkillHeroesResponse) ProtoMessage() {}
 
 func (x *OpenSkillHeroesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_hero_proto_msgTypes[9]
+	mi := &file_gamelogic_hero_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -526,7 +526,7 @@ func (x *OpenSkillHeroesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OpenSkillHeroesResponse.ProtoReflect.Descriptor instead.
 func (*OpenSkillHeroesResponse) Descriptor() ([]byte, []int) {
-	return file_hero_proto_rawDescGZIP(), []int{9}
+	return file_gamelogic_hero_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *OpenSkillHeroesResponse) GetErr() *ResultErr {
@@ -543,13 +543,11 @@ func (x *OpenSkillHeroesResponse) GetData() *HeroData {
 	return nil
 }
 
-var File_hero_proto protoreflect.FileDescriptor
+var File_gamelogic_hero_proto protoreflect.FileDescriptor
 
-const file_hero_proto_rawDesc = "" +
+const file_gamelogic_hero_proto_rawDesc = "" +
 	"\n" +
-	"\n" +
-	"hero.proto\x12\bprotocli\x1a\n" +
-	"base.proto\"\x8a\x01\n" +
+	"\x14gamelogic/hero.proto\x12\bprotocli\x1a\x14gamelogic/base.proto\"\x8a\x01\n" +
 	"\bHeroData\x12\x10\n" +
 	"\x03uid\x18\x01 \x01(\x03R\x03uid\x12\x15\n" +
 	"\x06cfg_id\x18\x02 \x01(\x05R\x05cfgId\x12\x14\n" +
@@ -582,19 +580,19 @@ const file_hero_proto_rawDesc = "" +
 	"\x04data\x18\x02 \x01(\v2\x12.protocli.HeroDataR\x04dataB\x1bZ\x19zgame/pb/golang/gamelogicb\x06proto3"
 
 var (
-	file_hero_proto_rawDescOnce sync.Once
-	file_hero_proto_rawDescData []byte
+	file_gamelogic_hero_proto_rawDescOnce sync.Once
+	file_gamelogic_hero_proto_rawDescData []byte
 )
 
-func file_hero_proto_rawDescGZIP() []byte {
-	file_hero_proto_rawDescOnce.Do(func() {
-		file_hero_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_hero_proto_rawDesc), len(file_hero_proto_rawDesc)))
+func file_gamelogic_hero_proto_rawDescGZIP() []byte {
+	file_gamelogic_hero_proto_rawDescOnce.Do(func() {
+		file_gamelogic_hero_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_gamelogic_hero_proto_rawDesc), len(file_gamelogic_hero_proto_rawDesc)))
 	})
-	return file_hero_proto_rawDescData
+	return file_gamelogic_hero_proto_rawDescData
 }
 
-var file_hero_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
-var file_hero_proto_goTypes = []any{
+var file_gamelogic_hero_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_gamelogic_hero_proto_goTypes = []any{
 	(*HeroData)(nil),                // 0: protocli.HeroData
 	(*GetHeroesRequest)(nil),        // 1: protocli.GetHeroesRequest
 	(*GetHeroesResponse)(nil),       // 2: protocli.GetHeroesResponse
@@ -607,7 +605,7 @@ var file_hero_proto_goTypes = []any{
 	(*OpenSkillHeroesResponse)(nil), // 9: protocli.OpenSkillHeroesResponse
 	(*ResultErr)(nil),               // 10: protocli.ResultErr
 }
-var file_hero_proto_depIdxs = []int32{
+var file_gamelogic_hero_proto_depIdxs = []int32{
 	10, // 0: protocli.GetHeroesResponse.err:type_name -> protocli.ResultErr
 	0,  // 1: protocli.GetHeroesResponse.data:type_name -> protocli.HeroData
 	10, // 2: protocli.RecruiHeroesResponse.err:type_name -> protocli.ResultErr
@@ -623,28 +621,28 @@ var file_hero_proto_depIdxs = []int32{
 	0,  // [0:8] is the sub-list for field type_name
 }
 
-func init() { file_hero_proto_init() }
-func file_hero_proto_init() {
-	if File_hero_proto != nil {
+func init() { file_gamelogic_hero_proto_init() }
+func file_gamelogic_hero_proto_init() {
+	if File_gamelogic_hero_proto != nil {
 		return
 	}
-	file_base_proto_init()
-	file_hero_proto_msgTypes[0].OneofWrappers = []any{}
+	file_gamelogic_base_proto_init()
+	file_gamelogic_hero_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_hero_proto_rawDesc), len(file_hero_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_gamelogic_hero_proto_rawDesc), len(file_gamelogic_hero_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_hero_proto_goTypes,
-		DependencyIndexes: file_hero_proto_depIdxs,
-		MessageInfos:      file_hero_proto_msgTypes,
+		GoTypes:           file_gamelogic_hero_proto_goTypes,
+		DependencyIndexes: file_gamelogic_hero_proto_depIdxs,
+		MessageInfos:      file_gamelogic_hero_proto_msgTypes,
 	}.Build()
-	File_hero_proto = out.File
-	file_hero_proto_goTypes = nil
-	file_hero_proto_depIdxs = nil
+	File_gamelogic_hero_proto = out.File
+	file_gamelogic_hero_proto_goTypes = nil
+	file_gamelogic_hero_proto_depIdxs = nil
 }
