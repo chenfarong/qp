@@ -32,8 +32,8 @@ func NewHandler() *Handler {
 // RegisterHandlers 注册消息处理器
 func (h *Handler) RegisterHandlers(router *grpc.Router) {
 	// 装备消息
-	router.RegisterHandler(proto.MessageIDGetEquipRequest, h.handleGetEquipRequest)
-	router.RegisterHandler(proto.MessageIDUpgradeEquipRequest, h.handleUpgradeEquipRequest)
+	router.RegisterHandler(proto.MSG_GetEquipRequest, h.handleGetEquipRequest)
+	router.RegisterHandler(proto.MSG_UpgradeEquipRequest, h.handleUpgradeEquipRequest)
 }
 
 // handleGetEquipRequest 处理获取装备请求

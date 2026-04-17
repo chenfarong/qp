@@ -41,9 +41,9 @@ func NewHandler() *Handler {
 // RegisterHandlers 注册消息处理器
 func (h *Handler) RegisterHandlers(router *grpc.Router) {
 	// 角色消息
-	router.RegisterHandler(proto.MessageIDActorCreateRequest, h.handleActorCreateRequest)
-	router.RegisterHandler(proto.MessageIDActorUseRequest, h.handleActorUseRequest)
-	router.RegisterHandler(proto.MessageIDActorUseWithNameRequest, h.handleActorUseWithNameRequest)
+	router.RegisterHandler(proto.MSG_ActorCreateRequest, h.handleActorCreateRequest)
+	router.RegisterHandler(proto.MSG_ActorUseRequest, h.handleActorUseRequest)
+	router.RegisterHandler(proto.MSG_ActorUseWithNameRequest, h.handleActorUseWithNameRequest)
 }
 
 // handleActorCreateRequest 处理创建角色请求

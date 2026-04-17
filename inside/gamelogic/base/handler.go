@@ -37,9 +37,9 @@ func NewHandler() *Handler {
 // RegisterHandlers 注册消息处理器
 func (h *Handler) RegisterHandlers(router *grpc.Router) {
 	// 基础消息
-	router.RegisterHandler(proto.MessageIDLoginRequest, h.handleLoginRequest)
-	router.RegisterHandler(proto.MessageIDGetRoleInfoRequest, h.handleGetRoleInfoRequest)
-	router.RegisterHandler(proto.MessageIDGetGameMoneyRequest, h.handleGetGameMoneyRequest)
+	router.RegisterHandler(proto.MSG_LoginRequest, h.handleLoginRequest)
+	router.RegisterHandler(proto.MSG_GetRoleInfoRequest, h.handleGetRoleInfoRequest)
+	router.RegisterHandler(proto.MSG_GetGameMoneyRequest, h.handleGetGameMoneyRequest)
 }
 
 // handleLoginRequest 处理登录请求

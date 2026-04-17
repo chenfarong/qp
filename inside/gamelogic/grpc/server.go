@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 
 	"zagame/common/logger"
-	gateway "zagame/inside/gamelogic/grpc/gateway"
 	"zagame/inside/gamelogic/session"
+	"zagame/proto"
+
+	gateway "zagame/inside/gamelogic/gateway"
 )
 
 // GatewayServer Gateway服务器实现
@@ -37,7 +39,7 @@ func (s *GatewayServer) RegisterServer(ctx context.Context, req *gateway.Registe
 // ForwardMessage 转发消息
 func (s *GatewayServer) ForwardMessage(ctx context.Context, req *gateway.ForwardMessageRequest) (*gateway.ForwardMessageResponse, error) {
 	// 打印收到的消息
-	logger.Infof("收到转发消息: messageID=%d, session=%s, clientIP=%s", req.MessageId, req.Session, req.ClientIp)
+	logger.Infof("收到转发消息: messageID=%d, messageName=%s, session=%s, clientIP=%s", req.MessageId, proto.GetMessageName(req.MessageId), req.Session, req.ClientIp)
 
 	// 尝试将消息内容解析为JSON并打印
 	if len(req.MessageContent) > 0 {
@@ -50,7 +52,8 @@ func (s *GatewayServer) ForwardMessage(ctx context.Context, req *gateway.Forward
 			if err != nil {
 				logger.Errorf("消息内容序列化失败: %v", err)
 			} else {
-				logger.Debugf("收到消息内容: %s", string(jsonContent))
+				//logger.Debugf("收到消息内容: %s", string(jsonContent))
+				_ = jsonContent
 			}
 		}
 	}
@@ -71,7 +74,7 @@ func (s *GatewayServer) ForwardMessage(ctx context.Context, req *gateway.Forward
 
 	responseContent, err := s.router.HandleMessage(ctx, req.MessageId, req.Session, req.MessageContent)
 	if err != nil {
-		logger.Errorf("处理消息失败: messageID=%d, error=%v", req.MessageId, err)
+		logger.Errorf("处理消息失败: messageID=%d, messageName=%s, error=%v", req.MessageId, proto.GetMessageName(req.MessageId), err)
 		return &gateway.ForwardMessageResponse{
 			Success: false,
 			Message: err.Error(),
@@ -94,7 +97,7 @@ func (s *GatewayServer) ForwardMessage(ctx context.Context, req *gateway.Forward
 		}
 	}
 
-	logger.Infof("处理消息成功: messageID=%d, session=%s, clientIP=%s", req.MessageId, req.Session, req.ClientIp)
+	logger.Infof("处理消息成功: messageID=%d, messageName=%s, session=%s, clientIP=%s", req.MessageId, proto.GetMessageName(req.MessageId), req.Session, req.ClientIp)
 
 	return &gateway.ForwardMessageResponse{
 		Success:         true,

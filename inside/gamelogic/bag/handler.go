@@ -37,8 +37,8 @@ func NewHandler() *Handler {
 // RegisterHandlers 注册消息处理器
 func (h *Handler) RegisterHandlers(router *grpc.Router) {
 	// 背包消息
-	router.RegisterHandler(proto.MessageIDGetBagRequest, h.handleGetBagRequest)
-	router.RegisterHandler(proto.MessageIDBagItemUseRequest, h.handleBagItemUseRequest)
+	router.RegisterHandler(proto.MSG_GetBagRequest, h.handleGetBagRequest)
+	router.RegisterHandler(proto.MSG_BagItemUseRequest, h.handleBagItemUseRequest)
 }
 
 // handleGetBagRequest 处理获取背包请求

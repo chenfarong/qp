@@ -47,11 +47,11 @@ func NewHandler() *Handler {
 // RegisterHandlers 注册消息处理器
 func (h *Handler) RegisterHandlers(router *grpc.Router) {
 	// 英雄消息
-	router.RegisterHandler(proto.MessageIDGetHeroesRequest, h.handleGetHeroesRequest)
-	router.RegisterHandler(proto.MessageIDRecruitHeroRequest, h.handleRecruitHeroRequest)
-	router.RegisterHandler(proto.MessageIDUpStarHeroRequest, h.handleUpStarHeroRequest)
-	router.RegisterHandler(proto.MessageIDOpenSkillHeroRequest, h.handleOpenSkillHeroRequest)
-	router.RegisterHandler(proto.MessageIDUpSkillHeroRequest, h.handleUpSkillHeroRequest)
+	router.RegisterHandler(proto.MSG_GetHeroesRequest, h.handleGetHeroesRequest)
+	router.RegisterHandler(proto.MSG_RecruitHeroRequest, h.handleRecruitHeroRequest)
+	router.RegisterHandler(proto.MSG_UpStarHeroRequest, h.handleUpStarHeroRequest)
+	router.RegisterHandler(proto.MSG_OpenSkillHeroRequest, h.handleOpenSkillHeroRequest)
+	router.RegisterHandler(proto.MSG_UpSkillHeroRequest, h.handleUpSkillHeroRequest)
 }
 
 // handleGetHeroesRequest 处理获取英雄请求

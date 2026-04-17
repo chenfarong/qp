@@ -6,23 +6,23 @@ import (
 	"time"
 
 	"zagame/common/logger"
-	gateway "zagame/inside/gamelogic/grpc/gateway"
+	gateway "zagame/inside/gamelogic/gateway"
 	"zagame/proto"
 
-	grpcclient "google.golang.org/grpc"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 // Client gRPC客户端
 type Client struct {
-	conn        *grpcclient.ClientConn
-	client      gateway.GatewayServiceClient
-	address     string
-	serverID    string
-	serverName  string
-	serverAddr  string
-	serverPort  int32
-	isConnected bool
+	conn           *grpc.ClientConn
+	gatewayService gateway.GatewayServiceClient
+	address        string
+	serverID       string
+	serverName     string
+	serverAddr     string
+	serverPort     int32
+	isConnected    bool
 }
 
 // NewClient 创建gRPC客户端
@@ -46,7 +46,7 @@ func NewClient(address string) (*Client, error) {
 // connect 连接到gateway服务
 func (c *Client) connect() error {
 	// 连接到gateway服务
-	conn, err := grpcclient.NewClient(c.address, grpcclient.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(c.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func (c *Client) connect() error {
 	client := gateway.NewGatewayServiceClient(conn)
 
 	c.conn = conn
-	c.client = client
+	c.gatewayService = client
 	c.isConnected = true
 
 	logger.Infof("成功连接到gateway服务: %s", c.address)
@@ -134,7 +134,7 @@ func (c *Client) RegisterServer(serverID, serverName, address string, port int32
 	defer cancel()
 
 	// 发送注册请求
-	resp, err := c.client.RegisterServer(ctx, req)
+	resp, err := c.gatewayService.RegisterServer(ctx, req)
 	if err != nil {
 		c.isConnected = false
 		// 启动自动重连

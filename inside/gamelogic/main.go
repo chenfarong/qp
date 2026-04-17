@@ -14,7 +14,7 @@ import (
 	"zagame/inside/gamelogic/grpc/client"
 	"zagame/inside/gamelogic/hero"
 
-	gateway "zagame/inside/gamelogic/grpc/gateway"
+	gateway "zagame/inside/gamelogic/gateway"
 
 	grpcserver "google.golang.org/grpc"
 )

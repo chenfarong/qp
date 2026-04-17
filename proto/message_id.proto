@@ -2,42 +2,42 @@
 package proto;
 
 // 基础消息
-const int32 MessageIDLoginRequest = 1001;
-const int32 MessageIDLoginResponse = 1002;
-const int32 MessageIDGetRoleInfoRequest = 1003;
-const int32 MessageIDGetRoleInfoResponse = 1004;
+const int32 MSG_LoginRequest = 1001;
+const int32 MSG_LoginResponse = 1002;
+const int32 MSG_GetRoleInfoRequest = 1003;
+const int32 MSG_GetRoleInfoResponse = 1004;
 
 // 角色消息
-const int32 MessageIDActorCreateRequest = 2001;
-const int32 MessageIDActorUseRequest = 2002;
-const int32 MessageIDActorUseWithNameRequest = 2003;
-const int32 MessageIDActorUseResponse = 2004;
+const int32 MSG_ActorCreateRequest = 2001;
+const int32 MSG_ActorUseRequest = 2002;
+const int32 MSG_ActorUseWithNameRequest = 2003;
+const int32 MSG_ActorUseResponse = 2004;
 
 // 背包消息
-const int32 MessageIDGetBagRequest = 3001;
-const int32 MessageIDGetBagResponse = 3002;
-const int32 MessageIDBagItemUseRequest = 3003;
-const int32 MessageIDBagItemUseResponse = 3004;
-const int32 MessageIDSyncBagItemChange = 3005;
+const int32 MSG_GetBagRequest = 3001;
+const int32 MSG_GetBagResponse = 3002;
+const int32 MSG_BagItemUseRequest = 3003;
+const int32 MSG_BagItemUseResponse = 3004;
+const int32 MSG_SyncBagItemChange = 3005;
 
 // 装备消息
-const int32 MessageIDGetEquipRequest = 4001;
-const int32 MessageIDGetEquipResponse = 4002;
-const int32 MessageIDUpgradeEquipRequest = 4003;
-const int32 MessageIDUpgradeEquipResponse = 4004;
+const int32 MSG_GetEquipRequest = 4001;
+const int32 MSG_GetEquipResponse = 4002;
+const int32 MSG_UpgradeEquipRequest = 4003;
+const int32 MSG_UpgradeEquipResponse = 4004;
 
 // 英雄消息
-const int32 MessageIDGetHeroesRequest = 5001;
-const int32 MessageIDGetHeroesResponse = 5002;
-const int32 MessageIDRecruitHeroRequest = 5003;
-const int32 MessageIDRecruiHeroesResponse = 5004;
-const int32 MessageIDUpStarHeroRequest = 5005;
-const int32 MessageIDUpStarHeroesResponse = 5006;
-const int32 MessageIDOpenSkillHeroRequest = 5007;
-const int32 MessageIDUpSkillHeroRequest = 5008;
-const int32 MessageIDOpenSkillHeroesResponse = 5009;
+const int32 MSG_GetHeroesRequest = 5001;
+const int32 MSG_GetHeroesResponse = 5002;
+const int32 MSG_RecruitHeroRequest = 5003;
+const int32 MSG_RecruiHeroesResponse = 5004;
+const int32 MSG_UpStarHeroRequest = 5005;
+const int32 MSG_UpStarHeroesResponse = 5006;
+const int32 MSG_OpenSkillHeroRequest = 5007;
+const int32 MSG_UpSkillHeroRequest = 5008;
+const int32 MSG_OpenSkillHeroesResponse = 5009;
 
 // 货币消息
-const int32 MessageIDGetGameMoneyRequest = 6001;
-const int32 MessageIDGetGameMoneyResponse = 6002;
-const int32 MessageIDSyncGameMoneyChange = 6003;
+const int32 MSG_GetGameMoneyRequest = 6001;
+const int32 MSG_GetGameMoneyResponse = 6002;
+const int32 MSG_SyncGameMoneyChange = 6003;
