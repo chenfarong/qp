@@ -211,7 +211,7 @@ func createActor(token string) (*ActorInfo, error) {
 
 	// 构造创建角色请求
 	req := pb.ActorCreateRequest{
-		Name: *actorName,
+		ActorName: actorName,
 	}
 
 	// 发送WebSocket消息
@@ -229,14 +229,14 @@ func createActor(token string) (*ActorInfo, error) {
 	}
 
 	// 解析响应
-	var createResp pb.ActorCreateResponse
+	var createResp pb.ActorUseResponse
 	err = json.Unmarshal(response.Data, &createResp)
 	if err != nil {
 		return nil, fmt.Errorf("解析响应失败: %v", err)
 	}
 
-	if !createResp.Success {
-		return nil, fmt.Errorf("创建角色失败: %s", createResp.Message)
+	if createResp.Err.ErrCode != 0 {
+		return nil, fmt.Errorf("创建角色失败: %s", createResp.Err.ErrText)
 	}
 
 	// 转换响应格式

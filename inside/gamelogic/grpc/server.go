@@ -65,11 +65,11 @@ func (s *GatewayServer) ForwardMessage(ctx context.Context, req *gateway.Forward
 	if exists {
 		ctx = context.WithValue(ctx, "actor_id", actorInfo.ActorID)
 		ctx = context.WithValue(ctx, "actor_name", actorInfo.ActorName)
-		logger.Debugf("会话 %s 关联的角色: %s(%s), 客户端IP: %s", req.Session, actorInfo.ActorName, actorInfo.ActorID, req.ClientIp)
+		//		logger.Debugf("会话 %s 关联的角色: %s(%s), 客户端IP: %s", req.Session, actorInfo.ActorName, actorInfo.ActorID, req.ClientIp)
 	} else {
 		// 即使没有角色信息，也添加客户端IP
 		ctx = context.WithValue(ctx, "client_ip", req.ClientIp)
-		logger.Debugf("会话 %s 客户端IP: %s", req.Session, req.ClientIp)
+		//		logger.Debugf("会话 %s 客户端IP: %s", req.Session, req.ClientIp)
 	}
 
 	responseContent, err := s.router.HandleMessage(ctx, req.MessageId, req.Session, req.MessageContent)
@@ -82,11 +82,11 @@ func (s *GatewayServer) ForwardMessage(ctx context.Context, req *gateway.Forward
 	}
 
 	// 尝试将响应内容解析为JSON并打印
-	if len(responseContent) > 0 {
+	if responseContent != nil && len(*responseContent) > 0 {
 		var respContent interface{}
-		err := json.Unmarshal(responseContent, &respContent)
+		err := json.Unmarshal(*responseContent, &respContent)
 		if err != nil {
-			logger.Errorf("响应内容解析失败: %v, 原始内容: %s", err, string(responseContent))
+			logger.Errorf("响应内容解析失败: %v, 原始内容: %s", err, string(*responseContent))
 		} else {
 			jsonContent, err := json.Marshal(respContent)
 			if err != nil {
@@ -95,13 +95,34 @@ func (s *GatewayServer) ForwardMessage(ctx context.Context, req *gateway.Forward
 				logger.Debugf("响应内容: %s", string(jsonContent))
 			}
 		}
+
+		// 检查是否需要更新sessionActor映射
+		if req.MessageId == proto.MSG_ActorCreateRequest || req.MessageId == proto.MSG_ActorUseRequest || req.MessageId == proto.MSG_ActorUseWithNameRequest {
+			if respMap, ok := respContent.(map[string]interface{}); ok {
+				if errInfo, ok := respMap["err"].(map[string]interface{}); ok {
+					if errCode, ok := errInfo["errCode"].(float64); ok && errCode == 0 {
+						if data, ok := respMap["data"].(map[string]interface{}); ok {
+							if actorId, ok := data["actorId"].(string); ok {
+								if actorName, ok := data["name"].(string); ok {
+									session.SetActorInfo(req.Session, session.ActorInfo{
+										ActorID:   actorId,
+										ActorName: actorName,
+									})
+									logger.Infof("会话 %s 关联角色: %s(%s)", req.Session, actorName, actorId)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
-	logger.Infof("处理消息成功: messageID=%d, messageName=%s, session=%s, clientIP=%s", req.MessageId, proto.GetMessageName(req.MessageId), req.Session, req.ClientIp)
+	//	logger.Infof("处理消息成功: messageID=%d, messageName=%s, session=%s, clientIP=%s", req.MessageId, proto.GetMessageName(req.MessageId), req.Session, req.ClientIp)
 
 	return &gateway.ForwardMessageResponse{
 		Success:         true,
 		Message:         "处理成功",
-		ResponseContent: responseContent,
+		ResponseContent: *responseContent,
 	}, nil
 }

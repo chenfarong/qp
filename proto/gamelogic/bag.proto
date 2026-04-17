@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package protocli;
 
-import "base.proto";
+import "gamelogic/base.proto";
 
 option go_package = "zgame/pb/golang/gamelogic";
 

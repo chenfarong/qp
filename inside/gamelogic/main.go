@@ -88,7 +88,7 @@ func StartGRPCServer(port int32, gatewayAddress string) error {
 	}
 
 	for _, h := range handlers {
-		h.RegisterHandlers(router)
+		h.RegisterHandlers(router, h)
 	}
 
 	// 监听端口
@@ -105,8 +105,18 @@ func StartGRPCServer(port int32, gatewayAddress string) error {
 	gwServer := grpc.NewGatewayServer(router)
 	gateway.RegisterGatewayServiceServer(server, gwServer)
 
-	// 启动服务器
-	logger.Infof("GameLogic gRPC Server started on %s", addr)
+	// 打印欢迎信息
+	logger.Info("============================================================")
+	logger.Info("                      GameLogic Server                      ")
+	logger.Info("============================================================")
+	logger.Info("服务名称: GameLogic Server")
+	logger.Info("服务类型: gRPC Server")
+	logger.Info("监听地址: 0.0.0.0")
+	logger.Info("监听端口: %d", port)
+	logger.Info("Gateway 地址: %s", gatewayAddress)
+	logger.Info("============================================================")
+	logger.Info("服务器已成功启动，等待客户端连接...")
+	logger.Info("============================================================")
 
 	// 连接到gateway服务并注册消息处理号段
 	client, err := client.NewClient(gatewayAddress)

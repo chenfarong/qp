@@ -43,7 +43,8 @@ message Message {
 
 // 登录请求
 message LoginRequest {
-  string name = 1;          // 角色名称
+  string session = 1;       // 会话ID
+  string name = 2;          // 角色名称
 }
 
 // 登录响应

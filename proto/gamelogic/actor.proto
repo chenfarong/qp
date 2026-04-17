@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package protocli;
 
-import "base.proto";
+import "gamelogic/base.proto";
 
 option go_package = "zgame/pb/golang/gamelogic";
 
@@ -28,7 +28,7 @@ message ActorData {
 message ActorCreateRequest
 {
     string session=1; //会话ID
-    optional string name=2; //角色名称 如果没提供的时候服务器随机一个名字
+    optional string actor_name=2; //角色名称 如果没提供的时候服务器随机一个名字
 }
 
 

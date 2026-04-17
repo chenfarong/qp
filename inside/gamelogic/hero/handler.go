@@ -2,6 +2,7 @@ package hero
 
 import (
 	"context"
+	"zagame/inside/gamelogic/common"
 	"zagame/inside/gamelogic/grpc"
 	pb "zagame/pb/golang/gamelogic"
 	"zagame/proto"
@@ -45,86 +46,20 @@ func NewHandler() *Handler {
 }
 
 // RegisterHandlers 注册消息处理器
-func (h *Handler) RegisterHandlers(router *grpc.Router) {
-	// 英雄消息
-	router.RegisterHandler(proto.MSG_GetHeroesRequest, h.handleGetHeroesRequest)
-	router.RegisterHandler(proto.MSG_RecruitHeroRequest, h.handleRecruitHeroRequest)
-	router.RegisterHandler(proto.MSG_UpStarHeroRequest, h.handleUpStarHeroRequest)
-	router.RegisterHandler(proto.MSG_OpenSkillHeroRequest, h.handleOpenSkillHeroRequest)
-	router.RegisterHandler(proto.MSG_UpSkillHeroRequest, h.handleUpSkillHeroRequest)
-}
-
-// handleGetHeroesRequest 处理获取英雄请求
-func (h *Handler) handleGetHeroesRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
-	req := &pb.GetHeroesRequest{}
-	if err := grpc.Unmarshal(messageContent, req); err != nil {
-		return nil, err
-	}
-
-	resp, err := h.GetHeroes(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return grpc.Marshal(resp)
-}
-
-// handleRecruitHeroRequest 处理招募英雄请求
-func (h *Handler) handleRecruitHeroRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
-	req := &pb.RecruitHeroRequest{}
-	if err := grpc.Unmarshal(messageContent, req); err != nil {
-		return nil, err
-	}
-
-	resp, err := h.RecruitHero(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return grpc.Marshal(resp)
-}
-
-// handleUpStarHeroRequest 处理英雄升星请求
-func (h *Handler) handleUpStarHeroRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
-	req := &pb.UpStarHeroRequest{}
-	if err := grpc.Unmarshal(messageContent, req); err != nil {
-		return nil, err
-	}
-
-	resp, err := h.UpStarHero(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return grpc.Marshal(resp)
-}
-
-// handleOpenSkillHeroRequest 处理开启技能请求
-func (h *Handler) handleOpenSkillHeroRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
-	req := &pb.OpenSkillHeroRequest{}
-	if err := grpc.Unmarshal(messageContent, req); err != nil {
-		return nil, err
-	}
-
-	resp, err := h.OpenSkillHero(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return grpc.Marshal(resp)
-}
-
-// handleUpSkillHeroRequest 处理升级技能请求
-func (h *Handler) handleUpSkillHeroRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
-	req := &pb.UpSkillHeroRequest{}
-	if err := grpc.Unmarshal(messageContent, req); err != nil {
-		return nil, err
-	}
-
-	resp, err := h.UpSkillHero(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return grpc.Marshal(resp)
+func (h *Handler) RegisterHandlers(router *grpc.Router, handler common.Handler) {
+	router.RegisterHandler(proto.MSG_GetHeroesRequest, h, "GetHeroes",
+		func() interface{} { return &pb.GetHeroesRequest{} },
+		func() interface{} { return &pb.GetHeroesResponse{} })
+	router.RegisterHandler(proto.MSG_RecruitHeroRequest, h, "RecruitHero",
+		func() interface{} { return &pb.RecruitHeroRequest{} },
+		func() interface{} { return &pb.RecruiHeroesResponse{} })
+	router.RegisterHandler(proto.MSG_UpStarHeroRequest, h, "UpStarHero",
+		func() interface{} { return &pb.UpStarHeroRequest{} },
+		func() interface{} { return &pb.UpStarHeroesResponse{} })
+	router.RegisterHandler(proto.MSG_OpenSkillHeroRequest, h, "OpenSkillHero",
+		func() interface{} { return &pb.OpenSkillHeroRequest{} },
+		func() interface{} { return &pb.OpenSkillHeroesResponse{} })
+	router.RegisterHandler(proto.MSG_UpSkillHeroRequest, h, "UpSkillHero",
+		func() interface{} { return &pb.UpSkillHeroRequest{} },
+		func() interface{} { return &pb.OpenSkillHeroesResponse{} })
 }

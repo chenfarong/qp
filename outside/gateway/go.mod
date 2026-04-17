@@ -1,4 +1,4 @@
-module zgame/internet/gateway
+module zagame/outside/gateway
 
 go 1.25.5
 
@@ -6,13 +6,13 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.33.0
-	zgame/config v0.0.0-00010101000000-000000000000
-	zgame/database v0.0.0-00010101000000-000000000000
+	zagame/config v0.0.0
+	zagame/database v0.0.0
 )
 
-replace zgame/config => ../../config
+replace zagame/config => ../../config
 
-replace zgame/database => ../../database
+replace zagame/database => ../../database
 
 require (
 	github.com/kr/pretty v0.3.1 // indirect

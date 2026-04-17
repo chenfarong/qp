@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"sync"
 
-	"zgame/config"
-	"zgame/internet/gateway/proto"
+	"zagame/config"
+	"zagame/outside/gateway/proto"
 
 	"github.com/gorilla/websocket"
 )
@@ -30,7 +30,7 @@ func StartWebSocketServer() error {
 	// 注册WebSocket路由
 	http.HandleFunc("/ws", handleWebSocket)
 
-	addr := fmt.Sprintf("%s:%d", config.AppConfig.Game.Host, config.AppConfig.Game.Port)
+	addr := fmt.Sprintf("%s:%d", config.AppConfig.Gateway.Host, config.AppConfig.Gateway.WsPort)
 	return http.ListenAndServe(addr, nil)
 }
 

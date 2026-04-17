@@ -10,7 +10,15 @@ auth:
 # 游戏服务器配置
 game:
   host: "localhost"
-  port: 8081
+  port: 8091
+  max_connections: 1000
+  session_timeout: 3600  # 会话超时时间（秒）
+
+# 网关服务器配置
+gateway:
+  host: "localhost"
+  ws_port: 8061  # WebSocket 端口
+  grpc_port: 8082  # gRPC 端口
   max_connections: 1000
   session_timeout: 3600  # 会话超时时间（秒）
 

@@ -2,6 +2,7 @@ package base
 
 import (
 	"context"
+	"zagame/inside/gamelogic/common"
 	"zagame/inside/gamelogic/grpc"
 	pb "zagame/pb/golang/gamelogic"
 	"zagame/proto"
@@ -35,54 +36,15 @@ func NewHandler() *Handler {
 }
 
 // RegisterHandlers 注册消息处理器
-func (h *Handler) RegisterHandlers(router *grpc.Router) {
+func (h *Handler) RegisterHandlers(router *grpc.Router, handler common.Handler) {
 	// 基础消息
-	router.RegisterHandler(proto.MSG_LoginRequest, h.handleLoginRequest)
-	router.RegisterHandler(proto.MSG_GetRoleInfoRequest, h.handleGetRoleInfoRequest)
-	router.RegisterHandler(proto.MSG_GetGameMoneyRequest, h.handleGetGameMoneyRequest)
-}
-
-// handleLoginRequest 处理登录请求
-func (h *Handler) handleLoginRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
-	req := &pb.LoginRequest{}
-	if err := grpc.Unmarshal(messageContent, req); err != nil {
-		return nil, err
-	}
-
-	resp, err := h.Login(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return grpc.Marshal(resp)
-}
-
-// handleGetRoleInfoRequest 处理获取角色信息请求
-func (h *Handler) handleGetRoleInfoRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
-	req := &pb.GetRoleInfoRequest{}
-	if err := grpc.Unmarshal(messageContent, req); err != nil {
-		return nil, err
-	}
-
-	resp, err := h.GetRoleInfo(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return grpc.Marshal(resp)
-}
-
-// handleGetGameMoneyRequest 处理获取游戏货币请求
-func (h *Handler) handleGetGameMoneyRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
-	req := &pb.GetGameMoneyRequest{}
-	if err := grpc.Unmarshal(messageContent, req); err != nil {
-		return nil, err
-	}
-
-	resp, err := h.GetGameMoney(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return grpc.Marshal(resp)
+	router.RegisterHandler(proto.MSG_LoginRequest, h, "Login",
+		func() interface{} { return &pb.LoginRequest{} },
+		func() interface{} { return &pb.LoginResponse{} })
+	router.RegisterHandler(proto.MSG_GetRoleInfoRequest, h, "GetRoleInfo",
+		func() interface{} { return &pb.GetRoleInfoRequest{} },
+		func() interface{} { return &pb.GetRoleInfoResponse{} })
+	router.RegisterHandler(proto.MSG_GetGameMoneyRequest, h, "GetGameMoney",
+		func() interface{} { return &pb.GetGameMoneyRequest{} },
+		func() interface{} { return &pb.GetGameMoneyResponse{} })
 }

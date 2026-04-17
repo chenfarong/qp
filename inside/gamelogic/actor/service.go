@@ -21,7 +21,7 @@ func (s *Service) ActorCreate(ctx context.Context, req *pb.ActorCreateRequest) (
 	aid := s.model.CreateActor()
 	actorData := &pb.ActorData{
 		ActorId: aid,
-		Name:    req.Name,
+		Name:    req.GetActorName(),
 		Level:   1,
 	}
 	return &pb.ActorUseResponse{
@@ -33,14 +33,14 @@ func (s *Service) ActorCreate(ctx context.Context, req *pb.ActorCreateRequest) (
 // ActorUse 使用角色服务
 func (s *Service) ActorUse(ctx context.Context, req *pb.ActorUseRequest) (*pb.ActorUseResponse, error) {
 	// 实现使用角色逻辑
-	err := s.model.UseActor(req.Aid)
+	err := s.model.UseActor(req.GetAid())
 	if err != nil {
 		return &pb.ActorUseResponse{
 			Err: &pb.ResultErr{ErrCode: 1, ErrText: err.Error()},
 		}, err
 	}
 	actorData := &pb.ActorData{
-		ActorId: req.Aid,
+		ActorId: req.GetAid(),
 		Name:    "TestActor",
 		Level:   1,
 	}

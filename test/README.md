@@ -1,121 +1,101 @@
-# 测试执行程序使用说明
+# 测试脚本使用说明
 
-## 执行程序位置
-测试执行程序位于 `test/bin` 目录下：
-- Windows: `test/bin/ssoauth_test.exe`
+## 概述
 
-## 运行方式
+本目录包含游戏服务器的测试脚本，用于测试注册账号、创建角色、获取背包数据等功能。
 
-### 基本运行
-直接运行执行程序，使用默认参数：
+## 测试脚本
 
-```bash
-test/bin/ssoauth_test.exe
-```
+### 1. 游戏逻辑测试客户端
 
-### 使用命令行参数
-可以通过命令行参数指定服务器URL、用户名和密码：
+**文件路径**: `test/gamelogic/main.go`
 
-```bash
-test/bin/ssoauth_test.exe -url=http://localhost:8080 -username=testuser -password=testpassword
-```
+**功能**: 测试游戏逻辑服务的各种功能，包括登录验证、创建角色、获取背包数据等。
 
-## 可用的命令行参数
+**使用方法**:
 
-| 参数 | 描述 | 默认值 |
-|------|------|--------|
-| `-url` | 服务器URL | `http://localhost:8080` |
-| `-username` | 用户名 | `testuser` |
-| `-password` | 密码 | `testpassword` |
-| `-method` | 测试方法名 | `all` |
+1. **编译脚本**:
+   ```bash
+   cd test/gamelogic
+   go build -mod=mod -o gamelogic_test.exe main.go
+   ```
 
-### 测试方法说明
+2. **运行脚本**:
+   ```bash
+   # 使用配置文件中的服务器地址
+   ./gamelogic_test.exe
+   
+   # 使用指定的服务器地址
+   ./gamelogic_test.exe -auth=http://localhost:7080 -gateway=ws://localhost:7061
+   
+   # 使用指定的用户名和密码
+   ./gamelogic_test.exe -username=testuser -password=testpassword
+   
+   # 使用指定的角色名称
+   ./gamelogic_test.exe -actor=testactor
+   
+   # 组合使用多个参数
+   ./gamelogic_test.exe -username=testuser -password=testpassword -actor=testactor
+   ```
 
-| 方法名 | 描述 |
-|--------|------|
-| `all` | 运行所有测试（注册、登录、个人信息） |
-| `register` | 只运行注册测试 |
-| `login` | 只运行登录测试 |
-| `profile` | 只运行个人信息测试（会先登录获取token） |
+**参数说明**:
 
-### 示例用法
+- `help`: 显示帮助信息
+- `-auth=auth_url`: 验证服务器URL (默认: 从配置文件读取)
+- `-gateway=gateway_url`: 网关服务器WebSocket URL (默认: 从配置文件读取)
+- `-username=username`: 用户名 (默认: za_admin)
+- `-password=password`: 密码 (默认: za_admin)
+- `-actor=actor_name`: 角色名称 (可选)
+- `-interval=seconds`: 定时发送GetGameMoneyRequest请求的间隔（秒，0表示不开启）
 
-运行所有测试：
-```bash
-test/bin/ssoauth_test.exe
-```
+**配置文件**:
 
-只运行登录测试：
-```bash
-test/bin/ssoauth_test.exe -method=login
-```
+脚本会自动读取 `../../config.yml` 文件中的服务器配置:
 
-指定服务器URL和只运行注册测试：
-```bash
-test/bin/ssoauth_test.exe -url=http://localhost:8080 -method=register
-```
+- `auth.host` 和 `auth.port`: 验证服务器地址和端口
+- `gateway.host` 和 `gateway.ws_port`: 网关服务器地址和WebSocket端口
+
+如果没有提供命令行参数，脚本会使用配置文件中的服务器地址。
+
+### 2. 注册和角色测试脚本
+
+**文件路径**: `test/registration_and_role.go`
+
+**功能**: 测试注册账号和创建角色的流程。
+
+**使用方法**:
+
+1. **运行脚本**:
+   ```bash
+   go run registration_and_role.go
+   ```
 
 ## 测试流程
 
-执行程序会按照以下流程进行测试：
+1. **启动服务**:
+   - 启动 ssoauth 服务（验证服务器）
+   - 启动 gateway 服务（网关服务器）
+   - 启动 gamelogic 服务（游戏逻辑服务器）
 
-1. **注册测试**：向服务器发送注册请求，测试注册功能
-2. **登录测试**：向服务器发送登录请求，测试登录功能并获取session和token
-3. **个人信息测试**：使用获取到的token访问个人信息接口，测试JWT验证功能
+2. **运行测试脚本**:
+   - 执行注册账号操作
+   - 执行创建角色操作
+   - 执行获取背包数据操作
 
-## 测试输出
-
-执行程序会在控制台打印详细的测试信息，包括：
-
-- 命令行参数值
-- 每个测试步骤的请求内容
-- 每个测试步骤的响应内容
-- 测试结果
-
-## 示例输出
-
-```
-Testing SSO Auth Server
-Server URL: http://localhost:8080
-Username: testuser
-Password: testpassword
-=== Testing Register ===
-Register request: {"password":"testpassword","username":"testuser"}
-Register response: {
-  "message": "Username already exists",
-  "success": false
-}
-Register failed: Username already exists
-
-=== Testing Login ===
-Login request: {"password":"testpassword","username":"testuser"}
-Login response: {
-  "message": "Login successful",
-  "session": "q0cx6bk8nhydj2v3hn9p6aqyc8eg9w1f",
-  "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3R1c2VyIiwiZXhwIjoxNzc2MzM0ODMwLCJuYmYiOjE3NzYyNDg0MzAsImlhdCI6MTc3NjI0ODQzMH0.I67_acgFcc_LiS2PZDq-mfj25JV9ufEc8DMcQyzPQi8"
-}
-Login successful
-Session: q0cx6bk8nhydj2v3hn9p6aqyc8eg9w1f
-Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3R1c2VyIiwiZXhwIjoxNzc2MzM0ODMwLCJuYmYiOjE3NzYyNDg0MzAsImlhdCI6MTc3NjI0ODQzMH0.I67_acgFcc_LiS2PZDq-mfj25JV9ufEc8DMcQyzPQi8
-
-=== Testing Profile ===
-Profile request URL: http://localhost:8080/auth/profile
-Profile request Authorization header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3R1c2VyIiwiZXhwIjoxNzc2MzM0ODMwLCJuYmYiOjE3NzYyNDg0MzAsImlhdCI6MTc3NjI0ODQzMH0.I67_acgFcc_LiS2PZDq-mfj25JV9ufEc8DMcQyzPQi8
-Profile response: {
-  "message": "Profile retrieved successfully",
-  "success": true,
-  "username": "testuser"
-}
-Profile request successful
-Username: testuser
-
-Testing completed
-```
+3. **查看测试结果**:
+   - 脚本会输出测试过程中的各种信息
+   - 检查是否成功完成所有测试步骤
 
 ## 注意事项
 
-- 确保ssoauth服务器正在运行，并且监听在指定的URL上
-- 注册测试可能会失败，因为用户可能已经存在，这是正常现象
-- 登录测试需要使用正确的用户名和密码
-- 个人信息测试需要服务器支持JWT验证功能
+- 确保所有服务都已启动并正常运行
+- 确保配置文件中的服务器地址和端口正确
+- 确保网络连接正常，没有防火墙阻止连接
+- 测试完成后，可以按 Ctrl+C 停止测试脚本
+
+## 故障排除
+
+- **连接失败**: 检查服务器是否启动，端口是否正确，网络是否正常
+- **登录失败**: 检查用户名和密码是否正确，验证服务器是否正常运行
+- **创建角色失败**: 检查游戏逻辑服务器是否正常运行，角色名称是否符合要求
+- **获取背包数据失败**: 检查游戏逻辑服务器是否正常运行，角色是否已成功创建

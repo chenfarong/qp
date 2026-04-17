@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"zagame/config"
 	pb "zagame/pb/golang/gamelogic"
 	"zagame/proto"
 
@@ -101,6 +102,17 @@ func main() {
 	// 解析命令行参数
 	flag.Parse()
 
+	// 加载配置文件
+	config.LoadConfig()
+
+	// 如果没有提供命令行参数，使用配置文件中的服务器地址
+	if *authServerURL == "http://localhost:8080" {
+		authServerURL = &[]string{fmt.Sprintf("http://%s:%d", config.AppConfig.Auth.Host, config.AppConfig.Auth.Port)}[0]
+	}
+	if *gatewayURL == "ws://localhost:8081" {
+		gatewayURL = &[]string{fmt.Sprintf("ws://%s:%d", config.AppConfig.Gateway.Host, config.AppConfig.Gateway.WsPort)}[0]
+	}
+
 	// 处理清除缓存参数
 	fmt.Println("正在清除Go测试缓存...")
 	exec.Command("go", "clean", "-testcache").Run()
@@ -119,18 +131,29 @@ func main() {
 		go startGameMoneyTimer()
 	}
 
-	// 1. 通过HTTP登录验证获得token
+	// 1. 通过HTTP登录验证获得token和session
 	fmt.Println("\n=== 步骤1: 登录验证 ===")
-	token, err := login()
+	token, session, err := login()
 	if err != nil {
 		fmt.Printf("登录失败: %v\n", err)
-		return
+		fmt.Println("尝试注册账号...")
+		err = register()
+		if err != nil {
+			fmt.Printf("注册失败: %v\n", err)
+			return
+		}
+		fmt.Println("注册成功! 再次尝试登录...")
+		token, session, err = login()
+		if err != nil {
+			fmt.Printf("登录失败: %v\n", err)
+			return
+		}
 	}
-	fmt.Printf("登录成功! Token: %s\n", token)
+	fmt.Printf("登录成功! Token: %s, Session: %s\n", token, session)
 
 	// 2. 连接WebSocket
 	fmt.Println("\n=== 步骤2: 连接WebSocket ===")
-	err = connectWebSocket(*gatewayURL, token)
+	err = connectWebSocket(*gatewayURL, token, session)
 	if err != nil {
 		fmt.Printf("连接WebSocket失败: %v\n", err)
 		return
@@ -151,7 +174,7 @@ func main() {
 	if len(actors) == 0 {
 		// 没有角色，需要创建
 		fmt.Println("没有找到角色，需要创建新角色")
-		selectedActor, err = createNewActor()
+		selectedActor, err = createNewActor(session)
 		if err != nil {
 			fmt.Printf("创建角色失败: %v\n", err)
 			return
@@ -185,7 +208,7 @@ func main() {
 
 	// 5. 进入游戏
 	fmt.Println("\n=== 步骤5: 进入游戏 ===")
-	err = useActor(selectedActor.ActorId)
+	err = useActor(selectedActor.ActorId, session)
 	if err != nil {
 		fmt.Printf("进入游戏失败: %v\n", err)
 		return
@@ -208,8 +231,50 @@ func main() {
 	select {}
 }
 
+// register 注册账号
+func register() error {
+	// 构造注册请求
+	registerReq := map[string]string{
+		"username": *username,
+		"password": *password,
+	}
+
+	jsonData, err := json.Marshal(registerReq)
+	if err != nil {
+		return fmt.Errorf("构造注册请求失败: %v", err)
+	}
+
+	// 发送注册请求
+	resp, err := http.Post(*authServerURL+"/register", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("发送注册请求失败: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// 解析响应
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("读取注册响应失败: %v", err)
+	}
+
+	var registerResp struct {
+		Success bool   `json:"success"`
+		Message string `json:"message"`
+	}
+
+	if err := json.Unmarshal(body, &registerResp); err != nil {
+		return fmt.Errorf("解析注册响应失败: %v", err)
+	}
+
+	if !registerResp.Success {
+		return fmt.Errorf("注册失败: %s", registerResp.Message)
+	}
+
+	return nil
+}
+
 // login 登录验证
-func login() (string, error) {
+func login() (string, string, error) {
 	// 构造登录请求
 	loginReq := map[string]string{
 		"username": *username,
@@ -218,36 +283,36 @@ func login() (string, error) {
 
 	jsonData, err := json.Marshal(loginReq)
 	if err != nil {
-		return "", fmt.Errorf("构造登录请求失败: %v", err)
+		return "", "", fmt.Errorf("构造登录请求失败: %v", err)
 	}
 
 	// 发送登录请求
 	resp, err := http.Post(*authServerURL+"/login", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
-		return "", fmt.Errorf("发送登录请求失败: %v", err)
+		return "", "", fmt.Errorf("发送登录请求失败: %v", err)
 	}
 	defer resp.Body.Close()
 
 	// 解析响应
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("读取登录响应失败: %v", err)
+		return "", "", fmt.Errorf("读取登录响应失败: %v", err)
 	}
 
 	var loginResp LoginResponse
 	if err := json.Unmarshal(body, &loginResp); err != nil {
-		return "", fmt.Errorf("解析登录响应失败: %v", err)
+		return "", "", fmt.Errorf("解析登录响应失败: %v", err)
 	}
 
 	if !loginResp.Success {
-		return "", fmt.Errorf("登录失败: %s", loginResp.Message)
+		return "", "", fmt.Errorf("登录失败: %s", loginResp.Message)
 	}
 
-	return loginResp.Token, nil
+	return loginResp.Token, loginResp.Session, nil
 }
 
 // connectWebSocket 连接WebSocket
-func connectWebSocket(url, token string) error {
+func connectWebSocket(url, token string, session string) error {
 	// 构造WebSocket连接URL
 	wsURL := url + "/ws?token=" + token
 
@@ -281,6 +346,19 @@ func connectWebSocket(url, token string) error {
 	}()
 
 	fmt.Println("WebSocket连接成功")
+
+	// 向gateway发送登录请求，提交session值
+	loginReq := map[string]string{
+		"session": session,
+	}
+	err = sendWebSocketMessage(proto.MSG_LoginRequest, loginReq)
+	if err != nil {
+		return fmt.Errorf("发送登录请求失败: %v", err)
+	}
+
+	// 等待登录响应
+	time.Sleep(1 * time.Second)
+
 	return nil
 }
 
@@ -289,7 +367,7 @@ func handleWebSocketMessage(msg WebSocketMessage) {
 	fmt.Printf("收到消息: MsgID=%d, Data=%s\n", msg.MsgID, msg.Data)
 
 	switch msg.MsgID {
-	case proto.MessageIDLoginResponse:
+	case proto.MSG_LoginResponse:
 		// 处理登录响应
 		var resp pb.LoginResponse
 		if err := json.Unmarshal(msg.Data, &resp); err != nil {
@@ -301,7 +379,7 @@ func handleWebSocketMessage(msg WebSocketMessage) {
 			fmt.Printf("角色ID: %s, 名称: %s, 等级: %d\n", resp.Role.Aid, resp.Role.Name, resp.Role.Level)
 		}
 
-	case proto.MessageIDGetRoleInfoResponse:
+	case proto.MSG_GetRoleInfoResponse:
 		// 处理获取角色信息响应
 		var resp pb.GetRoleInfoResponse
 		if err := json.Unmarshal(msg.Data, &resp); err != nil {
@@ -313,7 +391,7 @@ func handleWebSocketMessage(msg WebSocketMessage) {
 			fmt.Printf("角色ID: %s, 名称: %s, 等级: %d\n", resp.Role.Aid, resp.Role.Name, resp.Role.Level)
 		}
 
-	case proto.MessageIDActorUseResponse:
+	case proto.MSG_ActorUseResponse:
 		// 处理使用角色响应
 		var resp pb.ActorUseResponse
 		if err := json.Unmarshal(msg.Data, &resp); err != nil {
@@ -329,7 +407,7 @@ func handleWebSocketMessage(msg WebSocketMessage) {
 			fmt.Printf("角色ID: %s, 名称: %s, 等级: %d\n", resp.Data.ActorId, resp.Data.Name, resp.Data.Level)
 		}
 
-	case proto.MessageIDGetBagResponse:
+	case proto.MSG_GetBagResponse:
 		// 处理获取背包响应
 		var resp pb.GetBagResponse
 		if err := json.Unmarshal(msg.Data, &resp); err != nil {
@@ -348,7 +426,7 @@ func handleWebSocketMessage(msg WebSocketMessage) {
 			}
 		}
 
-	case proto.MessageIDGetEquipResponse:
+	case proto.MSG_GetEquipResponse:
 		// 处理获取装备响应
 		var resp pb.GetEquipResponse
 		if err := json.Unmarshal(msg.Data, &resp); err != nil {
@@ -367,7 +445,7 @@ func handleWebSocketMessage(msg WebSocketMessage) {
 			}
 		}
 
-	case proto.MessageIDGetHeroesResponse:
+	case proto.MSG_GetHeroesResponse:
 		// 处理获取英雄响应
 		var resp pb.GetHeroesResponse
 		if err := json.Unmarshal(msg.Data, &resp); err != nil {
@@ -386,7 +464,7 @@ func handleWebSocketMessage(msg WebSocketMessage) {
 			}
 		}
 
-	case proto.MessageIDGetGameMoneyResponse:
+	case proto.MSG_GetGameMoneyResponse:
 		// 处理获取游戏货币响应
 		var resp pb.GetGameMoneyResponse
 		if err := json.Unmarshal(msg.Data, &resp); err != nil {
@@ -442,7 +520,7 @@ func sendWebSocketMessage(msgID int32, data interface{}) error {
 func getActorList() ([]ActorInfo, error) {
 	// 发送获取角色信息请求
 	req := pb.GetRoleInfoRequest{}
-	err := sendWebSocketMessage(proto.MessageIDGetRoleInfoRequest, req)
+	err := sendWebSocketMessage(proto.MSG_GetRoleInfoRequest, req)
 	if err != nil {
 		return nil, fmt.Errorf("发送获取角色信息请求失败: %v", err)
 	}
@@ -495,7 +573,7 @@ func selectActor(actors []ActorInfo) *ActorInfo {
 }
 
 // createNewActor 创建新角色
-func createNewActor() (*ActorInfo, error) {
+func createNewActor(session string) (*ActorInfo, error) {
 	// 如果没有提供角色名称，使用默认名称
 	actorNameInput := *actorName
 	if actorNameInput == "" {
@@ -506,9 +584,10 @@ func createNewActor() (*ActorInfo, error) {
 
 	// 发送创建角色请求
 	req := pb.ActorCreateRequest{
-		Name: actorNameInput,
+		Session:   session,
+		ActorName: &actorNameInput,
 	}
-	err := sendWebSocketMessage(proto.MessageIDActorCreateRequest, req)
+	err := sendWebSocketMessage(proto.MSG_ActorCreateRequest, req)
 	if err != nil {
 		return nil, fmt.Errorf("发送创建角色请求失败: %v", err)
 	}
@@ -534,12 +613,13 @@ func createNewActor() (*ActorInfo, error) {
 }
 
 // useActor 使用角色
-func useActor(actorId string) error {
+func useActor(actorId string, session string) error {
 	// 发送使用角色请求
 	req := pb.ActorUseRequest{
-		Aid: actorId,
+		Session: session,
+		Aid:     actorId,
 	}
-	err := sendWebSocketMessage(proto.MessageIDActorUseRequest, req)
+	err := sendWebSocketMessage(proto.MSG_ActorUseRequest, req)
 	if err != nil {
 		return fmt.Errorf("发送使用角色请求失败: %v", err)
 	}
@@ -562,7 +642,7 @@ func startGameMoneyTimer() {
 		select {
 		case <-ticker.C:
 			req := pb.GetGameMoneyRequest{}
-			err := sendWebSocketMessage(proto.MessageIDGetGameMoneyRequest, req)
+			err := sendWebSocketMessage(proto.MSG_GetGameMoneyRequest, req)
 			if err != nil {
 				fmt.Printf("定时发送游戏货币请求失败: %v\n", err)
 			} else {
@@ -577,7 +657,7 @@ func testGameFunctions() {
 	// 测试获取背包
 	fmt.Println("\n测试获取背包...")
 	req := pb.GetBagRequest{}
-	err := sendWebSocketMessage(proto.MessageIDGetBagRequest, req)
+	err := sendWebSocketMessage(proto.MSG_GetBagRequest, req)
 	if err != nil {
 		fmt.Printf("发送获取背包请求失败: %v\n", err)
 		return
@@ -587,7 +667,7 @@ func testGameFunctions() {
 	// 测试获取装备
 	fmt.Println("\n测试获取装备...")
 	req2 := pb.GetEquipRequest{}
-	err = sendWebSocketMessage(proto.MessageIDGetEquipRequest, req2)
+	err = sendWebSocketMessage(proto.MSG_GetEquipRequest, req2)
 	if err != nil {
 		fmt.Printf("发送获取装备请求失败: %v\n", err)
 		return
@@ -597,7 +677,7 @@ func testGameFunctions() {
 	// 测试获取英雄
 	fmt.Println("\n测试获取英雄...")
 	req3 := pb.GetHeroesRequest{}
-	err = sendWebSocketMessage(proto.MessageIDGetHeroesRequest, req3)
+	err = sendWebSocketMessage(proto.MSG_GetHeroesRequest, req3)
 	if err != nil {
 		fmt.Printf("发送获取英雄请求失败: %v\n", err)
 		return
@@ -607,7 +687,7 @@ func testGameFunctions() {
 	// 测试获取游戏货币
 	fmt.Println("\n测试获取游戏货币...")
 	req4 := pb.GetGameMoneyRequest{}
-	err = sendWebSocketMessage(proto.MessageIDGetGameMoneyRequest, req4)
+	err = sendWebSocketMessage(proto.MSG_GetGameMoneyRequest, req4)
 	if err != nil {
 		fmt.Printf("发送获取游戏货币请求失败: %v\n", err)
 		return

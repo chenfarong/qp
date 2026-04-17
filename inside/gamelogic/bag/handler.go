@@ -2,6 +2,7 @@ package bag
 
 import (
 	"context"
+	"zagame/inside/gamelogic/common"
 	"zagame/inside/gamelogic/grpc"
 	pb "zagame/pb/golang/gamelogic"
 	"zagame/proto"
@@ -35,38 +36,12 @@ func NewHandler() *Handler {
 }
 
 // RegisterHandlers 注册消息处理器
-func (h *Handler) RegisterHandlers(router *grpc.Router) {
+func (h *Handler) RegisterHandlers(router *grpc.Router, handler common.Handler) {
 	// 背包消息
-	router.RegisterHandler(proto.MSG_GetBagRequest, h.handleGetBagRequest)
-	router.RegisterHandler(proto.MSG_BagItemUseRequest, h.handleBagItemUseRequest)
-}
-
-// handleGetBagRequest 处理获取背包请求
-func (h *Handler) handleGetBagRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
-	req := &pb.GetBagRequest{}
-	if err := grpc.Unmarshal(messageContent, req); err != nil {
-		return nil, err
-	}
-
-	resp, err := h.GetBag(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return grpc.Marshal(resp)
-}
-
-// handleBagItemUseRequest 处理背包物品使用请求
-func (h *Handler) handleBagItemUseRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
-	req := &pb.BagItemUseRequest{}
-	if err := grpc.Unmarshal(messageContent, req); err != nil {
-		return nil, err
-	}
-
-	resp, err := h.BagItemUse(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return grpc.Marshal(resp)
+	router.RegisterHandler(proto.MSG_GetBagRequest, h, "GetBag",
+		func() interface{} { return &pb.GetBagRequest{} },
+		func() interface{} { return &pb.GetBagResponse{} })
+	router.RegisterHandler(proto.MSG_BagItemUseRequest, h, "BagItemUse",
+		func() interface{} { return &pb.BagItemUseRequest{} },
+		func() interface{} { return &pb.BagItemUseResponse{} })
 }

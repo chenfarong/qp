@@ -13,9 +13,19 @@ import (
 type Config struct {
 	Auth       AuthConfig       `yaml:"auth"`
 	Game       GameConfig       `yaml:"game"`
+	Gateway    GatewayConfig    `yaml:"gateway"`
 	Database   DatabaseConfig   `yaml:"database"`
 	Log        LogConfig        `yaml:"log"`
 	GameConfig GameConfigConfig `yaml:"game_config"`
+}
+
+// GatewayConfig 网关服务器配置
+type GatewayConfig struct {
+	Host           string `yaml:"host"`
+	WsPort         int    `yaml:"ws_port"`
+	GrpcPort       int    `yaml:"grpc_port"`
+	MaxConnections int    `yaml:"max_connections"`
+	SessionTimeout int    `yaml:"session_timeout"`
 }
 
 // AuthConfig 验证服务器配置

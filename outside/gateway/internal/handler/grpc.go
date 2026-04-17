@@ -6,10 +6,12 @@ import (
 	"log"
 	"net"
 	"sync"
+	"time"
 
-	"zgame/internet/gateway/proto"
+	"zagame/outside/gateway/proto"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 )
 
 // 服务器信息存储
@@ -22,6 +24,7 @@ type ServerInfo struct {
 	Port       int32
 	Client     proto.GatewayServiceClient
 	Conn       *grpc.ClientConn
+	Cancel     context.CancelFunc
 }
 
 // 服务器管理器
@@ -50,6 +53,12 @@ func (s *GatewayServer) RegisterServer(ctx context.Context, req *proto.RegisterS
 	serverManager.mu.Lock()
 	defer serverManager.mu.Unlock()
 
+	// 如果服务器已存在，先删除旧的连接
+	if oldServer, exists := serverManager.servers[serverInfo.ServerId]; exists {
+		log.Printf("服务器 %s (%s) 已存在，删除旧连接", oldServer.ServerName, oldServer.ServerID)
+		removeServer(oldServer)
+	}
+
 	// 检查消息ID范围是否冲突
 	for msgID := serverInfo.StartMsgId; msgID <= serverInfo.EndMsgId; msgID++ {
 		if _, exists := serverManager.msgIDMap[msgID]; exists {
@@ -73,6 +82,9 @@ func (s *GatewayServer) RegisterServer(ctx context.Context, req *proto.RegisterS
 	// 创建客户端
 	client := proto.NewGatewayServiceClient(conn)
 
+	// 创建监控上下文
+	monitorCtx, cancel := context.WithCancel(context.Background())
+
 	// 存储服务器信息
 	server := &ServerInfo{
 		ServerID:   serverInfo.ServerId,
@@ -83,6 +95,7 @@ func (s *GatewayServer) RegisterServer(ctx context.Context, req *proto.RegisterS
 		Port:       serverInfo.Port,
 		Client:     client,
 		Conn:       conn,
+		Cancel:     cancel,
 	}
 
 	serverManager.servers[serverInfo.ServerId] = server
@@ -91,6 +104,9 @@ func (s *GatewayServer) RegisterServer(ctx context.Context, req *proto.RegisterS
 	for msgID := serverInfo.StartMsgId; msgID <= serverInfo.EndMsgId; msgID++ {
 		serverManager.msgIDMap[msgID] = serverInfo.ServerId
 	}
+
+	// 启动连接状态监控
+	go monitorConnection(monitorCtx, server)
 
 	log.Printf("服务器 %s (%s) 注册成功，消息ID范围: %d-%d",
 		serverInfo.ServerName, serverInfo.ServerId, serverInfo.StartMsgId, serverInfo.EndMsgId)
@@ -132,6 +148,7 @@ func (s *GatewayServer) ForwardMessage(ctx context.Context, req *proto.ForwardMe
 	response, err := server.Client.ForwardMessage(ctx, &proto.ForwardMessageRequest{
 		MessageId:      messageID,
 		Session:        session,
+		ClientIp:       req.ClientIp,
 		MessageContent: messageContent,
 	})
 
@@ -143,6 +160,52 @@ func (s *GatewayServer) ForwardMessage(ctx context.Context, req *proto.ForwardMe
 	}
 
 	return response, nil
+}
+
+// monitorConnection 监控服务器连接状态
+func monitorConnection(ctx context.Context, server *ServerInfo) {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			state := server.Conn.GetState()
+			if state == connectivity.Shutdown || state == connectivity.TransientFailure {
+				log.Printf("服务器 %s (%s) 连接断开，状态: %s", server.ServerName, server.ServerID, state)
+				removeServer(server)
+				return
+			}
+		}
+	}
+}
+
+// removeServer 删除服务器注册
+func removeServer(server *ServerInfo) {
+	serverManager.mu.Lock()
+	defer serverManager.mu.Unlock()
+
+	// 停止监控
+	if server.Cancel != nil {
+		server.Cancel()
+	}
+
+	// 关闭连接
+	if server.Conn != nil {
+		server.Conn.Close()
+	}
+
+	// 删除消息ID映射
+	for msgID := server.StartMsgID; msgID <= server.EndMsgID; msgID++ {
+		delete(serverManager.msgIDMap, msgID)
+	}
+
+	// 删除服务器信息
+	delete(serverManager.servers, server.ServerID)
+
+	log.Printf("服务器 %s (%s) 已删除注册", server.ServerName, server.ServerID)
 }
 
 // StartGRPCServer 启动gRPC服务器

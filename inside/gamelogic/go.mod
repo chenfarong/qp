@@ -7,11 +7,14 @@ require (
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.33.0
 	zagame/common/logger v0.0.0
+	zagame/config v0.0.0
 	zagame/pb/golang/gamelogic v0.0.0-00010101000000-000000000000
 	zagame/proto v0.0.0-00010101000000-000000000000
 )
 
 replace zagame/common/logger => ../../common/logger
+
+replace zagame/config => ../../config
 
 replace zagame/pb/golang/gamelogic => ../../pb/golang/gamelogic
 
