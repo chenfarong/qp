@@ -1,0 +1,4 @@
+1、创建账号：通过http的POST向ssoauth提交账号和密码，获得session，如果没带参数/测试配置文件中也没有设置，就随机生成账号和密码。
+2、网关验证：通过websocket连接gateway服务器，连接成功后提交从ssoauth获得的session，gateway将这个连接客户端和session值绑定。
+3、创建角色：向gateway发送创建角色请求，gateway将这个请求转发给gamelogic，gamelogic处理后再通过gateway服务器发送给客户端。
+4、获取背包信息：通过已经连接到gateway的websocket连接，发送获取背包请求，gateway转发给gamelogic，gamelogic处理完后通过gateway返回给客户端。

@@ -160,47 +160,12 @@ func main() {
 	}
 	defer wsConn.Close()
 
-	// 3. 获取已经创建的角色列表
-	fmt.Println("\n=== 步骤3: 获取角色列表 ===")
-	actors, err := getActorList()
+	// 3. 直接创建角色
+	fmt.Println("\n=== 步骤3: 创建角色 ===")
+	selectedActor, err := createNewActor(session)
 	if err != nil {
-		fmt.Printf("获取角色列表失败: %v\n", err)
+		fmt.Printf("创建角色失败: %v\n", err)
 		return
-	}
-
-	// 4. 处理角色选择或创建
-	fmt.Println("\n=== 步骤4: 角色选择或创建 ===")
-	var selectedActor *ActorInfo
-	if len(actors) == 0 {
-		// 没有角色，需要创建
-		fmt.Println("没有找到角色，需要创建新角色")
-		selectedActor, err = createNewActor(session)
-		if err != nil {
-			fmt.Printf("创建角色失败: %v\n", err)
-			return
-		}
-	} else if len(actors) == 1 {
-		// 只有一个角色，直接选择
-		selectedActor = &actors[0]
-		fmt.Printf("自动选择角色: %s (ID: %s)\n", selectedActor.Name, selectedActor.ActorId)
-	} else {
-		// 多个角色，需要选择
-		if *actorName != "" {
-			// 参数提供了角色名称，尝试查找
-			for i := range actors {
-				if actors[i].Name == *actorName {
-					selectedActor = &actors[i]
-					break
-				}
-			}
-			if selectedActor == nil {
-				fmt.Printf("未找到名称为 %s 的角色\n", *actorName)
-				selectedActor = selectActor(actors)
-			}
-		} else {
-			// 需要用户选择
-			selectedActor = selectActor(actors)
-		}
 	}
 
 	fmt.Printf("\n已选择角色: %s (ID: %s, 等级: %d)\n",
