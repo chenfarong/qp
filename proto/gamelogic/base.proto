@@ -4,7 +4,6 @@ package protocli;
 
 option go_package = "zgame/pb/golang/gamelogic";
 
-//编号基础 2000
 
 // 标准返回信息顶部
 message ResultErr {
@@ -25,12 +24,14 @@ message GetGameMoneyRequest {
 message GetGameMoneyResponse {
   ResultErr err=1;
   repeated GameMoneyItem data=2;
+  int64 server_time=3;
 }
 
 // 同步 游戏中的货币改变
 message SyncGameMoneyChange {
   repeated GameMoneyItem data=1;
 }
+
 
 
 // 基础消息结构

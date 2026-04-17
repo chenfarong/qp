@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -25,6 +26,7 @@ var (
 	username      = flag.String("username", "za_admin", "用户名")
 	password      = flag.String("password", "za_admin", "密码")
 	actorName     = flag.String("actor", "", "角色名称（可选）")
+	interval      = flag.Int("interval", 0, "定时发送GetGameMoneyRequest请求的间隔（秒，0表示不开启）")
 )
 
 // LoginResponse 登录响应结构
@@ -99,12 +101,23 @@ func main() {
 	// 解析命令行参数
 	flag.Parse()
 
+	// 处理清除缓存参数
+	fmt.Println("正在清除Go测试缓存...")
+	exec.Command("go", "clean", "-testcache").Run()
+	fmt.Println("Go测试缓存已清除")
+
 	fmt.Println("=== 游戏逻辑测试客户端 ===")
 	fmt.Printf("验证服务器: %s\n", *authServerURL)
 	fmt.Printf("网关服务器: %s\n", *gatewayURL)
 	fmt.Printf("用户名: %s\n", *username)
 	fmt.Printf("密码: %s\n", *password)
 	fmt.Printf("角色名称: %s\n", *actorName)
+	fmt.Printf("定时发送间隔: %d秒\n", *interval)
+
+	// 如果设置了定时发送间隔，启动定时器
+	if *interval > 0 {
+		go startGameMoneyTimer()
+	}
 
 	// 1. 通过HTTP登录验证获得token
 	fmt.Println("\n=== 步骤1: 登录验证 ===")
@@ -538,6 +551,27 @@ func useActor(actorId string) error {
 	return nil
 }
 
+// startGameMoneyTimer 启动定时发送游戏货币请求的定时器
+func startGameMoneyTimer() {
+	ticker := time.NewTicker(time.Duration(*interval) * time.Second)
+	defer ticker.Stop()
+
+	fmt.Printf("定时发送游戏货币请求已启动，间隔: %d秒\n", *interval)
+
+	for {
+		select {
+		case <-ticker.C:
+			req := pb.GetGameMoneyRequest{}
+			err := sendWebSocketMessage(proto.MessageIDGetGameMoneyRequest, req)
+			if err != nil {
+				fmt.Printf("定时发送游戏货币请求失败: %v\n", err)
+			} else {
+				fmt.Printf("[定时任务] 发送游戏货币请求成功\n")
+			}
+		}
+	}
+}
+
 // testGameFunctions 测试游戏功能
 func testGameFunctions() {
 	// 测试获取背包
@@ -585,7 +619,7 @@ func testGameFunctions() {
 func printHelp() {
 	fmt.Println("游戏逻辑测试客户端")
 	fmt.Println("Usage:")
-	fmt.Println("  gamelogic_test.exe [help] [-auth=auth_url] [-gateway=gateway_url] [-username=username] [-password=password] [-actor=actor_name]")
+	fmt.Println("  gamelogic_test.exe [help] [-auth=auth_url] [-gateway=gateway_url] [-username=username] [-password=password] [-actor=actor_name] [-interval=seconds] [-cleancache]")
 	fmt.Println("\nOptions:")
 	fmt.Println("  help                  Show this help message")
 	fmt.Println("  -auth=auth_url        Auth server URL (default: http://localhost:8080)")
@@ -593,9 +627,11 @@ func printHelp() {
 	fmt.Println("  -username=username    Username (default: za_admin)")
 	fmt.Println("  -password=password    Password (default: za_admin)")
 	fmt.Println("  -actor=actor_name     Actor name (optional)")
+	fmt.Println("  -interval=seconds      Interval for periodic GetGameMoneyRequest (0 means disabled)")
 	fmt.Println("\nExamples:")
 	fmt.Println("  gamelogic_test.exe help")
 	fmt.Println("  gamelogic_test.exe")
 	fmt.Println("  gamelogic_test.exe -username=testuser -password=testpassword")
 	fmt.Println("  gamelogic_test.exe -actor=myactor")
+	fmt.Println("  gamelogic_test.exe -interval=5  # 每5秒发送一次游戏货币请求")
 }

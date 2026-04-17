@@ -1,0 +1,366 @@
+package logger
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"net"
+	"os"
+	"strings"
+	"sync"
+	"time"
+)
+
+type Level int
+
+const (
+	DEBUG Level = iota
+	INFO
+	WARN
+	ERROR
+	PANIC
+	FATAL
+)
+
+var levelNames = map[Level]string{
+	DEBUG: "DEBUG",
+	INFO:  "INFO",
+	WARN:  "WARN",
+	ERROR: "ERROR",
+	PANIC: "PANIC",
+	FATAL: "FATAL",
+}
+
+func (l Level) String() string {
+	if name, ok := levelNames[l]; ok {
+		return name
+	}
+	return "UNKNOWN"
+}
+
+type OutputType int
+
+const (
+	Console OutputType = iota
+	UDP
+)
+
+var outputTypeNames = map[OutputType]string{
+	Console: "Console",
+	UDP:     "UDP",
+}
+
+func (o OutputType) String() string {
+	if name, ok := outputTypeNames[o]; ok {
+		return name
+	}
+	return "UNKNOWN"
+}
+
+type Config struct {
+	ServerName string
+	Level      Level
+	Outputs    []OutputConfig
+	UDPServer  string
+	UDPPort    int
+}
+
+type OutputConfig struct {
+	Type OutputType
+	Addr string
+}
+
+var (
+	defaultLogger *Logger
+	once          sync.Once
+)
+
+type Logger struct {
+	config     Config
+	consoleLog *log.Logger
+	udpConn    *net.UDPConn
+	mu         sync.Mutex
+}
+
+type LogMessage struct {
+	Time       string `json:"time"`
+	Level      string `json:"level"`
+	ServerName string `json:"server_name"`
+	Message    string `json:"message"`
+}
+
+func New(config Config) *Logger {
+	l := &Logger{
+		config: config,
+	}
+
+	l.consoleLog = log.New(os.Stdout, "", 0)
+
+	if config.UDPServer != "" && config.UDPPort > 0 {
+		addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", config.UDPServer, config.UDPPort))
+		if err == nil {
+			conn, err := net.DialUDP("udp", nil, addr)
+			if err == nil {
+				l.udpConn = conn
+			}
+		}
+	}
+
+	return l
+}
+
+func Init(config Config) {
+	once.Do(func() {
+		defaultLogger = New(config)
+	})
+}
+
+func Default() *Logger {
+	if defaultLogger == nil {
+		defaultLogger = New(Config{
+			ServerName: "Unknown",
+			Level:      INFO,
+			Outputs:    []OutputConfig{{Type: Console}},
+		})
+	}
+	return defaultLogger
+}
+
+func (l *Logger) shouldLog(level Level) bool {
+	return level >= l.config.Level
+}
+
+func (l *Logger) formatMessage(level Level, v ...interface{}) string {
+	msg := fmt.Sprint(v...)
+	return l.formatString(level, msg)
+}
+
+func (l *Logger) formatMessagef(level Level, format string, v ...interface{}) string {
+	msg := fmt.Sprintf(format, v...)
+	return l.formatString(level, msg)
+}
+
+func (l *Logger) formatString(level Level, msg string) string {
+	logMsg := LogMessage{
+		Time:       time.Now().Format("2006-01-02 15:04:05.000"),
+		Level:      level.String(),
+		ServerName: l.config.ServerName,
+		Message:    msg,
+	}
+
+	jsonBytes, err := json.Marshal(logMsg)
+	if err != nil {
+		return fmt.Sprintf("[%s] [%s] [%s] %s",
+			logMsg.Time, logMsg.Level, logMsg.ServerName, logMsg.Message)
+	}
+	return string(jsonBytes)
+}
+
+func (l *Logger) log(level Level, v ...interface{}) {
+	if !l.shouldLog(level) {
+		return
+	}
+
+	msg := l.formatMessage(level, v...)
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	for _, output := range l.config.Outputs {
+		switch output.Type {
+		case Console:
+			l.consoleLog.Println(msg)
+		case UDP:
+			l.sendUDP(msg)
+		}
+	}
+}
+
+func (l *Logger) logf(level Level, format string, v ...interface{}) {
+	if !l.shouldLog(level) {
+		return
+	}
+
+	msg := l.formatMessagef(level, format, v...)
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	for _, output := range l.config.Outputs {
+		switch output.Type {
+		case Console:
+			l.consoleLog.Println(msg)
+		case UDP:
+			l.sendUDP(msg)
+		}
+	}
+}
+
+func (l *Logger) sendUDP(msg string) {
+	if l.udpConn == nil {
+		return
+	}
+
+	_, err := l.udpConn.Write([]byte(msg))
+	if err != nil {
+		l.consoleLog.Printf("Failed to send UDP log: %v\n", err)
+	}
+}
+
+func (l *Logger) Debug(v ...interface{}) {
+	l.log(DEBUG, v...)
+}
+
+func (l *Logger) Debugf(format string, v ...interface{}) {
+	l.logf(DEBUG, format, v...)
+}
+
+func (l *Logger) Info(v ...interface{}) {
+	l.log(INFO, v...)
+}
+
+func (l *Logger) Infof(format string, v ...interface{}) {
+	l.logf(INFO, format, v...)
+}
+
+func (l *Logger) Warn(v ...interface{}) {
+	l.log(WARN, v...)
+}
+
+func (l *Logger) Warnf(format string, v ...interface{}) {
+	l.logf(WARN, format, v...)
+}
+
+func (l *Logger) Error(v ...interface{}) {
+	l.log(ERROR, v...)
+}
+
+func (l *Logger) Errorf(format string, v ...interface{}) {
+	l.logf(ERROR, format, v...)
+}
+
+func (l *Logger) Panic(v ...interface{}) {
+	l.log(PANIC, v...)
+}
+
+func (l *Logger) Panicf(format string, v ...interface{}) {
+	l.logf(PANIC, format, v...)
+}
+
+func (l *Logger) Fatal(v ...interface{}) {
+	l.log(FATAL, v...)
+	os.Exit(1)
+}
+
+func (l *Logger) Fatalf(format string, v ...interface{}) {
+	l.logf(FATAL, format, v...)
+	os.Exit(1)
+}
+
+func (l *Logger) Close() {
+	if l.udpConn != nil {
+		l.udpConn.Close()
+	}
+}
+
+func SetServerName(name string) {
+	if defaultLogger != nil {
+		defaultLogger.config.ServerName = name
+	}
+}
+
+func SetLevel(level Level) {
+	if defaultLogger != nil {
+		defaultLogger.config.Level = level
+	}
+}
+
+func SetOutputs(outputs []OutputConfig) {
+	if defaultLogger != nil {
+		defaultLogger.config.Outputs = outputs
+	}
+}
+
+func Debug(v ...interface{}) {
+	Default().Debug(v...)
+}
+
+func Debugf(format string, v ...interface{}) {
+	Default().Debugf(format, v...)
+}
+
+func Info(v ...interface{}) {
+	Default().Info(v...)
+}
+
+func Infof(format string, v ...interface{}) {
+	Default().Infof(format, v...)
+}
+
+func Warn(v ...interface{}) {
+	Default().Warn(v...)
+}
+
+func Warnf(format string, v ...interface{}) {
+	Default().Warnf(format, v...)
+}
+
+func Error(v ...interface{}) {
+	Default().Error(v...)
+}
+
+func Errorf(format string, v ...interface{}) {
+	Default().Errorf(format, v...)
+}
+
+func Panic(v ...interface{}) {
+	Default().Panic(v...)
+}
+
+func Panicf(format string, v ...interface{}) {
+	Default().Panicf(format, v...)
+}
+
+func Fatal(v ...interface{}) {
+	Default().Fatal(v...)
+}
+
+func Fatalf(format string, v ...interface{}) {
+	Default().Fatalf(format, v...)
+}
+
+func Close() {
+	Default().Close()
+}
+
+func ParseLevel(s string) Level {
+	s = strings.ToUpper(s)
+	switch s {
+	case "DEBUG":
+		return DEBUG
+	case "INFO":
+		return INFO
+	case "WARN", "WARNING":
+		return WARN
+	case "ERROR":
+		return ERROR
+	case "PANIC":
+		return PANIC
+	case "FATAL":
+		return FATAL
+	default:
+		return INFO
+	}
+}
+
+func ParseOutputType(s string) OutputType {
+	s = strings.ToUpper(s)
+	switch s {
+	case "CONSOLE":
+		return Console
+	case "UDP":
+		return UDP
+	default:
+		return Console
+	}
+}
