@@ -19,6 +19,7 @@ func main() {
 		Level:      logger.DEBUG,
 		Outputs: []logger.OutputConfig{
 			{Type: logger.Console},
+			{Type: logger.File},
 		},
 		UDPServer: "",
 		UDPPort:   0,

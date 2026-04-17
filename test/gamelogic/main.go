@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
@@ -24,11 +25,22 @@ import (
 var (
 	authServerURL = flag.String("auth", "http://localhost:8080", "验证服务器URL")
 	gatewayURL    = flag.String("gateway", "ws://localhost:8081", "网关服务器WebSocket URL")
-	username      = flag.String("username", "za_admin", "用户名")
-	password      = flag.String("password", "za_admin", "密码")
+	username      = flag.String("username", "", "用户名")
+	password      = flag.String("password", "", "密码")
 	actorName     = flag.String("actor", "", "角色名称（可选）")
 	interval      = flag.Int("interval", 0, "定时发送GetGameMoneyRequest请求的间隔（秒，0表示不开启）")
 )
+
+// 生成随机字符串
+func generateRandomString(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	rand.Seed(time.Now().UnixNano())
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
+}
 
 // LoginResponse 登录响应结构
 type LoginResponse struct {
@@ -111,6 +123,22 @@ func main() {
 	}
 	if *gatewayURL == "ws://localhost:8081" {
 		gatewayURL = &[]string{fmt.Sprintf("ws://%s:%d", config.AppConfig.Gateway.Host, config.AppConfig.Gateway.WsPort)}[0]
+	}
+
+	// 如果没有提供用户名和密码，随机生成
+	if *username == "" {
+		randomUsername := "test_" + generateRandomString(8)
+		username = &randomUsername
+	}
+	if *password == "" {
+		randomPassword := generateRandomString(10)
+		password = &randomPassword
+	}
+
+	// 如果没有提供角色名称，随机生成
+	if *actorName == "" {
+		randomActorName := "actor_" + generateRandomString(6)
+		actorName = &randomActorName
 	}
 
 	// 处理清除缓存参数

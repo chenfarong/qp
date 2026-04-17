@@ -8,11 +8,14 @@ require (
 	google.golang.org/protobuf v1.33.0
 	zagame/config v0.0.0
 	zagame/database v0.0.0
+	zagame/common/logger v0.0.0
 )
 
 replace zagame/config => ../../config
 
 replace zagame/database => ../../database
+
+replace zagame/common/logger => ../../common/logger
 
 require (
 	github.com/kr/pretty v0.3.1 // indirect

@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
-	"zgame/config"
+	"zagame/common/logger"
+	"zagame/config"
 	"zgame/internet/ssoauth/internal/handler"
 	"zgame/internet/ssoauth/internal/middleware"
 
@@ -15,6 +15,19 @@ import (
 func main() {
 	// 加载配置
 	config.LoadConfig()
+
+	// 初始化日志系统
+	logger.Init(logger.Config{
+		ServerName: "ssoauth",
+		Level:      logger.DEBUG,
+		Outputs: []logger.OutputConfig{
+			{Type: logger.Console},
+			{Type: logger.File},
+		},
+		UDPServer: "",
+		UDPPort:   0,
+	})
+	defer logger.Close()
 
 	// 检查并创建默认的za_admin账号
 	handler.CheckAndCreateDefaultAdmin()
@@ -42,8 +55,8 @@ func main() {
 		Handler: r,
 	}
 
-	fmt.Printf("SSO Auth Server started on %s\n", addr)
+	logger.InfoKV("启动SSO Auth服务器", "address", addr)
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("listen: %s\n", err)
+		logger.Fatalf("listen: %s\n", err)
 	}
 }

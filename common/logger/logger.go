@@ -45,11 +45,13 @@ type OutputType int
 const (
 	Console OutputType = iota
 	UDP
+	File
 )
 
 var outputTypeNames = map[OutputType]string{
 	Console: "Console",
 	UDP:     "UDP",
+	File:    "File",
 }
 
 func (o OutputType) String() string {
@@ -80,6 +82,7 @@ var (
 type Logger struct {
 	config     Config
 	consoleLog *log.Logger
+	fileLog    *log.Logger
 	udpConn    *net.UDPConn
 	mu         sync.Mutex
 }
@@ -100,6 +103,32 @@ func New(config Config) *Logger {
 	}
 
 	l.consoleLog = log.New(os.Stdout, "", 0)
+
+	// 初始化文件日志
+	for _, output := range config.Outputs {
+		if output.Type == File {
+			// 确保 logs 目录存在
+			logDir := "logs"
+			if _, err := os.Stat(logDir); os.IsNotExist(err) {
+				err = os.MkdirAll(logDir, 0755)
+				if err != nil {
+					l.consoleLog.Printf("Failed to create log directory: %v\n", err)
+					continue
+				}
+			}
+
+			// 创建日志文件
+			logFile := filepath.Join(logDir, fmt.Sprintf("%s_%s.log", config.ServerName, time.Now().Format("2006-01-02")))
+			file, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
+				l.consoleLog.Printf("Failed to open log file: %v\n", err)
+				continue
+			}
+
+			l.fileLog = log.New(file, "", 0)
+			break
+		}
+	}
 
 	if config.UDPServer != "" && config.UDPPort > 0 {
 		addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", config.UDPServer, config.UDPPort))
@@ -201,6 +230,11 @@ func (l *Logger) log(level Level, v ...interface{}) {
 		case UDP:
 			// UDP使用JSON格式
 			l.sendUDP(msg, source, line)
+		case File:
+			// 文件使用JSON格式
+			if l.fileLog != nil {
+				l.fileLog.Println(msg)
+			}
 		}
 	}
 }
@@ -224,6 +258,11 @@ func (l *Logger) logf(level Level, format string, v ...interface{}) {
 		case UDP:
 			// UDP使用JSON格式
 			l.sendUDP(msg, source, line)
+		case File:
+			// 文件使用JSON格式
+			if l.fileLog != nil {
+				l.fileLog.Println(msg)
+			}
 		}
 	}
 }
@@ -298,6 +337,12 @@ func (l *Logger) logkv(level Level, msg string, keysAndValues ...interface{}) {
 			// UDP使用JSON格式
 			msgJSON := l.formatLogMsg(level, msg, source, line, fields)
 			l.sendUDP(msgJSON, source, line)
+		case File:
+			// 文件使用JSON格式
+			if l.fileLog != nil {
+				msgJSON := l.formatLogMsg(level, msg, source, line, fields)
+				l.fileLog.Println(msgJSON)
+			}
 		}
 	}
 }
@@ -392,6 +437,13 @@ func (l *Logger) Fatalf(format string, v ...interface{}) {
 func (l *Logger) Close() {
 	if l.udpConn != nil {
 		l.udpConn.Close()
+	}
+	// 关闭文件日志
+	if l.fileLog != nil {
+		// 尝试关闭文件
+		if file, ok := l.fileLog.Writer().(*os.File); ok {
+			file.Close()
+		}
 	}
 }
 
@@ -517,6 +569,8 @@ func ParseOutputType(s string) OutputType {
 		return Console
 	case "UDP":
 		return UDP
+	case "FILE":
+		return File
 	default:
 		return Console
 	}
