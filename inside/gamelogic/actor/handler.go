@@ -3,11 +3,12 @@ package actor
 import (
 	"context"
 	"encoding/json"
+
+	"zagame/common/logger"
 	"zagame/inside/gamelogic/grpc"
+	"zagame/inside/gamelogic/session"
 	pb "zagame/pb/golang/gamelogic"
 	"zagame/proto"
-
-	"github.com/bytedance/gopkg/util/logger"
 )
 
 // Handler 角色处理器
@@ -46,14 +47,14 @@ func (h *Handler) RegisterHandlers(router *grpc.Router) {
 }
 
 // handleActorCreateRequest 处理创建角色请求
-func (h *Handler) handleActorCreateRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
+func (h *Handler) handleActorCreateRequest(ctx context.Context, sess string, messageContent []byte) ([]byte, error) {
 	req := &pb.ActorCreateRequest{}
 	if err := grpc.Unmarshal(messageContent, req); err != nil {
 		return nil, err
 	}
 
 	// 打印请求日志
-	reqJSON, err := json.MarshalIndent(req, "  ", "  ")
+	reqJSON, err := json.Marshal(req)
 	if err == nil {
 		logger.Debugf("角色创建请求: %s", string(reqJSON))
 	}
@@ -64,23 +65,32 @@ func (h *Handler) handleActorCreateRequest(ctx context.Context, session string, 
 	}
 
 	// 打印响应日志
-	respJSON, err := json.MarshalIndent(resp, "  ", "  ")
+	respJSON, err := json.Marshal(resp)
 	if err == nil {
 		logger.Debugf("角色创建响应: %s", string(respJSON))
+	}
+
+	// 如果创建成功，更新sessionActor映射
+	if resp.Err != nil && resp.Err.ErrCode == 0 && resp.Data != nil {
+		session.SetActorInfo(sess, session.ActorInfo{
+			ActorID:   resp.Data.ActorId,
+			ActorName: resp.Data.Name,
+		})
+		logger.Infof("会话 %s 关联角色: %s(%s)", sess, resp.Data.Name, resp.Data.ActorId)
 	}
 
 	return grpc.Marshal(resp)
 }
 
 // handleActorUseRequest 处理使用角色请求
-func (h *Handler) handleActorUseRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
+func (h *Handler) handleActorUseRequest(ctx context.Context, sess string, messageContent []byte) ([]byte, error) {
 	req := &pb.ActorUseRequest{}
 	if err := grpc.Unmarshal(messageContent, req); err != nil {
 		return nil, err
 	}
 
 	// 打印请求日志
-	reqJSON, err := json.MarshalIndent(req, "  ", "  ")
+	reqJSON, err := json.Marshal(req)
 	if err == nil {
 		logger.Debugf("角色使用请求: %s", string(reqJSON))
 	}
@@ -91,16 +101,25 @@ func (h *Handler) handleActorUseRequest(ctx context.Context, session string, mes
 	}
 
 	// 打印响应日志
-	respJSON, err := json.MarshalIndent(resp, "  ", "  ")
+	respJSON, err := json.Marshal(resp)
 	if err == nil {
 		logger.Debugf("角色使用响应: %s", string(respJSON))
+	}
+
+	// 如果使用成功，更新sessionActor映射
+	if resp.Err != nil && resp.Err.ErrCode == 0 && resp.Data != nil {
+		session.SetActorInfo(sess, session.ActorInfo{
+			ActorID:   resp.Data.ActorId,
+			ActorName: resp.Data.Name,
+		})
+		logger.Infof("会话 %s 关联角色: %s(%s)", sess, resp.Data.Name, resp.Data.ActorId)
 	}
 
 	return grpc.Marshal(resp)
 }
 
 // handleActorUseWithNameRequest 处理使用角色请求（通过名称）
-func (h *Handler) handleActorUseWithNameRequest(ctx context.Context, session string, messageContent []byte) ([]byte, error) {
+func (h *Handler) handleActorUseWithNameRequest(ctx context.Context, sess string, messageContent []byte) ([]byte, error) {
 	req := &pb.ActorUseWithNameRequest{}
 	if err := grpc.Unmarshal(messageContent, req); err != nil {
 		return nil, err
@@ -109,6 +128,15 @@ func (h *Handler) handleActorUseWithNameRequest(ctx context.Context, session str
 	resp, err := h.ActorUseWithName(ctx, req)
 	if err != nil {
 		return nil, err
+	}
+
+	// 如果使用成功，更新sessionActor映射
+	if resp.Err != nil && resp.Err.ErrCode == 0 && resp.Data != nil {
+		session.SetActorInfo(sess, session.ActorInfo{
+			ActorID:   resp.Data.ActorId,
+			ActorName: resp.Data.Name,
+		})
+		logger.Infof("会话 %s 关联角色: %s(%s)", sess, resp.Data.Name, resp.Data.ActorId)
 	}
 
 	return grpc.Marshal(resp)

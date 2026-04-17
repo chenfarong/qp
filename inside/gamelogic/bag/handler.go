@@ -5,6 +5,8 @@ import (
 	"zagame/inside/gamelogic/grpc"
 	pb "zagame/pb/golang/gamelogic"
 	"zagame/proto"
+
+	"github.com/bytedance/gopkg/util/logger"
 )
 
 // Handler 背包处理器
@@ -14,6 +16,9 @@ type Handler struct {
 
 // GetBag 获取背包请求处理
 func (h *Handler) GetBag(ctx context.Context, req *pb.GetBagRequest) (*pb.GetBagResponse, error) {
+
+	logger.Debug("获取背包请求", "user", ctx.Value("username"))
+
 	return h.Service.GetBag(ctx, req)
 }
 

@@ -83,12 +83,24 @@ func Login(c *gin.Context) {
 	usersMutex.RUnlock()
 
 	if !exists || user.Password != req.Password {
-		log.Printf("登录失败: 用户名或密码错误: %s\n", req.Username)
-		c.JSON(http.StatusUnauthorized, LoginResponse{
-			Success: false,
-			Message: "Invalid username or password",
-		})
-		return
+		if !exists {
+			// 账号不存在，自动注册
+			usersMutex.Lock()
+			users[req.Username] = &User{
+				Username: req.Username,
+				Password: req.Password,
+			}
+			usersMutex.Unlock()
+			log.Printf("自动注册账号: username=%s\n", req.Username)
+		} else {
+			// 账号存在但密码错误
+			log.Printf("登录失败: 密码错误: %s\n", req.Username)
+			c.JSON(http.StatusUnauthorized, LoginResponse{
+				Success: false,
+				Message: "Invalid password",
+			})
+			return
+		}
 	}
 
 	// 生成32位小写字母和数字的session

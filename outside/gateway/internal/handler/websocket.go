@@ -35,7 +35,7 @@ func StartWebSocketServer() error {
 }
 
 // forwardToGameLogic 转发消息到游戏逻辑服务
-func forwardToGameLogic(msgID int32, session string, message []byte) ([]byte, error) {
+func forwardToGameLogic(msgID int32, session string, clientIP string, message []byte) ([]byte, error) {
 	// 查找处理该消息的服务器
 	serverManager.mu.RLock()
 	serverID, exists := serverManager.msgIDMap[msgID]
@@ -55,6 +55,7 @@ func forwardToGameLogic(msgID int32, session string, message []byte) ([]byte, er
 	response, err := server.Client.ForwardMessage(context.Background(), &proto.ForwardMessageRequest{
 		MessageId:      msgID,
 		Session:        session,
+		ClientIp:       clientIP,
 		MessageContent: message,
 	})
 
@@ -89,12 +90,15 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	// 使用token作为session
 	session := token
 
+	// 获取客户端IP地址
+	clientIP := r.RemoteAddr
+
 	// 存储客户端连接
 	clientsMutex.Lock()
 	clients[session] = conn
 	clientsMutex.Unlock()
 
-	log.Printf("Client connected with session: %s\n", session)
+	log.Printf("Client connected with session: %s, IP: %s\n", session, clientIP)
 
 	// 处理消息
 	for {
@@ -105,7 +109,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// 处理收到的消息
-		log.Printf("Received message from session %s: %s\n", session, message)
+		log.Printf("Received message from session %s (IP: %s): %s\n", session, clientIP, message)
 
 		// 解析消息
 		var wsMsg struct {
@@ -129,7 +133,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// 转发消息到gamelogic
-		response, err := forwardToGameLogic(wsMsg.MsgID, session, message)
+		response, err := forwardToGameLogic(wsMsg.MsgID, session, clientIP, message)
 		if err != nil {
 			log.Printf("转发消息失败: %v\n", err)
 			// 发送错误响应
@@ -157,7 +161,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	delete(clients, session)
 	clientsMutex.Unlock()
 
-	log.Printf("Client disconnected with session: %s\n", session)
+	log.Printf("Client disconnected with session: %s, IP: %s\n", session, clientIP)
 }
 
 // SendToClient 发送消息到客户端

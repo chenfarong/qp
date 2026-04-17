@@ -7,8 +7,8 @@ option go_package = "zgame/pb/golang/gamelogic";
 
 // 标准返回信息顶部
 message ResultErr {
-    int32 err_code=1; //错误编号
-    string err_text=2; //错误信息
+    optional int32 err_code=1; //错误编号
+    optional string err_text=2; //错误信息
 }
 
 message GameMoneyItem {
@@ -58,10 +58,6 @@ message Role {
   string aid = 1;           // 角色唯一编号
   string name = 2;          // 角色名称
   int32 level = 3;          // 角色等级
-  int32 gold = 4;           // 金币
-  map<string, int32> bag = 5; // 背包物品
-  repeated string heroes = 6; // 英雄列表
-  string session = 7;       // 会话ID
 }
 
 // 获取角色信息请求
@@ -70,9 +66,8 @@ message GetRoleInfoRequest {
 
 // 获取角色信息响应
 message GetRoleInfoResponse {
-  bool success = 1;         // 是否成功
-  Role role = 2;            // 角色信息
-  string message = 3;       // 消息
+  ResultErr err=1;
+  Role data=2;
 }
 
 

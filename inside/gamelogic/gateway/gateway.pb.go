@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.10
 // 	protoc        v6.33.2
-// source: internal/proto/gateway.proto
+// source: grpc/gateway.proto
 
-package proto
+package gateway
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -36,7 +36,7 @@ type ServerInfo struct {
 
 func (x *ServerInfo) Reset() {
 	*x = ServerInfo{}
-	mi := &file_internal_proto_gateway_proto_msgTypes[0]
+	mi := &file_grpc_gateway_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +48,7 @@ func (x *ServerInfo) String() string {
 func (*ServerInfo) ProtoMessage() {}
 
 func (x *ServerInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_gateway_proto_msgTypes[0]
+	mi := &file_grpc_gateway_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,7 +61,7 @@ func (x *ServerInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServerInfo.ProtoReflect.Descriptor instead.
 func (*ServerInfo) Descriptor() ([]byte, []int) {
-	return file_internal_proto_gateway_proto_rawDescGZIP(), []int{0}
+	return file_grpc_gateway_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ServerInfo) GetServerId() string {
@@ -116,7 +116,7 @@ type RegisterServerRequest struct {
 
 func (x *RegisterServerRequest) Reset() {
 	*x = RegisterServerRequest{}
-	mi := &file_internal_proto_gateway_proto_msgTypes[1]
+	mi := &file_grpc_gateway_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -128,7 +128,7 @@ func (x *RegisterServerRequest) String() string {
 func (*RegisterServerRequest) ProtoMessage() {}
 
 func (x *RegisterServerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_gateway_proto_msgTypes[1]
+	mi := &file_grpc_gateway_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -141,7 +141,7 @@ func (x *RegisterServerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterServerRequest.ProtoReflect.Descriptor instead.
 func (*RegisterServerRequest) Descriptor() ([]byte, []int) {
-	return file_internal_proto_gateway_proto_rawDescGZIP(), []int{1}
+	return file_grpc_gateway_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *RegisterServerRequest) GetServerInfo() *ServerInfo {
@@ -162,7 +162,7 @@ type RegisterServerResponse struct {
 
 func (x *RegisterServerResponse) Reset() {
 	*x = RegisterServerResponse{}
-	mi := &file_internal_proto_gateway_proto_msgTypes[2]
+	mi := &file_grpc_gateway_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -174,7 +174,7 @@ func (x *RegisterServerResponse) String() string {
 func (*RegisterServerResponse) ProtoMessage() {}
 
 func (x *RegisterServerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_gateway_proto_msgTypes[2]
+	mi := &file_grpc_gateway_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -187,7 +187,7 @@ func (x *RegisterServerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterServerResponse.ProtoReflect.Descriptor instead.
 func (*RegisterServerResponse) Descriptor() ([]byte, []int) {
-	return file_internal_proto_gateway_proto_rawDescGZIP(), []int{2}
+	return file_grpc_gateway_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *RegisterServerResponse) GetSuccess() bool {
@@ -217,7 +217,7 @@ type ForwardMessageRequest struct {
 
 func (x *ForwardMessageRequest) Reset() {
 	*x = ForwardMessageRequest{}
-	mi := &file_internal_proto_gateway_proto_msgTypes[3]
+	mi := &file_grpc_gateway_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -229,7 +229,7 @@ func (x *ForwardMessageRequest) String() string {
 func (*ForwardMessageRequest) ProtoMessage() {}
 
 func (x *ForwardMessageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_gateway_proto_msgTypes[3]
+	mi := &file_grpc_gateway_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -242,7 +242,7 @@ func (x *ForwardMessageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForwardMessageRequest.ProtoReflect.Descriptor instead.
 func (*ForwardMessageRequest) Descriptor() ([]byte, []int) {
-	return file_internal_proto_gateway_proto_rawDescGZIP(), []int{3}
+	return file_grpc_gateway_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ForwardMessageRequest) GetMessageId() int32 {
@@ -285,7 +285,7 @@ type ForwardMessageResponse struct {
 
 func (x *ForwardMessageResponse) Reset() {
 	*x = ForwardMessageResponse{}
-	mi := &file_internal_proto_gateway_proto_msgTypes[4]
+	mi := &file_grpc_gateway_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -297,7 +297,7 @@ func (x *ForwardMessageResponse) String() string {
 func (*ForwardMessageResponse) ProtoMessage() {}
 
 func (x *ForwardMessageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_gateway_proto_msgTypes[4]
+	mi := &file_grpc_gateway_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -310,7 +310,7 @@ func (x *ForwardMessageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ForwardMessageResponse.ProtoReflect.Descriptor instead.
 func (*ForwardMessageResponse) Descriptor() ([]byte, []int) {
-	return file_internal_proto_gateway_proto_rawDescGZIP(), []int{4}
+	return file_grpc_gateway_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ForwardMessageResponse) GetSuccess() bool {
@@ -334,11 +334,11 @@ func (x *ForwardMessageResponse) GetResponseContent() []byte {
 	return nil
 }
 
-var File_internal_proto_gateway_proto protoreflect.FileDescriptor
+var File_grpc_gateway_proto protoreflect.FileDescriptor
 
-const file_internal_proto_gateway_proto_rawDesc = "" +
+const file_grpc_gateway_proto_rawDesc = "" +
 	"\n" +
-	"\x1cinternal/proto/gateway.proto\x12\agateway\"\xb8\x01\n" +
+	"\x12grpc/gateway.proto\x12\agateway\"\xb8\x01\n" +
 	"\n" +
 	"ServerInfo\x12\x1b\n" +
 	"\tserver_id\x18\x01 \x01(\tR\bserverId\x12\x1f\n" +
@@ -368,29 +368,29 @@ const file_internal_proto_gateway_proto_rawDesc = "" +
 	"\x10response_content\x18\x03 \x01(\fR\x0fresponseContent2\xb6\x01\n" +
 	"\x0eGatewayService\x12Q\n" +
 	"\x0eRegisterServer\x12\x1e.gateway.RegisterServerRequest\x1a\x1f.gateway.RegisterServerResponse\x12Q\n" +
-	"\x0eForwardMessage\x12\x1e.gateway.ForwardMessageRequest\x1a\x1f.gateway.ForwardMessageResponseB\tZ\a./protob\x06proto3"
+	"\x0eForwardMessage\x12\x1e.gateway.ForwardMessageRequest\x1a\x1f.gateway.ForwardMessageResponseB\vZ\t./gatewayb\x06proto3"
 
 var (
-	file_internal_proto_gateway_proto_rawDescOnce sync.Once
-	file_internal_proto_gateway_proto_rawDescData []byte
+	file_grpc_gateway_proto_rawDescOnce sync.Once
+	file_grpc_gateway_proto_rawDescData []byte
 )
 
-func file_internal_proto_gateway_proto_rawDescGZIP() []byte {
-	file_internal_proto_gateway_proto_rawDescOnce.Do(func() {
-		file_internal_proto_gateway_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_internal_proto_gateway_proto_rawDesc), len(file_internal_proto_gateway_proto_rawDesc)))
+func file_grpc_gateway_proto_rawDescGZIP() []byte {
+	file_grpc_gateway_proto_rawDescOnce.Do(func() {
+		file_grpc_gateway_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_grpc_gateway_proto_rawDesc), len(file_grpc_gateway_proto_rawDesc)))
 	})
-	return file_internal_proto_gateway_proto_rawDescData
+	return file_grpc_gateway_proto_rawDescData
 }
 
-var file_internal_proto_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
-var file_internal_proto_gateway_proto_goTypes = []any{
+var file_grpc_gateway_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_grpc_gateway_proto_goTypes = []any{
 	(*ServerInfo)(nil),             // 0: gateway.ServerInfo
 	(*RegisterServerRequest)(nil),  // 1: gateway.RegisterServerRequest
 	(*RegisterServerResponse)(nil), // 2: gateway.RegisterServerResponse
 	(*ForwardMessageRequest)(nil),  // 3: gateway.ForwardMessageRequest
 	(*ForwardMessageResponse)(nil), // 4: gateway.ForwardMessageResponse
 }
-var file_internal_proto_gateway_proto_depIdxs = []int32{
+var file_grpc_gateway_proto_depIdxs = []int32{
 	0, // 0: gateway.RegisterServerRequest.server_info:type_name -> gateway.ServerInfo
 	1, // 1: gateway.GatewayService.RegisterServer:input_type -> gateway.RegisterServerRequest
 	3, // 2: gateway.GatewayService.ForwardMessage:input_type -> gateway.ForwardMessageRequest
@@ -403,26 +403,26 @@ var file_internal_proto_gateway_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_internal_proto_gateway_proto_init() }
-func file_internal_proto_gateway_proto_init() {
-	if File_internal_proto_gateway_proto != nil {
+func init() { file_grpc_gateway_proto_init() }
+func file_grpc_gateway_proto_init() {
+	if File_grpc_gateway_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_proto_gateway_proto_rawDesc), len(file_internal_proto_gateway_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_grpc_gateway_proto_rawDesc), len(file_grpc_gateway_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_internal_proto_gateway_proto_goTypes,
-		DependencyIndexes: file_internal_proto_gateway_proto_depIdxs,
-		MessageInfos:      file_internal_proto_gateway_proto_msgTypes,
+		GoTypes:           file_grpc_gateway_proto_goTypes,
+		DependencyIndexes: file_grpc_gateway_proto_depIdxs,
+		MessageInfos:      file_grpc_gateway_proto_msgTypes,
 	}.Build()
-	File_internal_proto_gateway_proto = out.File
-	file_internal_proto_gateway_proto_goTypes = nil
-	file_internal_proto_gateway_proto_depIdxs = nil
+	File_grpc_gateway_proto = out.File
+	file_grpc_gateway_proto_goTypes = nil
+	file_grpc_gateway_proto_depIdxs = nil
 }

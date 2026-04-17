@@ -29,7 +29,8 @@ message RegisterServerResponse {
 message ForwardMessageRequest {
   int32 message_id = 1;       // 消息ID
   string session = 2;         // 会话ID
-  bytes message_content = 3;   // 消息内容
+  string client_ip = 3;       // 客户端IP地址
+  bytes message_content = 4;   // 消息内容
 }
 
 // 消息转发响应

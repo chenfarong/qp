@@ -6,6 +6,7 @@ import (
 
 	"zagame/common/logger"
 	gateway "zagame/inside/gamelogic/grpc/gateway"
+	"zagame/inside/gamelogic/session"
 )
 
 // GatewayServer Gateway服务器实现
@@ -36,7 +37,7 @@ func (s *GatewayServer) RegisterServer(ctx context.Context, req *gateway.Registe
 // ForwardMessage 转发消息
 func (s *GatewayServer) ForwardMessage(ctx context.Context, req *gateway.ForwardMessageRequest) (*gateway.ForwardMessageResponse, error) {
 	// 打印收到的消息
-	logger.Infof("收到转发消息: messageID=%d, session=%s", req.MessageId, req.Session)
+	logger.Infof("收到转发消息: messageID=%d, session=%s, clientIP=%s", req.MessageId, req.Session, req.ClientIp)
 
 	// 尝试将消息内容解析为JSON并打印
 	if len(req.MessageContent) > 0 {
@@ -45,13 +46,27 @@ func (s *GatewayServer) ForwardMessage(ctx context.Context, req *gateway.Forward
 		if err != nil {
 			logger.Errorf("消息内容解析失败: %v, 原始内容: %s", err, string(req.MessageContent))
 		} else {
-			jsonContent, err := json.MarshalIndent(msgContent, "  ", "  ")
+			jsonContent, err := json.Marshal(msgContent)
 			if err != nil {
 				logger.Errorf("消息内容序列化失败: %v", err)
 			} else {
 				logger.Debugf("收到消息内容: %s", string(jsonContent))
 			}
 		}
+	}
+
+	// 从sessionActor映射中获取actor信息
+	actorInfo, exists := session.GetActorInfo(req.Session)
+
+	// 将actor信息和客户端IP添加到上下文中
+	if exists {
+		ctx = context.WithValue(ctx, "actor_id", actorInfo.ActorID)
+		ctx = context.WithValue(ctx, "actor_name", actorInfo.ActorName)
+		logger.Debugf("会话 %s 关联的角色: %s(%s), 客户端IP: %s", req.Session, actorInfo.ActorName, actorInfo.ActorID, req.ClientIp)
+	} else {
+		// 即使没有角色信息，也添加客户端IP
+		ctx = context.WithValue(ctx, "client_ip", req.ClientIp)
+		logger.Debugf("会话 %s 客户端IP: %s", req.Session, req.ClientIp)
 	}
 
 	responseContent, err := s.router.HandleMessage(ctx, req.MessageId, req.Session, req.MessageContent)
@@ -70,7 +85,7 @@ func (s *GatewayServer) ForwardMessage(ctx context.Context, req *gateway.Forward
 		if err != nil {
 			logger.Errorf("响应内容解析失败: %v, 原始内容: %s", err, string(responseContent))
 		} else {
-			jsonContent, err := json.MarshalIndent(respContent, "  ", "  ")
+			jsonContent, err := json.Marshal(respContent)
 			if err != nil {
 				logger.Errorf("响应内容序列化失败: %v", err)
 			} else {
@@ -79,7 +94,7 @@ func (s *GatewayServer) ForwardMessage(ctx context.Context, req *gateway.Forward
 		}
 	}
 
-	logger.Infof("处理消息成功: messageID=%d", req.MessageId)
+	logger.Infof("处理消息成功: messageID=%d, session=%s, clientIP=%s", req.MessageId, req.Session, req.ClientIp)
 
 	return &gateway.ForwardMessageResponse{
 		Success:         true,
