@@ -235,6 +235,73 @@ func (l *Logger) formatConsoleLog(level Level, msg string, source string, line i
 		timestamp, l.config.ServerName, level.String(), msg, source, line)
 }
 
+// formatConsoleLogKV 格式化控制台日志（支持 key-value）
+func (l *Logger) formatConsoleLogKV(level Level, msg string, source string, line int, fields map[string]interface{}) string {
+	timestamp := time.Now().Format("2006-01-02 15:04:05.000")
+	baseMsg := fmt.Sprintf("%s %s %s %s %s:%d",
+		timestamp, l.config.ServerName, level.String(), msg, source, line)
+
+	// 添加 key-value 对
+	if len(fields) > 0 {
+		var kvPairs []string
+		for k, v := range fields {
+			kvPairs = append(kvPairs, fmt.Sprintf("%s=%v", k, v))
+		}
+		baseMsg += " " + strings.Join(kvPairs, " ")
+	}
+
+	return baseMsg
+}
+
+// logkv 处理 key-value 格式的日志
+func (l *Logger) logkv(level Level, msg string, keysAndValues ...interface{}) {
+	if !l.shouldLog(level) {
+		return
+	}
+
+	// 解析 key-value 对
+	fields := make(map[string]interface{})
+	for i := 0; i < len(keysAndValues); i += 2 {
+		if i+1 < len(keysAndValues) {
+			if key, ok := keysAndValues[i].(string); ok {
+				fields[key] = keysAndValues[i+1]
+			}
+		}
+	}
+
+	// 获取源代码位置
+	pc, file, line, ok := runtime.Caller(3)
+	if !ok {
+		file = "unknown"
+		line = 0
+	}
+
+	filename := filepath.Base(file)
+
+	funcName := "unknown"
+	if fn := runtime.FuncForPC(pc); fn != nil {
+		funcName = filepath.Base(fn.Name())
+	}
+
+	source := fmt.Sprintf("%s:%s", filename, funcName)
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	for _, output := range l.config.Outputs {
+		switch output.Type {
+		case Console:
+			// 控制台使用非JSON格式，显示 key-value
+			consoleMsg := l.formatConsoleLogKV(level, msg, source, line, fields)
+			l.consoleLog.Println(consoleMsg)
+		case UDP:
+			// UDP使用JSON格式
+			msgJSON := l.formatLogMsg(level, msg, source, line, fields)
+			l.sendUDP(msgJSON, source, line)
+		}
+	}
+}
+
 func (l *Logger) sendUDP(msg string, source string, line int) {
 	if l.udpConn == nil {
 		return
@@ -392,6 +459,31 @@ func Fatal(v ...interface{}) {
 
 func Fatalf(format string, v ...interface{}) {
 	Default().Fatalf(format, v...)
+}
+
+// 支持 key-value 格式的全局日志方法
+func DebugKV(msg string, keysAndValues ...interface{}) {
+	Default().DebugKV(msg, keysAndValues...)
+}
+
+func InfoKV(msg string, keysAndValues ...interface{}) {
+	Default().InfoKV(msg, keysAndValues...)
+}
+
+func WarnKV(msg string, keysAndValues ...interface{}) {
+	Default().WarnKV(msg, keysAndValues...)
+}
+
+func ErrorKV(msg string, keysAndValues ...interface{}) {
+	Default().ErrorKV(msg, keysAndValues...)
+}
+
+func PanicKV(msg string, keysAndValues ...interface{}) {
+	Default().PanicKV(msg, keysAndValues...)
+}
+
+func FatalKV(msg string, keysAndValues ...interface{}) {
+	Default().FatalKV(msg, keysAndValues...)
 }
 
 func Close() {
