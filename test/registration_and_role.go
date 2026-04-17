@@ -8,6 +8,12 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
+
+	pb "zagame/pb/golang/gamelogic"
+	"zagame/proto"
+
+	"github.com/gorilla/websocket"
 )
 
 // 全局变量存储命令行参数
@@ -52,6 +58,14 @@ type ActorInfo struct {
 	Level   int32  `json:"level"`
 	Realm   string `json:"realm"`
 }
+
+// WebSocketMessage WebSocket消息结构
+type WebSocketMessage struct {
+	MsgID int32           `json:"msg_id"`
+	Data  json.RawMessage `json:"data"`
+}
+
+var wsConn *websocket.Conn
 
 func main() {
 	// 检查是否有help参数
@@ -185,42 +199,39 @@ func login() (string, error) {
 
 // createActor 创建角色
 func createActor(token string) (*ActorInfo, error) {
+	// 连接到WebSocket服务器
+	dialer := websocket.DefaultDialer
+	url := fmt.Sprintf("ws://localhost:8081/ws?token=%s", token)
+	conn, _, err := dialer.Dial(url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("连接WebSocket失败: %v", err)
+	}
+	defer conn.Close()
+	wsConn = conn
+
 	// 构造创建角色请求
-	createReq := ActorCreateRequest{
+	req := pb.ActorCreateRequest{
 		Name: *actorName,
 	}
 
-	jsonData, err := json.Marshal(createReq)
+	// 发送WebSocket消息
+	err = sendWebSocketMessage(proto.MessageIDActorCreateRequest, req)
 	if err != nil {
-		return nil, fmt.Errorf("构造创建角色请求失败: %v", err)
+		return nil, fmt.Errorf("发送创建角色请求失败: %v", err)
 	}
 
-	// 构造请求
-	req, err := http.NewRequest("POST", *gameServerURL+"/actor/create", bytes.NewBuffer(jsonData))
-	if err != nil {
-		return nil, fmt.Errorf("构造请求失败: %v", err)
-	}
-
-	// 添加Authorization header
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Content-Type", "application/json")
-
-	// 发送请求
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("发送请求失败: %v", err)
-	}
-	defer resp.Body.Close()
-
-	// 解析响应
-	body, err := io.ReadAll(resp.Body)
+	// 等待响应
+	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	var response WebSocketMessage
+	err = conn.ReadJSON(&response)
 	if err != nil {
 		return nil, fmt.Errorf("读取响应失败: %v", err)
 	}
 
-	var createResp ActorCreateResponse
-	if err := json.Unmarshal(body, &createResp); err != nil {
+	// 解析响应
+	var createResp pb.ActorCreateResponse
+	err = json.Unmarshal(response.Data, &createResp)
+	if err != nil {
 		return nil, fmt.Errorf("解析响应失败: %v", err)
 	}
 
@@ -228,7 +239,30 @@ func createActor(token string) (*ActorInfo, error) {
 		return nil, fmt.Errorf("创建角色失败: %s", createResp.Message)
 	}
 
-	return &createResp.Data, nil
+	// 转换响应格式
+	actor := &ActorInfo{
+		ActorId: createResp.Data.ActorId,
+		Name:    createResp.Data.Name,
+		Level:   createResp.Data.Level,
+		Realm:   createResp.Data.Realm,
+	}
+
+	return actor, nil
+}
+
+// sendWebSocketMessage 发送WebSocket消息
+func sendWebSocketMessage(msgID int32, data interface{}) error {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("序列化消息失败: %v", err)
+	}
+
+	message := WebSocketMessage{
+		MsgID: msgID,
+		Data:  jsonData,
+	}
+
+	return wsConn.WriteJSON(message)
 }
 
 // printHelp 打印帮助信息

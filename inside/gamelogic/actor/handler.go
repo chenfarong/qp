@@ -3,10 +3,11 @@ package actor
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"zagame/inside/gamelogic/grpc"
 	pb "zagame/pb/golang/gamelogic"
 	"zagame/proto"
+
+	"github.com/bytedance/gopkg/util/logger"
 )
 
 // Handler 角色处理器
@@ -54,7 +55,7 @@ func (h *Handler) handleActorCreateRequest(ctx context.Context, session string, 
 	// 打印请求日志
 	reqJSON, err := json.MarshalIndent(req, "  ", "  ")
 	if err == nil {
-		log.Printf("DEBUG: 角色创建请求: %s\n", string(reqJSON))
+		logger.Debugf("角色创建请求: %s", string(reqJSON))
 	}
 
 	resp, err := h.ActorCreate(ctx, req)
@@ -65,7 +66,7 @@ func (h *Handler) handleActorCreateRequest(ctx context.Context, session string, 
 	// 打印响应日志
 	respJSON, err := json.MarshalIndent(resp, "  ", "  ")
 	if err == nil {
-		log.Printf("DEBUG: 角色创建响应: %s\n", string(respJSON))
+		logger.Debugf("角色创建响应: %s", string(respJSON))
 	}
 
 	return grpc.Marshal(resp)
@@ -81,7 +82,7 @@ func (h *Handler) handleActorUseRequest(ctx context.Context, session string, mes
 	// 打印请求日志
 	reqJSON, err := json.MarshalIndent(req, "  ", "  ")
 	if err == nil {
-		log.Printf("DEBUG: 角色使用请求: %s\n", string(reqJSON))
+		logger.Debugf("角色使用请求: %s", string(reqJSON))
 	}
 
 	resp, err := h.ActorUse(ctx, req)
@@ -92,7 +93,7 @@ func (h *Handler) handleActorUseRequest(ctx context.Context, session string, mes
 	// 打印响应日志
 	respJSON, err := json.MarshalIndent(resp, "  ", "  ")
 	if err == nil {
-		log.Printf("DEBUG: 角色使用响应: %s\n", string(respJSON))
+		logger.Debugf("角色使用响应: %s", string(respJSON))
 	}
 
 	return grpc.Marshal(resp)

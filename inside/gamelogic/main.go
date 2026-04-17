@@ -2,9 +2,9 @@ package gamelogic
 
 import (
 	"fmt"
-	"log"
 	"net"
 
+	"zagame/common/logger"
 	"zagame/inside/gamelogic/actor"
 	"zagame/inside/gamelogic/bag"
 	"zagame/inside/gamelogic/base"
@@ -64,7 +64,7 @@ func StartGRPCServer(port int32, gatewayAddress string) error {
 	// 添加panic恢复机制
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("发生panic，已恢复: %v\n", r)
+			logger.Panic("发生panic，已恢复: %v", r)
 		}
 	}()
 
@@ -106,12 +106,12 @@ func StartGRPCServer(port int32, gatewayAddress string) error {
 	gateway.RegisterGatewayServiceServer(server, gwServer)
 
 	// 启动服务器
-	log.Printf("GameLogic gRPC Server started on %s\n", addr)
+	logger.Infof("GameLogic gRPC Server started on %s", addr)
 
 	// 连接到gateway服务并注册消息处理号段
 	client, err := client.NewClient(gatewayAddress)
 	if err != nil {
-		log.Printf("连接到gateway服务失败: %v\n", err)
+		logger.Errorf("连接到gateway服务失败: %v", err)
 		// 继续启动服务器，因为客户端会自动重连
 	} else {
 		defer client.Close()
@@ -119,7 +119,7 @@ func StartGRPCServer(port int32, gatewayAddress string) error {
 		// 注册服务器
 		err = client.RegisterServer("gamelogic", "GameLogic Server", "localhost", port)
 		if err != nil {
-			log.Printf("注册服务器失败: %v\n", err)
+			logger.Errorf("注册服务器失败: %v", err)
 			// 继续启动服务器，因为客户端会自动重连
 		}
 	}

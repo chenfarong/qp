@@ -3,9 +3,9 @@ package client
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
+	"zagame/common/logger"
 	gateway "zagame/inside/gamelogic/grpc/gateway"
 	"zagame/proto"
 
@@ -58,7 +58,7 @@ func (c *Client) connect() error {
 	c.client = client
 	c.isConnected = true
 
-	log.Printf("成功连接到gateway服务: %s\n", c.address)
+	logger.Infof("成功连接到gateway服务: %s", c.address)
 	return nil
 }
 
@@ -72,10 +72,10 @@ func (c *Client) reconnect() {
 			continue
 		}
 
-		log.Printf("尝试重新连接到gateway服务: %s\n", c.address)
+		logger.Warnf("尝试重新连接到gateway服务: %s", c.address)
 		err := c.connect()
 		if err != nil {
-			log.Printf("重新连接失败: %v\n", err)
+			logger.Errorf("重新连接失败: %v", err)
 			continue
 		}
 
@@ -83,7 +83,7 @@ func (c *Client) reconnect() {
 		if c.serverID != "" {
 			err = c.RegisterServer(c.serverID, c.serverName, c.serverAddr, c.serverPort)
 			if err != nil {
-				log.Printf("重新注册服务器失败: %v\n", err)
+				logger.Errorf("重新注册服务器失败: %v", err)
 			}
 		}
 
@@ -148,7 +148,7 @@ func (c *Client) RegisterServer(serverID, serverName, address string, port int32
 	}
 
 	// 打印注册成功日志
-	log.Printf("服务器注册成功: serverID=%s, serverName=%s, startMsgID=%d, endMsgID=%d, address=%s, port=%d\n",
+	logger.Infof("服务器注册成功: serverID=%s, serverName=%s, startMsgID=%d, endMsgID=%d, address=%s, port=%d",
 		serverID, serverName, startMsgID, endMsgID, address, port)
 
 	return nil

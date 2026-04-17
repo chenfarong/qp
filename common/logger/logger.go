@@ -6,6 +6,8 @@ import (
 	"log"
 	"net"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -83,10 +85,13 @@ type Logger struct {
 }
 
 type LogMessage struct {
-	Time       string `json:"time"`
-	Level      string `json:"level"`
-	ServerName string `json:"server_name"`
-	Message    string `json:"message"`
+	Time       string                 `json:"time"`
+	Level      string                 `json:"level"`
+	ServerName string                 `json:"server_name"`
+	Message    string                 `json:"message"`
+	Source     string                 `json:"source"`
+	Line       int                    `json:"line"`
+	Fields     map[string]interface{} `json:"fields,omitempty"`
 }
 
 func New(config Config) *Logger {
@@ -130,28 +135,49 @@ func (l *Logger) shouldLog(level Level) bool {
 	return level >= l.config.Level
 }
 
-func (l *Logger) formatMessage(level Level, v ...interface{}) string {
+func (l *Logger) formatMessage(level Level, v ...interface{}) (string, string, int) {
 	msg := fmt.Sprint(v...)
 	return l.formatString(level, msg)
 }
 
-func (l *Logger) formatMessagef(level Level, format string, v ...interface{}) string {
+func (l *Logger) formatMessagef(level Level, format string, v ...interface{}) (string, string, int) {
 	msg := fmt.Sprintf(format, v...)
 	return l.formatString(level, msg)
 }
 
-func (l *Logger) formatString(level Level, msg string) string {
+func (l *Logger) formatString(level Level, msg string) (string, string, int) {
+	pc, file, line, ok := runtime.Caller(5)
+	if !ok {
+		return l.formatLogMsg(level, msg, "unknown", 0, nil), "", 0
+	}
+
+	filename := filepath.Base(file)
+
+	funcName := "unknown"
+	if fn := runtime.FuncForPC(pc); fn != nil {
+		funcName = filepath.Base(fn.Name())
+	}
+
+	source := fmt.Sprintf("%s:%s", filename, funcName)
+
+	return l.formatLogMsg(level, msg, source, line, nil), source, line
+}
+
+func (l *Logger) formatLogMsg(level Level, msg string, source string, line int, fields map[string]interface{}) string {
 	logMsg := LogMessage{
 		Time:       time.Now().Format("2006-01-02 15:04:05.000"),
 		Level:      level.String(),
 		ServerName: l.config.ServerName,
 		Message:    msg,
+		Source:     source,
+		Line:       line,
+		Fields:     fields,
 	}
 
 	jsonBytes, err := json.Marshal(logMsg)
 	if err != nil {
-		return fmt.Sprintf("[%s] [%s] [%s] %s",
-			logMsg.Time, logMsg.Level, logMsg.ServerName, logMsg.Message)
+		return fmt.Sprintf("[%s] [%s] [%s] [%s:%d] %s",
+			logMsg.Time, logMsg.Level, logMsg.ServerName, source, line, logMsg.Message)
 	}
 	return string(jsonBytes)
 }
@@ -161,7 +187,7 @@ func (l *Logger) log(level Level, v ...interface{}) {
 		return
 	}
 
-	msg := l.formatMessage(level, v...)
+	msg, source, line := l.formatMessage(level, v...)
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -169,9 +195,12 @@ func (l *Logger) log(level Level, v ...interface{}) {
 	for _, output := range l.config.Outputs {
 		switch output.Type {
 		case Console:
-			l.consoleLog.Println(msg)
+			// 控制台使用非JSON格式
+			consoleMsg := l.formatConsoleLog(level, fmt.Sprint(v...), source, line)
+			l.consoleLog.Println(consoleMsg)
 		case UDP:
-			l.sendUDP(msg)
+			// UDP使用JSON格式
+			l.sendUDP(msg, source, line)
 		}
 	}
 }
@@ -181,7 +210,7 @@ func (l *Logger) logf(level Level, format string, v ...interface{}) {
 		return
 	}
 
-	msg := l.formatMessagef(level, format, v...)
+	msg, source, line := l.formatMessagef(level, format, v...)
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -189,14 +218,24 @@ func (l *Logger) logf(level Level, format string, v ...interface{}) {
 	for _, output := range l.config.Outputs {
 		switch output.Type {
 		case Console:
-			l.consoleLog.Println(msg)
+			// 控制台使用非JSON格式
+			consoleMsg := l.formatConsoleLog(level, fmt.Sprintf(format, v...), source, line)
+			l.consoleLog.Println(consoleMsg)
 		case UDP:
-			l.sendUDP(msg)
+			// UDP使用JSON格式
+			l.sendUDP(msg, source, line)
 		}
 	}
 }
 
-func (l *Logger) sendUDP(msg string) {
+// formatConsoleLog 格式化控制台日志
+func (l *Logger) formatConsoleLog(level Level, msg string, source string, line int) string {
+	timestamp := time.Now().Format("2006-01-02 15:04:05.000")
+	return fmt.Sprintf("%s %s %s %s %s:%d",
+		timestamp, l.config.ServerName, level.String(), msg, source, line)
+}
+
+func (l *Logger) sendUDP(msg string, source string, line int) {
 	if l.udpConn == nil {
 		return
 	}
@@ -240,11 +279,37 @@ func (l *Logger) Errorf(format string, v ...interface{}) {
 }
 
 func (l *Logger) Panic(v ...interface{}) {
-	l.log(PANIC, v...)
+	l.log(DEBUG, v...)
 }
 
 func (l *Logger) Panicf(format string, v ...interface{}) {
-	l.logf(PANIC, format, v...)
+	l.logf(DEBUG, format, v...)
+}
+
+// 支持 key-value 格式的日志方法
+func (l *Logger) DebugKV(msg string, keysAndValues ...interface{}) {
+	l.logkv(DEBUG, msg, keysAndValues...)
+}
+
+func (l *Logger) InfoKV(msg string, keysAndValues ...interface{}) {
+	l.logkv(INFO, msg, keysAndValues...)
+}
+
+func (l *Logger) WarnKV(msg string, keysAndValues ...interface{}) {
+	l.logkv(WARN, msg, keysAndValues...)
+}
+
+func (l *Logger) ErrorKV(msg string, keysAndValues ...interface{}) {
+	l.logkv(ERROR, msg, keysAndValues...)
+}
+
+func (l *Logger) PanicKV(msg string, keysAndValues ...interface{}) {
+	l.logkv(PANIC, msg, keysAndValues...)
+}
+
+func (l *Logger) FatalKV(msg string, keysAndValues ...interface{}) {
+	l.logkv(FATAL, msg, keysAndValues...)
+	os.Exit(1)
 }
 
 func (l *Logger) Fatal(v ...interface{}) {

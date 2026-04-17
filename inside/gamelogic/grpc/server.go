@@ -3,8 +3,8 @@ package grpc
 import (
 	"context"
 	"encoding/json"
-	"log"
 
+	"zagame/common/logger"
 	gateway "zagame/inside/gamelogic/grpc/gateway"
 )
 
@@ -23,7 +23,7 @@ func NewGatewayServer(router *Router) *GatewayServer {
 
 // RegisterServer 注册服务器
 func (s *GatewayServer) RegisterServer(ctx context.Context, req *gateway.RegisterServerRequest) (*gateway.RegisterServerResponse, error) {
-	log.Printf("收到注册服务器请求: serverID=%s, serverName=%s\n", req.ServerInfo.ServerId, req.ServerInfo.ServerName)
+	logger.Infof("收到注册服务器请求: serverID=%s, serverName=%s", req.ServerInfo.ServerId, req.ServerInfo.ServerName)
 
 	resp := &gateway.RegisterServerResponse{
 		Success: true,
@@ -36,27 +36,27 @@ func (s *GatewayServer) RegisterServer(ctx context.Context, req *gateway.Registe
 // ForwardMessage 转发消息
 func (s *GatewayServer) ForwardMessage(ctx context.Context, req *gateway.ForwardMessageRequest) (*gateway.ForwardMessageResponse, error) {
 	// 打印收到的消息
-	log.Printf("收到转发消息: messageID=%d, session=%s\n", req.MessageId, req.Session)
-	
+	logger.Infof("收到转发消息: messageID=%d, session=%s", req.MessageId, req.Session)
+
 	// 尝试将消息内容解析为JSON并打印
 	if len(req.MessageContent) > 0 {
 		var msgContent interface{}
 		err := json.Unmarshal(req.MessageContent, &msgContent)
 		if err != nil {
-			log.Printf("消息内容解析失败: %v, 原始内容: %s\n", err, string(req.MessageContent))
+			logger.Errorf("消息内容解析失败: %v, 原始内容: %s", err, string(req.MessageContent))
 		} else {
 			jsonContent, err := json.MarshalIndent(msgContent, "  ", "  ")
 			if err != nil {
-				log.Printf("消息内容序列化失败: %v\n", err)
+				logger.Errorf("消息内容序列化失败: %v", err)
 			} else {
-				log.Printf("消息内容: %s\n", string(jsonContent))
+				logger.Debugf("收到消息内容: %s", string(jsonContent))
 			}
 		}
 	}
 
 	responseContent, err := s.router.HandleMessage(ctx, req.MessageId, req.Session, req.MessageContent)
 	if err != nil {
-		log.Printf("处理消息失败: messageID=%d, error=%v\n", req.MessageId, err)
+		logger.Errorf("处理消息失败: messageID=%d, error=%v", req.MessageId, err)
 		return &gateway.ForwardMessageResponse{
 			Success: false,
 			Message: err.Error(),
@@ -68,18 +68,18 @@ func (s *GatewayServer) ForwardMessage(ctx context.Context, req *gateway.Forward
 		var respContent interface{}
 		err := json.Unmarshal(responseContent, &respContent)
 		if err != nil {
-			log.Printf("响应内容解析失败: %v, 原始内容: %s\n", err, string(responseContent))
+			logger.Errorf("响应内容解析失败: %v, 原始内容: %s", err, string(responseContent))
 		} else {
 			jsonContent, err := json.MarshalIndent(respContent, "  ", "  ")
 			if err != nil {
-				log.Printf("响应内容序列化失败: %v\n", err)
+				logger.Errorf("响应内容序列化失败: %v", err)
 			} else {
-				log.Printf("响应内容: %s\n", string(jsonContent))
+				logger.Debugf("响应内容: %s", string(jsonContent))
 			}
 		}
 	}
 
-	log.Printf("处理消息成功: messageID=%d\n", req.MessageId)
+	logger.Infof("处理消息成功: messageID=%d", req.MessageId)
 
 	return &gateway.ForwardMessageResponse{
 		Success:         true,
