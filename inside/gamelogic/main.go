@@ -2,7 +2,9 @@ package gamelogic
 
 import (
 	"fmt"
-	"net"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"zagame/common/logger"
 	"zagame/inside/gamelogic/actor"
@@ -13,10 +15,7 @@ import (
 	"zagame/inside/gamelogic/grpc"
 	"zagame/inside/gamelogic/grpc/client"
 	"zagame/inside/gamelogic/hero"
-
-	gateway "zagame/inside/gamelogic/gateway"
-
-	grpcserver "google.golang.org/grpc"
+	"zagame/inside/gamelogic/session"
 )
 
 // Handler 游戏逻辑处理器
@@ -59,15 +58,8 @@ func NewService() *Service {
 	}
 }
 
-// StartGRPCServer 启动gRPC服务器
-func StartGRPCServer(port int32, gatewayAddress string) error {
-	// 添加panic恢复机制
-	defer func() {
-		if r := recover(); r != nil {
-			logger.Panic("发生panic，已恢复: %v", r)
-		}
-	}()
-
+// StartClient 启动gRPC客户端，连接到gateway
+func StartClient(gatewayAddress string) error {
 	// 创建各个处理器
 	baseHandler := base.NewHandler()
 	heroHandler := hero.NewHandler()
@@ -91,49 +83,44 @@ func StartGRPCServer(port int32, gatewayAddress string) error {
 		h.RegisterHandlers(router, h)
 	}
 
-	// 监听端口
-	addr := fmt.Sprintf(":%d", port)
-	listener, err := net.Listen("tcp", addr)
-	if err != nil {
-		return err
-	}
-
-	// 创建gRPC服务器
-	server := grpcserver.NewServer()
-
-	// 注册Gateway服务
-	gwServer := grpc.NewGatewayServer(router)
-	gateway.RegisterGatewayServiceServer(server, gwServer)
+	// 设置router实例到session包
+	session.SetRouter(router)
 
 	// 打印欢迎信息
 	logger.Info("============================================================")
 	logger.Info("                      GameLogic Server                      ")
 	logger.Info("============================================================")
 	logger.Info("服务名称: GameLogic Server")
-	logger.Info("服务类型: gRPC Server")
-	logger.Info("监听地址: 0.0.0.0")
-	logger.Info("监听端口: %d", port)
-	logger.Info("Gateway 地址: %s", gatewayAddress)
+	logger.Info("服务类型: gRPC Client")
+	logger.Info("连接地址: %s", gatewayAddress)
 	logger.Info("============================================================")
-	logger.Info("服务器已成功启动，等待客户端连接...")
+	logger.Info("正在连接到Gateway服务器...")
 	logger.Info("============================================================")
 
-	// 连接到gateway服务并注册消息处理号段
-	client, err := client.NewClient(gatewayAddress)
+	// 连接到gateway服务
+	cli, err := client.NewClient(gatewayAddress)
 	if err != nil {
 		logger.Errorf("连接到gateway服务失败: %v", err)
-		// 继续启动服务器，因为客户端会自动重连
-	} else {
-		defer client.Close()
+		return fmt.Errorf("连接到gateway服务失败: %v", err)
+	}
+	defer cli.Close()
 
-		// 注册服务器
-		err = client.RegisterServer("gamelogic", "GameLogic Server", "localhost", port)
-		if err != nil {
-			logger.Errorf("注册服务器失败: %v", err)
-			// 继续启动服务器，因为客户端会自动重连
-		}
+	// 注册服务器
+	err = cli.RegisterServer("gamelogic", "GameLogic Server", "", 0)
+	if err != nil {
+		logger.Errorf("注册服务器失败: %v", err)
+		return fmt.Errorf("注册服务器失败: %v", err)
 	}
 
-	// 启动服务器
-	return server.Serve(listener)
+	logger.Info("成功连接到Gateway服务器")
+	logger.Info("服务器已成功启动，等待处理消息...")
+	logger.Info("============================================================")
+
+	// 等待信号
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+
+	logger.Info("收到退出信号，正在关闭服务器...")
+	return nil
 }
