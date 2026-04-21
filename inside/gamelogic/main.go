@@ -12,6 +12,7 @@ import (
 	"zagame/inside/gamelogic/base"
 	"zagame/inside/gamelogic/common"
 	"zagame/inside/gamelogic/equip"
+	"zagame/inside/gamelogic/gm"
 	"zagame/inside/gamelogic/grpc"
 	"zagame/inside/gamelogic/grpc/client"
 	"zagame/inside/gamelogic/hero"
@@ -96,6 +97,15 @@ func StartClient(gatewayAddress string) error {
 	logger.Info("============================================================")
 	logger.Info("正在连接到Gateway服务器...")
 	logger.Info("============================================================")
+
+	// 启动GM服务器
+	go func() {
+		gmService := gm.NewService()
+		gmServer := gm.NewServer(8084, gmService)
+		if err := gmServer.Start(); err != nil {
+			logger.Errorf("启动GM服务器失败: %v", err)
+		}
+	}()
 
 	// 连接到gateway服务
 	cli, err := client.NewClient(gatewayAddress)

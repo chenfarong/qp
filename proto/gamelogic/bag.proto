@@ -7,14 +7,13 @@ import "gamelogic/base.proto";
 option go_package = "zgame/pb/golang/gamelogic";
 
 
-
 //单物品信息
 message ItemData
 {
   int64 item_id = 1; //唯一编号
   int32 item_cfg_id = 2; //配表id
   int64 num = 3; //数量
-  string ext_info=100;
+  optional string ext_info=100;
 }
 
 // 获取背包请求
@@ -36,9 +35,7 @@ message BagItemUseRequest {
 
 //使用道具返回
 message BagItemUseResponse {
-  bool success = 1;         // 是否成功
-  string message = 2;       // 消息
-  ItemData item_data = 3; //请求物品的信息
+  ResultErr err=1;
 }
 
 //////////////////////////////////////////////////////////
@@ -46,7 +43,7 @@ message BagItemUseResponse {
 //////////////////////////////////////////////////////////
 
 //道具变化通知
-message SyncBagItemChange {
-    repeated ItemData data=2;
+message SyncBagItemsChange {
+  repeated ItemData data=2;
 }
 

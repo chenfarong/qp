@@ -53,10 +53,10 @@ func (s *GatewayServer) RegisterServer(ctx context.Context, req *proto.RegisterS
 	serverManager.mu.Lock()
 	defer serverManager.mu.Unlock()
 
-	// 如果服务器已存在，先删除旧的连接
+	// 如果服务器已存在，不再主动删除旧连接，只更新信息
 	if oldServer, exists := serverManager.servers[serverInfo.ServerId]; exists {
-		log.Printf("服务器 %s (%s) 已存在，删除旧连接", oldServer.ServerName, oldServer.ServerID)
-		removeServer(oldServer)
+		log.Printf("服务器 %s (%s) 已存在，更新连接信息", oldServer.ServerName, oldServer.ServerID)
+		// 保留旧连接，只更新服务器信息
 	}
 
 	// 检查消息ID范围是否冲突
@@ -69,44 +69,63 @@ func (s *GatewayServer) RegisterServer(ctx context.Context, req *proto.RegisterS
 		}
 	}
 
-	// 连接到注册的服务器
-	address := fmt.Sprintf("%s:%d", serverInfo.Address, serverInfo.Port)
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
-	if err != nil {
-		return &proto.RegisterServerResponse{
-			Success: false,
-			Message: fmt.Sprintf("无法连接到服务器: %v", err),
-		}, nil
+	// 检查服务器是否已存在
+	var server *ServerInfo
+	var err error
+	var conn *grpc.ClientConn
+	var client proto.GatewayServiceClient
+	var monitorCtx context.Context
+	var cancel context.CancelFunc
+
+	// 如果服务器已存在，重用旧连接
+	if oldServer, exists := serverManager.servers[serverInfo.ServerId]; exists {
+		server = oldServer
+		// 更新服务器信息
+		server.ServerName = serverInfo.ServerName
+		server.StartMsgID = serverInfo.StartMsgId
+		server.EndMsgID = serverInfo.EndMsgId
+		server.Address = serverInfo.Address
+		server.Port = serverInfo.Port
+	} else {
+		// 连接到注册的服务器
+		address := fmt.Sprintf("%s:%d", serverInfo.Address, serverInfo.Port)
+		conn, err = grpc.Dial(address, grpc.WithInsecure())
+		if err != nil {
+			return &proto.RegisterServerResponse{
+				Success: false,
+				Message: fmt.Sprintf("无法连接到服务器: %v", err),
+			}, nil
+		}
+
+		// 创建客户端
+		client = proto.NewGatewayServiceClient(conn)
+
+		// 创建监控上下文
+		monitorCtx, cancel = context.WithCancel(context.Background())
+
+		// 存储服务器信息
+		server = &ServerInfo{
+			ServerID:   serverInfo.ServerId,
+			ServerName: serverInfo.ServerName,
+			StartMsgID: serverInfo.StartMsgId,
+			EndMsgID:   serverInfo.EndMsgId,
+			Address:    serverInfo.Address,
+			Port:       serverInfo.Port,
+			Client:     client,
+			Conn:       conn,
+			Cancel:     cancel,
+		}
+
+		serverManager.servers[serverInfo.ServerId] = server
+
+		// 启动连接状态监控
+		go monitorConnection(monitorCtx, server)
 	}
-
-	// 创建客户端
-	client := proto.NewGatewayServiceClient(conn)
-
-	// 创建监控上下文
-	monitorCtx, cancel := context.WithCancel(context.Background())
-
-	// 存储服务器信息
-	server := &ServerInfo{
-		ServerID:   serverInfo.ServerId,
-		ServerName: serverInfo.ServerName,
-		StartMsgID: serverInfo.StartMsgId,
-		EndMsgID:   serverInfo.EndMsgId,
-		Address:    serverInfo.Address,
-		Port:       serverInfo.Port,
-		Client:     client,
-		Conn:       conn,
-		Cancel:     cancel,
-	}
-
-	serverManager.servers[serverInfo.ServerId] = server
 
 	// 更新消息ID映射
 	for msgID := serverInfo.StartMsgId; msgID <= serverInfo.EndMsgId; msgID++ {
 		serverManager.msgIDMap[msgID] = serverInfo.ServerId
 	}
-
-	// 启动连接状态监控
-	go monitorConnection(monitorCtx, server)
 
 	log.Printf("服务器 %s (%s) 注册成功，消息ID范围: %d-%d",
 		serverInfo.ServerName, serverInfo.ServerId, serverInfo.StartMsgId, serverInfo.EndMsgId)
@@ -174,9 +193,8 @@ func monitorConnection(ctx context.Context, server *ServerInfo) {
 		case <-ticker.C:
 			state := server.Conn.GetState()
 			if state == connectivity.Shutdown || state == connectivity.TransientFailure {
-				log.Printf("服务器 %s (%s) 连接断开，状态: %s", server.ServerName, server.ServerID, state)
-				removeServer(server)
-				return
+				log.Printf("服务器 %s (%s) 连接状态: %s", server.ServerName, server.ServerID, state)
+				// 不再主动删除连接，由服务器自己管理连接状态
 			}
 		}
 	}
