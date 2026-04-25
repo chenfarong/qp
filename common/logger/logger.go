@@ -107,8 +107,29 @@ func New(config Config) *Logger {
 	// 初始化文件日志
 	for _, output := range config.Outputs {
 		if output.Type == File {
-			// 确保 logs 目录存在
-			logDir := "logs"
+			// 确保 logs 目录存在（使用绝对路径指向根目录）
+			// 获取当前工作目录
+			cwd, err := os.Getwd()
+			if err != nil {
+				l.consoleLog.Printf("Failed to get current working directory: %v\n", err)
+				continue
+			}
+			// 计算根目录路径（假设当前在某个子目录中）
+			rootDir := cwd
+			// 向上查找，直到找到包含config.yml的目录
+			for i := 0; i < 5; i++ { // 最多向上查找5级
+				if _, err := os.Stat(filepath.Join(rootDir, "config.yml")); err == nil {
+					break
+				}
+				parentDir := filepath.Dir(rootDir)
+				if parentDir == rootDir {
+					// 已经到了根目录，停止查找
+					break
+				}
+				rootDir = parentDir
+			}
+			// 构建logs目录路径
+			logDir := filepath.Join(rootDir, "logs")
 			if _, err := os.Stat(logDir); os.IsNotExist(err) {
 				err = os.MkdirAll(logDir, 0755)
 				if err != nil {

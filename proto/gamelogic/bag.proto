@@ -6,44 +6,197 @@ import "gamelogic/base.proto";
 
 option go_package = "zgame/pb/golang/gamelogic";
 
-
-//单物品信息
+// ============================================================================
+// 背包与物品系统协议定义
+// ============================================================================
 message ItemData
 {
-  int64 item_id = 1; //唯一编号
-  int32 item_cfg_id = 2; //配表id
-  int64 num = 3; //数量
-  optional string ext_info=100;
-}
-
-// 获取背包请求
-message GetBagRequest {
-}
-
-// 获取背包响应
-message GetBagResponse {
-    ResultErr err=1;
-    repeated ItemData data=2;
+  int32 item_cfg_id=2;
+  int64 num=3;
 }
 
 
-//使用道具
-message BagItemUseRequest {
-  int64 item_id = 1;  //背包物品中的编号
-  int64 num = 2; //使用数量
+// 背包物品信息
+message BagItem {
+  int64 item_id = 1;
+  int32 item_cfg_id=2;
+  int64 num=3;
+
+  optional string ext=10;
+
 }
 
-//使用道具返回
-message BagItemUseResponse {
-  ResultErr err=1;
+
+// 获取背包列表请求
+message GetBagItemsRequest {
 }
 
-//////////////////////////////////////////////////////////
-// 通知
-//////////////////////////////////////////////////////////
-
-//道具变化通知
-message SyncBagItemsChange {
-  repeated ItemData data=2;
+// 获取背包列表响应 注意背包中的分包数量（客户端自己进行） 排序规则
+message GetBagItemsResponse {
+  types.CommonResp resp = 1;
+  repeated BagItem items = 2;
 }
 
+// 物品变化
+message SyncBagItemChange {
+  repeated BagItem items = 1;
+}
+
+
+message GetBagItemInfoRequest{
+  int64 item_id = 1;
+}
+
+message GetGagItemInfoResponse{
+  types.CommonResp resp = 1;
+  BagItem data = 2;
+}
+
+
+// 使用道具请求
+message UseBagItemRequest {
+  int64 item_id = 1;
+  int64 num = 2;
+}
+
+// 使用道具响应
+message UseBagItemResponse {
+  types.CommonResp resp = 1;
+  BagItem item=2;   //此物品使用后的情况
+  string ext=10;
+}
+
+
+//装备绑定给指定目标
+message BagItemSetRequest{
+  int64 item_id=1;
+  int64 target=2; //绑定目标
+  string target_ext=3; //目标附加信息
+}
+
+message BagItemSetResponse{
+  types.CommonResp resp = 1;
+  BagItem data = 2;
+}
+
+//装备解绑
+message BagItemUnsetRequest{
+  int64 item_id=1;
+  int64 target=2; //绑定目标
+  string target_ext=3; //目标附加信息
+}
+
+message BagItemUnsetResponse{
+  types.CommonResp resp = 1;
+  BagItem data = 2;
+}
+
+
+//////////////////////////////////////////////////////////////
+//
+//////////////////////////////////////////////////////////////
+
+// 添加物品请求
+message BagItemsAddRemoteRequest {
+  repeated ItemData items=1;
+  string from = 2;               // 来源
+}
+
+// 物品增加请求返回
+message BagItemsCostRemoteResponse {
+  types.CommonResp resp = 1;
+  repeated BagItem bag_items = 2;  // 已添加的物品变更详情
+}
+
+
+// 消耗物品请求 消耗的时候先消耗数字小的那个
+message BagItemsCostRemoteRequest {
+  repeated ItemData items=1;
+  string from = 2;               // 来源
+}
+
+// 不可堆叠物品（装备）
+message BagItemsCostEqRemoteRequest {
+  repeated int64 item_ids=1;
+  string from = 2;               // 来源
+}
+
+// 物品消耗请求返回
+message BagItemsCostRemoteResponse {
+  types.CommonResp resp = 1;
+  repeated BagItem bag_items = 2;  // 已添加的物品变更详情
+}
+
+
+// 添加物品到背包响应
+message BagItemsChangeRemoteResponse {
+  types.CommonResp resp = 1;
+  repeated BagItem bag_items = 2;  // 已添加的物品变更详情
+}
+
+// 是否拥有请求
+message BagItemsExistRemoteRequest {
+  repeated ItemData items=1;
+  string actor_id = 2; //角色编号
+}
+
+// 是否拥有返回
+message BagItemsExistRemoteResponse {
+  types.CommonResp resp = 1;
+  repeated BagItem bag_items = 2;  // 已添加的物品变更详情
+}
+
+// 请求当前背包格子数量 当超过9999的时候提示 并且开始其他逻辑
+message GetBagCellSizeRemoteRequest{
+
+}
+
+message GetBagCellSizeRemoteResponse {
+  types.CommonResp resp = 1;
+  int64 size = 2;  // 格子数量
+}
+
+
+//////////////////////////////////////////////////////////////
+// 主要资源
+//////////////////////////////////////////////////////////////
+message SyncDiamond
+{
+  int64 num_total = 1; //当期拥有值
+  int64 num_change = 2; //本次变化
+  string from = 3; //发生来源
+}
+
+message MainResData {
+  int32 cfg_id = 1; //配表编号
+  int64 num = 2; //拥有
+}
+
+//获取主要资源数据 返回内容和资源同步是同一
+message GetMainResDataRequest {
+}
+
+//获取主要资源数据响应
+message GetMainResDataResponse {
+  repeated MainResData items = 2; // 8种资源
+}
+
+// 8 种资源
+message SyncMainRes {
+  repeated MainResData items = 1;
+}
+
+
+//////////////////////////////////////////////////////////////
+// 测试环境使用
+/////////////////////////////////////////////////////////////
+
+//添加策划配置中所有道具 数量1-10之间随机
+//返回同 获取背包列表响应
+message TestBagAddItemsRequest {
+}
+
+message TestBagAddItemsResponse {
+  types.CommonResp resp = 1;
+  repeated BagItem items = 2;
+}
